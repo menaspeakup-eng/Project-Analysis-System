@@ -121,21 +121,25 @@ const PET_URLS: Record<string, string> = {
   turtle: petTurtleUrl,
 };
 
-// Per-accessory placement tuned by eye near the character's head/face, since
-// each generated GLB has its own scale and pivot.
-// Tuned against the human character's actual head geometry: analyzing the
-// grounded/normalized boy+girl meshes shows the head occupies roughly the
-// top quarter of CHARACTER_HEIGHT (from ~75% up to 100%), with the head
-// widest (~0.47 raw units, i.e. ~0.8 world units across) around 80-88%
-// height and narrowing toward the crown at the very top.
+// Per-accessory placement tuned against the human character's actual head
+// geometry: analyzing the grounded/normalized boy+girl meshes shows the
+// head occupies roughly the top quarter of CHARACTER_HEIGHT (from ~75% up
+// to 100%), and is about 0.75-0.8 world units wide at its widest.
+//
+// `scale` is the accessory's target size (its largest raw dimension,
+// whichever axis that is) as a fraction of CHARACTER_HEIGHT -- see
+// `useGroundedScene`'s `maxDim`. Sizing by the largest dimension (not raw
+// height) matters here because several of these props are wide/flat rather
+// than tall (glasses, bow, star), so scaling them to a target height alone
+// previously blew them up several times too large.
 const ACCESSORY_PLACEMENT: Record<
   string,
   { position: [number, number, number]; scale: number; rotation?: [number, number, number] }
 > = {
-  glasses: { position: [0, 1.44, 0.26], scale: 0.3 },
-  crown: { position: [0, 1.66, 0], scale: 0.38 },
-  bow: { position: [0.26, 1.52, 0.08], scale: 0.24 },
-  star: { position: [0.4, 1.05, 0.28], scale: 0.2 },
+  glasses: { position: [0, 1.44, 0.26], scale: 0.22 },
+  crown: { position: [0, 1.66, 0], scale: 0.4 },
+  bow: { position: [0.24, 1.56, 0.06], scale: 0.16 },
+  star: { position: [0.4, 1.05, 0.28], scale: 0.13 },
   cap: { position: [0, 1.6, -0.02], scale: 0.42 },
 };
 
@@ -153,7 +157,14 @@ function useGroundedScene(url: string) {
     cloned.position.x -= center.x;
     cloned.position.z -= center.z;
     cloned.position.y -= box.min.y;
-    return { object: cloned, height: size.y || 1 };
+    // Some generated assets (glasses, bows, stars, ...) are wide/flat rather
+    // than tall, so their Y-height can be much smaller than their width or
+    // depth. Scaling those purely by height blew them up to several times
+    // the intended size. Track the largest dimension too, so callers that
+    // aren't specifically person/pet-shaped can normalize against that
+    // instead and avoid oversized accessories.
+    const maxDim = Math.max(size.x, size.y, size.z) || 1;
+    return { object: cloned, height: size.y || 1, maxDim };
   }, [scene]);
 }
 
@@ -172,9 +183,12 @@ function AccessoryMesh({ accessory }: { accessory: string }) {
   const url = ACCESSORY_URLS[accessory];
   const placement = ACCESSORY_PLACEMENT[accessory];
   // eslint-disable-next-line react-hooks/rules-of-hooks -- url/placement are stable per accessory key
-  const { object, height } = url ? useGroundedScene(url) : { object: null, height: 1 };
+  const { object, maxDim } = url ? useGroundedScene(url) : { object: null, maxDim: 1 };
   if (!url || !placement || !object) return null;
-  const scale = (placement.scale * CHARACTER_HEIGHT) / height;
+  // Normalize by the accessory's largest dimension (not height) so flat/wide
+  // props like glasses or a bow don't balloon in size just because they're
+  // short from top to bottom.
+  const scale = (placement.scale * CHARACTER_HEIGHT) / maxDim;
   return (
     <group position={placement.position} rotation={placement.rotation}>
       <group scale={scale}>
@@ -187,7 +201,9 @@ function AccessoryMesh({ accessory }: { accessory: string }) {
 function PetMesh({ pet }: { pet: string }) {
   const url = PET_URLS[pet];
   // eslint-disable-next-line react-hooks/rules-of-hooks -- url is stable per pet key
-  const { object, height } = url ? useGroundedScene(url) : { object: null, height: 1 };
+  const { object, height } = url
+    ? useGroundedScene(url)
+    : { object: null, height: 1 };
   if (!url || !object) return null;
   const scale = PET_HEIGHT / height;
   return (
