@@ -9,8 +9,40 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface AvatarConfig {
+  bgColor: string;
+  accessory: string;
+}
+
 export interface StudentProfile {
   name: string;
   points: number;
+  avatarConfig: AvatarConfig;
+}
+
+export interface DailyChallenge {
+  title: string;
+  description: string;
+  pointsReward: number;
+  completed: boolean;
+}
+
+export interface DailyChallengeCompletion {
+  alreadyCompleted: boolean;
+  pointsAwarded: number;
+  totalPoints: number;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  name: string;
+  points: number;
+  avatarConfig: AvatarConfig;
+  isMe: boolean;
+}
+
+export interface Leaderboard {
+  top: LeaderboardEntry[];
+  me: LeaderboardEntry | null;
 }
 

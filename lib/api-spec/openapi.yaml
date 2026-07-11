@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: student
     description: Student profile operations
+  - name: leaderboard
+    description: Leaderboard operations
 paths:
   /healthz:
     get:
@@ -41,6 +43,67 @@ paths:
                 $ref: "#/components/schemas/StudentProfile"
         "401":
           description: Not signed in
+  /student/avatar:
+    patch:
+      operationId: updateStudentAvatar
+      tags: [student]
+      summary: Update the signed-in student's avatar customization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvatarConfig"
+      responses:
+        "200":
+          description: Updated student profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentProfile"
+        "401":
+          description: Not signed in
+  /student/daily-challenge:
+    get:
+      operationId: getDailyChallenge
+      tags: [student]
+      summary: Get today's daily challenge and the student's completion status
+      responses:
+        "200":
+          description: Today's challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyChallenge"
+        "401":
+          description: Not signed in
+  /student/daily-challenge/complete:
+    post:
+      operationId: completeDailyChallenge
+      tags: [student]
+      summary: Mark today's daily challenge as completed and award points
+      description: Idempotent — completing an already-completed challenge awards no additional points.
+      responses:
+        "200":
+          description: Completion result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyChallengeCompletion"
+        "401":
+          description: Not signed in
+  /leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [leaderboard]
+      summary: Get the top students by points, plus the current student's own rank
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leaderboard"
 components:
   schemas:
     HealthStatus:
@@ -50,6 +113,16 @@ components:
           type: string
       required:
         - status
+    AvatarConfig:
+      type: object
+      properties:
+        bgColor:
+          type: string
+        accessory:
+          type: string
+      required:
+        - bgColor
+        - accessory
     StudentProfile:
       type: object
       properties:
@@ -57,7 +130,72 @@ components:
           type: string
         points:
           type: integer
+        avatarConfig:
+          $ref: "#/components/schemas/AvatarConfig"
       required:
         - name
         - points
+        - avatarConfig
+    DailyChallenge:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        pointsReward:
+          type: integer
+        completed:
+          type: boolean
+      required:
+        - title
+        - description
+        - pointsReward
+        - completed
+    DailyChallengeCompletion:
+      type: object
+      properties:
+        alreadyCompleted:
+          type: boolean
+        pointsAwarded:
+          type: integer
+        totalPoints:
+          type: integer
+      required:
+        - alreadyCompleted
+        - pointsAwarded
+        - totalPoints
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        name:
+          type: string
+        points:
+          type: integer
+        avatarConfig:
+          $ref: "#/components/schemas/AvatarConfig"
+        isMe:
+          type: boolean
+      required:
+        - rank
+        - name
+        - points
+        - avatarConfig
+        - isMe
+    Leaderboard:
+      type: object
+      properties:
+        top:
+          type: array
+          items:
+            $ref: "#/components/schemas/LeaderboardEntry"
+        me:
+          oneOf:
+            - $ref: "#/components/schemas/LeaderboardEntry"
+            - type: "null"
+      required:
+        - top
+        - me
 

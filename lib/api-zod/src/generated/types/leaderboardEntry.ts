@@ -7,8 +7,10 @@
  */
 import type { AvatarConfig } from './avatarConfig';
 
-export interface StudentProfile {
+export interface LeaderboardEntry {
+  rank: number;
   name: string;
   points: number;
   avatarConfig: AvatarConfig;
+  isMe: boolean;
 }

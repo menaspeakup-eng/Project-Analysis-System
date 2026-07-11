@@ -23,7 +23,78 @@ export const HealthCheckResponse = zod.object({
  */
 export const GetStudentProfileResponse = zod.object({
   "name": zod.string(),
-  "points": zod.number()
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessory": zod.string()
+})
+})
+
+
+/**
+ * @summary Update the signed-in student's avatar customization
+ */
+export const UpdateStudentAvatarBody = zod.object({
+  "bgColor": zod.string(),
+  "accessory": zod.string()
+})
+
+export const UpdateStudentAvatarResponse = zod.object({
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessory": zod.string()
+})
+})
+
+
+/**
+ * @summary Get today's daily challenge and the student's completion status
+ */
+export const GetDailyChallengeResponse = zod.object({
+  "title": zod.string(),
+  "description": zod.string(),
+  "pointsReward": zod.number(),
+  "completed": zod.boolean()
+})
+
+
+/**
+ * Idempotent — completing an already-completed challenge awards no additional points.
+ * @summary Mark today's daily challenge as completed and award points
+ */
+export const CompleteDailyChallengeResponse = zod.object({
+  "alreadyCompleted": zod.boolean(),
+  "pointsAwarded": zod.number(),
+  "totalPoints": zod.number()
+})
+
+
+/**
+ * @summary Get the top students by points, plus the current student's own rank
+ */
+export const GetLeaderboardResponse = zod.object({
+  "top": zod.array(zod.object({
+  "rank": zod.number(),
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessory": zod.string()
+}),
+  "isMe": zod.boolean()
+})),
+  "me": zod.union([zod.object({
+  "rank": zod.number(),
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessory": zod.string()
+}),
+  "isMe": zod.boolean()
+}),zod.null()])
 })
 
 

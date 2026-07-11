@@ -6,22 +6,30 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  AvatarConfig,
+  DailyChallenge,
+  DailyChallengeCompletion,
   HealthStatus,
+  Leaderboard,
   StudentProfile
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
-import type { ErrorType } from '../custom-fetch';
+import type { ErrorType , BodyType } from '../custom-fetch';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -191,6 +199,303 @@ export function useGetStudentProfile<TData = Awaited<ReturnType<typeof getStuden
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetStudentProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateStudentAvatarUrl = () => {
+
+
+
+
+  return `/api/student/avatar`
+}
+
+/**
+ * @summary Update the signed-in student's avatar customization
+ */
+export const updateStudentAvatar = async (avatarConfig: AvatarConfig, options?: RequestInit): Promise<StudentProfile> => {
+
+  return customFetch<StudentProfile>(getUpdateStudentAvatarUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(avatarConfig)
+  }
+);}
+
+
+
+
+
+export const getUpdateStudentAvatarMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStudentAvatar>>, TError,{data: BodyType<AvatarConfig>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateStudentAvatar>>, TError,{data: BodyType<AvatarConfig>}, TContext> => {
+
+const mutationKey = ['updateStudentAvatar'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateStudentAvatar>>, {data: BodyType<AvatarConfig>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateStudentAvatar(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateStudentAvatarMutationResult = NonNullable<Awaited<ReturnType<typeof updateStudentAvatar>>>
+    export type UpdateStudentAvatarMutationBody = BodyType<AvatarConfig>
+    export type UpdateStudentAvatarMutationError = ErrorType<void>
+
+    /**
+ * @summary Update the signed-in student's avatar customization
+ */
+export const useUpdateStudentAvatar = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateStudentAvatar>>, TError,{data: BodyType<AvatarConfig>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateStudentAvatar>>,
+        TError,
+        {data: BodyType<AvatarConfig>},
+        TContext
+      > => {
+      return useMutation(getUpdateStudentAvatarMutationOptions(options));
+    }
+
+export const getGetDailyChallengeUrl = () => {
+
+
+
+
+  return `/api/student/daily-challenge`
+}
+
+/**
+ * @summary Get today's daily challenge and the student's completion status
+ */
+export const getDailyChallenge = async ( options?: RequestInit): Promise<DailyChallenge> => {
+
+  return customFetch<DailyChallenge>(getGetDailyChallengeUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDailyChallengeQueryKey = () => {
+    return [
+    `/api/student/daily-challenge`
+    ] as const;
+    }
+
+
+export const getGetDailyChallengeQueryOptions = <TData = Awaited<ReturnType<typeof getDailyChallenge>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyChallenge>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDailyChallengeQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyChallenge>>> = ({ signal }) => getDailyChallenge({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDailyChallenge>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDailyChallengeQueryResult = NonNullable<Awaited<ReturnType<typeof getDailyChallenge>>>
+export type GetDailyChallengeQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get today's daily challenge and the student's completion status
+ */
+
+export function useGetDailyChallenge<TData = Awaited<ReturnType<typeof getDailyChallenge>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyChallenge>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDailyChallengeQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCompleteDailyChallengeUrl = () => {
+
+
+
+
+  return `/api/student/daily-challenge/complete`
+}
+
+/**
+ * Idempotent — completing an already-completed challenge awards no additional points.
+ * @summary Mark today's daily challenge as completed and award points
+ */
+export const completeDailyChallenge = async ( options?: RequestInit): Promise<DailyChallengeCompletion> => {
+
+  return customFetch<DailyChallengeCompletion>(getCompleteDailyChallengeUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCompleteDailyChallengeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeDailyChallenge>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof completeDailyChallenge>>, TError,void, TContext> => {
+
+const mutationKey = ['completeDailyChallenge'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeDailyChallenge>>, void> = () => {
+
+
+          return  completeDailyChallenge(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CompleteDailyChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof completeDailyChallenge>>>
+
+    export type CompleteDailyChallengeMutationError = ErrorType<void>
+
+    /**
+ * @summary Mark today's daily challenge as completed and award points
+ */
+export const useCompleteDailyChallenge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeDailyChallenge>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof completeDailyChallenge>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCompleteDailyChallengeMutationOptions(options));
+    }
+
+export const getGetLeaderboardUrl = () => {
+
+
+
+
+  return `/api/leaderboard`
+}
+
+/**
+ * @summary Get the top students by points, plus the current student's own rank
+ */
+export const getLeaderboard = async ( options?: RequestInit): Promise<Leaderboard> => {
+
+  return customFetch<Leaderboard>(getGetLeaderboardUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeaderboardQueryKey = () => {
+    return [
+    `/api/leaderboard`
+    ] as const;
+    }
+
+
+export const getGetLeaderboardQueryOptions = <TData = Awaited<ReturnType<typeof getLeaderboard>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeaderboardQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeaderboard>>> = ({ signal }) => getLeaderboard({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeaderboardQueryResult = NonNullable<Awaited<ReturnType<typeof getLeaderboard>>>
+export type GetLeaderboardQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the top students by points, plus the current student's own rank
+ */
+
+export function useGetLeaderboard<TData = Awaited<ReturnType<typeof getLeaderboard>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeaderboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeaderboardQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

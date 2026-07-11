@@ -6,5 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './avatarConfig';
+export * from './dailyChallenge';
+export * from './dailyChallengeCompletion';
 export * from './healthStatus';
+export * from './leaderboard';
+export * from './leaderboardEntry';
 export * from './studentProfile';
