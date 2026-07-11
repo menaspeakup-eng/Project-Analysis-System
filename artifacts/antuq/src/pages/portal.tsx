@@ -93,16 +93,32 @@ function LeaderboardRow({
         {rank <= 3 ? <Crown className="w-4 h-4" /> : rank}
       </span>
       <div
-        className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border-2 border-white shadow-sm relative flex items-center justify-center"
+        className="w-9 h-9 rounded-xl shrink-0 border-2 border-white shadow-sm relative flex items-center justify-center"
         style={avatarBgStyle(avatarConfig.bgColor)}
       >
         <span className="text-lg" aria-hidden="true">
           {personEmoji}
         </span>
         {emojis.length > 0 && (
-          <span className="absolute -top-1 text-[10px]" aria-hidden="true">
-            {emojis[0]}
-          </span>
+          <div className="absolute -top-1.5 -right-1.5 h-3.5" aria-hidden="true">
+            {emojis.slice(0, 3).map((emoji, i) => (
+              <span
+                key={i}
+                className="absolute top-0 w-3.5 h-3.5 rounded-full bg-white border border-white shadow-sm flex items-center justify-center text-[8px] leading-none"
+                style={{ right: `${i * 6}px`, zIndex: 3 - i }}
+              >
+                {emoji}
+              </span>
+            ))}
+            {emojis.length > 3 && (
+              <span
+                className="absolute top-0 w-3.5 h-3.5 rounded-full bg-muted border border-white shadow-sm flex items-center justify-center text-[7px] leading-none font-black text-muted-foreground"
+                style={{ right: "18px", zIndex: 0 }}
+              >
+                +{emojis.length - 3}
+              </span>
+            )}
+          </div>
         )}
       </div>
       <span className={`flex-1 font-bold truncate ${isMe ? "text-primary" : "text-foreground"}`}>
