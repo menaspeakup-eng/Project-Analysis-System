@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/O/svg" viewBox="0 0 400 120" width="400" height="120" fill="none">
+  <path d="M40 60c0-11 9-20 20-20h60c11 0 20 9 20 20v20c0 11-9 20-20 20H60c-11 0-20-9-20-20V60z" fill="#FF7043" />
+  <circle cx="70" cy="70" r="10" fill="#FFF" />
+  <circle cx="110" cy="70" r="10" fill="#FFF" />
+  <path d="M80 85q10 10 20 0" stroke="#FFF" stroke-width="4" stroke-linecap="round" />
+  <text x="160" y="85" font-family="Tajawal, sans-serif" font-weight="900" font-size="64" fill="#13364A">انطق</text>
+  <circle cx="330" cy="50" r="6" fill="#F4B400" />
+  <circle cx="350" cy="40" r="4" fill="#00ACC1" />
+</svg>

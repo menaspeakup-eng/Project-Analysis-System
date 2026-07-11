@@ -1,0 +1,213 @@
+import { useEffect, useRef } from "react";
+import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from '@clerk/react';
+import { publishableKeyFromHost } from '@clerk/react/internal';
+import { shadcn } from '@clerk/themes';
+import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
+import { queryClient } from "@/lib/queryClient";
+import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { Toaster } from '@/components/ui/toaster';
+import { TooltipProvider } from '@/components/ui/tooltip';
+
+import Home from "@/pages/home";
+import Portal from "@/pages/portal";
+import NotFound from "@/pages/not-found";
+
+const clerkPubKey = publishableKeyFromHost(
+  window.location.hostname,
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
+
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function stripBase(path: string): string {
+  return basePath && path.startsWith(basePath)
+    ? path.slice(basePath.length) || "/"
+    : path;
+}
+
+if (!clerkPubKey) {
+  throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env file');
+}
+
+const clerkAppearance = {
+  theme: shadcn,
+  cssLayerName: "clerk",
+  options: {
+    logoPlacement: "inside" as const,
+    logoLinkUrl: basePath || "/",
+    logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
+  },
+  variables: {
+    colorPrimary: "hsl(15 85% 55%)",
+    colorForeground: "hsl(200 40% 15%)",
+    colorMutedForeground: "hsl(180 20% 45%)",
+    colorDanger: "hsl(350 80% 55%)",
+    colorBackground: "hsl(0 0% 100%)",
+    colorInput: "hsl(40 20% 90%)",
+    colorInputForeground: "hsl(200 40% 15%)",
+    colorNeutral: "hsl(40 20% 90%)",
+    fontFamily: "'Tajawal', sans-serif",
+    borderRadius: "1rem",
+  },
+  elements: {
+    rootBox: "w-full flex justify-center",
+    cardBox: "bg-white rounded-2xl w-[440px] max-w-full overflow-hidden shadow-xl border border-[hsl(40,20%,90%)]",
+    card: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    headerTitle: "text-2xl font-bold text-[hsl(200,40%,15%)]",
+    headerSubtitle: "text-[hsl(180,20%,45%)]",
+    socialButtonsBlockButtonText: "font-semibold text-[hsl(200,40%,15%)]",
+    formFieldLabel: "text-sm font-bold text-[hsl(200,40%,15%)]",
+    footerActionLink: "text-[hsl(15,85%,55%)] font-bold hover:text-[hsl(15,85%,45%)]",
+    footerActionText: "text-[hsl(180,20%,45%)]",
+    dividerText: "text-[hsl(180,20%,45%)] font-medium bg-white",
+    identityPreviewEditButton: "text-[hsl(15,85%,55%)]",
+    formFieldSuccessText: "text-[hsl(180,60%,45%)]",
+    alertText: "text-[hsl(350,80%,55%)]",
+    logoBox: "h-16 mb-4 flex items-center justify-center",
+    logoImage: "h-full w-auto",
+    socialButtonsBlockButton: "border border-[hsl(40,20%,90%)] hover:bg-[hsl(40,33%,98%)] rounded-xl h-12 transition-colors",
+    formButtonPrimary: "bg-[hsl(15,85%,55%)] hover:bg-[hsl(15,85%,45%)] text-white font-bold rounded-xl h-12 text-lg shadow-sm transition-all",
+    formFieldInput: "bg-[hsl(40,33%,98%)] border border-[hsl(40,20%,90%)] rounded-xl h-12 text-[hsl(200,40%,15%)] focus:ring-2 focus:ring-[hsl(15,85%,55%)] px-4",
+    footerAction: "bg-[hsl(40,33%,98%)] p-4 rounded-b-2xl border-t border-[hsl(40,20%,90%)]",
+    dividerLine: "bg-[hsl(40,20%,90%)]",
+    alert: "bg-[hsl(350,80%,95%)] border border-[hsl(350,80%,55%)] text-[hsl(350,80%,55%)]",
+    otpCodeFieldInput: "border border-[hsl(40,20%,90%)] rounded-xl text-[hsl(200,40%,15%)]",
+    formFieldRow: "mb-4",
+    main: "gap-6",
+  },
+};
+
+function HomeRedirect() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const isGuest = localStorage.getItem("antuq-guest") === "true";
+  
+  if (!isLoaded) return null;
+  
+  // If user is already signed in via Clerk or is a guest, send them straight to portal
+  if (isSignedIn || isGuest) {
+    return <Redirect to="/portal" />;
+  }
+
+  // If user is not signed in, show the landing page
+  return <Home />;
+}
+
+function SignInPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-accent/10 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="relative z-10 w-full max-w-[440px]">
+        <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
+      </div>
+    </div>
+  );
+}
+
+function SignUpPage() {
+  return (
+    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-secondary/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[30rem] h-[30rem] bg-primary/10 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="relative z-10 w-full max-w-[440px]">
+        <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+      </div>
+    </div>
+  );
+}
+
+function ClerkQueryClientCacheInvalidator() {
+  const { addListener } = useClerk();
+  const queryClientInstance = useQueryClient();
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    const unsubscribe = addListener(({ user }) => {
+      const userId = user?.id ?? null;
+      if (
+        prevUserIdRef.current !== undefined &&
+        prevUserIdRef.current !== userId
+      ) {
+        queryClientInstance.clear();
+      }
+      prevUserIdRef.current = userId;
+    });
+    return unsubscribe;
+  }, [addListener, queryClientInstance]);
+
+  return null;
+}
+
+function ClerkProviderWithRoutes() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      proxyUrl={clerkProxyUrl}
+      appearance={clerkAppearance}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      localization={{
+        signIn: {
+          start: {
+            title: "مرحباً بك مجدداً",
+            subtitle: "قم بتسجيل الدخول لمتابعة التعلم",
+            actionText: "ليس لديك حساب؟",
+            actionLink: "إنشاء حساب جديد",
+          },
+        },
+        signUp: {
+          start: {
+            title: "إنشاء حساب جديد",
+            subtitle: "ابدأ رحلة التعلم الممتعة اليوم",
+            actionText: "لديك حساب بالفعل؟",
+            actionLink: "تسجيل الدخول",
+          },
+        },
+        socialButtonsBlockButton: "تسجيل الدخول باستخدام {{provider|titleize}}",
+        dividerText: "أو",
+        formFieldLabel__emailAddress: "البريد الإلكتروني",
+        formFieldLabel__password: "كلمة المرور",
+        formButtonPrimary: "المتابعة",
+      }}
+      routerPush={(to) => setLocation(stripBase(to))}
+      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ClerkQueryClientCacheInvalidator />
+        <TooltipProvider>
+          <Switch>
+            <Route path="/" component={HomeRedirect} />
+            <Route path="/sign-in/*?" component={SignInPage} />
+            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route path="/portal" component={Portal} />
+            <Route component={NotFound} />
+          </Switch>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
+  );
+}
+
+function App() {
+  return (
+    <WouterRouter base={basePath}>
+      <ClerkProviderWithRoutes />
+    </WouterRouter>
+  );
+}
+
+export default App;
