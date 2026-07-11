@@ -1,7 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth, useUser, useClerk } from "@clerk/react";
-import { useLocation } from "wouter";
-import { useGetStudentProfile } from "@workspace/api-client-react";
+import { useLocation, Link } from "wouter";
+import { useEffect } from "react";
+import {
+  useGetStudentProfile,
+  useGetDailyChallenge,
+  useCompleteDailyChallenge,
+  useGetLeaderboard,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   LogOut,
   User as UserIcon,
@@ -13,9 +20,16 @@ import {
   Users,
   MessageCircle,
   Sparkles,
+  Check,
+  Loader2,
+  Crown,
+  Wand2,
+  Settings,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import avatarMascot from "@assets/generated_images/avatar-mascot.png";
+import { avatarBgStyle, avatarAccessoryEmoji } from "@/lib/avatarPresets";
 
 const POINTS_PER_LEVEL = 100;
 
@@ -41,11 +55,70 @@ function ComingSoonCard({
   );
 }
 
+function LeaderboardRow({
+  rank,
+  name,
+  points,
+  avatarConfig,
+  isMe,
+  detached,
+}: {
+  rank: number;
+  name: string;
+  points: number;
+  avatarConfig: { bgColor: string; accessory: string };
+  isMe: boolean;
+  detached?: boolean;
+}) {
+  const emoji = avatarAccessoryEmoji(avatarConfig.accessory);
+  const medalColors: Record<number, string> = {
+    1: "text-secondary-foreground bg-secondary/30",
+    2: "text-[hsl(200,15%,45%)] bg-[hsl(200,15%,90%)]",
+    3: "text-[hsl(25,60%,45%)] bg-[hsl(25,60%,90%)]",
+  };
+
+  return (
+    <div
+      className={`flex items-center gap-3 p-2.5 rounded-2xl ${
+        isMe ? "bg-primary/10 border border-primary/30" : ""
+      } ${detached ? "mt-2 border-t border-border pt-3" : ""}`}
+      data-testid={`row-leaderboard-${rank}`}
+    >
+      <span
+        className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-sm font-black ${
+          medalColors[rank] ?? "text-muted-foreground bg-muted"
+        }`}
+      >
+        {rank <= 3 ? <Crown className="w-4 h-4" /> : rank}
+      </span>
+      <div
+        className="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-white shadow-sm relative"
+        style={avatarBgStyle(avatarConfig.bgColor)}
+      >
+        <img src={avatarMascot} alt="" className="w-full h-full object-cover" />
+        {emoji && (
+          <span className="absolute -top-1 text-[10px]" aria-hidden="true">
+            {emoji}
+          </span>
+        )}
+      </div>
+      <span className={`flex-1 font-bold truncate ${isMe ? "text-primary" : "text-foreground"}`}>
+        {name} {isMe && "(أنت)"}
+      </span>
+      <span className="flex items-center gap-1 text-sm font-black text-secondary-foreground shrink-0">
+        <Star className="w-3.5 h-3.5 fill-secondary text-secondary" />
+        {points}
+      </span>
+    </div>
+  );
+}
+
 export default function Portal() {
   const { isSignedIn, isLoaded } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const isGuest = localStorage.getItem("antuq-guest") === "true";
   const [avatarFailed, setAvatarFailed] = useState(false);
@@ -53,6 +126,15 @@ export default function Portal() {
   const { data: profile, isLoading: isProfileLoading } = useGetStudentProfile({
     query: { enabled: !!isSignedIn } as never,
   });
+
+  const { data: challenge, isLoading: isChallengeLoading } = useGetDailyChallenge({
+    query: { enabled: !!isSignedIn } as never,
+  });
+
+  const { mutate: completeChallenge, isPending: isCompletingChallenge } =
+    useCompleteDailyChallenge();
+
+  const { data: leaderboard, isLoading: isLeaderboardLoading } = useGetLeaderboard();
 
   // Google sometimes populates fullName without splitting it into first/last name,
   // so fall back through fullName before the generic placeholder.
@@ -65,6 +147,8 @@ export default function Portal() {
   const levelProgress = points % POINTS_PER_LEVEL;
   const level = Math.floor(points / POINTS_PER_LEVEL) + 1;
   const progressPercent = (levelProgress / POINTS_PER_LEVEL) * 100;
+  const avatarConfig = profile?.avatarConfig ?? { bgColor: "orange", accessory: "none" };
+  const accessoryEmoji = avatarAccessoryEmoji(avatarConfig.accessory);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn && !isGuest) {
@@ -87,6 +171,17 @@ export default function Portal() {
     } else {
       await signOut({ redirectUrl: "/" });
     }
+  };
+
+  const handleCompleteChallenge = () => {
+    if (isGuest || !challenge || challenge.completed) return;
+    completeChallenge(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["/api/student/daily-challenge"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/student/me"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      },
+    });
   };
 
   return (
@@ -130,14 +225,30 @@ export default function Portal() {
       <main className="flex-1 w-full max-w-5xl mx-auto p-4 md:p-8 relative z-10 space-y-8">
         {/* Hero: avatar + points progress + continue learning */}
         <section className="bg-white rounded-3xl shadow-sm border border-border p-6 md:p-8 flex flex-col md:flex-row items-center gap-8">
-          <div className="relative shrink-0">
-            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full bg-gradient-to-b from-primary/10 to-accent/10 flex items-center justify-center border-4 border-white shadow-lg overflow-hidden">
+          <Link
+            href="/character"
+            data-testid="link-edit-character"
+            aria-label="تعديل الشخصية"
+            className="relative shrink-0 group cursor-pointer block"
+          >
+            <div
+              className="w-32 h-32 md:w-36 md:h-36 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden relative transition-transform group-hover:scale-105"
+              style={avatarBgStyle(avatarConfig.bgColor)}
+            >
               <img src={avatarMascot} alt="شخصية الطالب" className="w-full h-full object-cover" />
+              {accessoryEmoji && (
+                <span className="absolute top-1 text-3xl" aria-hidden="true">
+                  {accessoryEmoji}
+                </span>
+              )}
             </div>
             <span className="absolute -bottom-1 -left-1 bg-accent text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md border-2 border-white">
               المستوى {level}
             </span>
-          </div>
+            <span className="absolute -top-1 -right-1 bg-white text-primary rounded-full p-1.5 shadow-md border-2 border-primary/20 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Wand2 className="w-3.5 h-3.5" />
+            </span>
+          </Link>
 
           <div className="flex-1 w-full text-center md:text-right space-y-4">
             <div>
@@ -152,9 +263,13 @@ export default function Portal() {
             <div className="space-y-1.5">
               <div className="flex justify-between text-sm font-bold text-muted-foreground">
                 <span>{levelProgress} / {POINTS_PER_LEVEL} نقطة للمستوى التالي</span>
-                <span className="text-secondary-foreground flex items-center gap-1">
-                  <Sparkles className="w-4 h-4" /> تخصيص الشخصية (قريباً)
-                </span>
+                <Link
+                  href="/character"
+                  className="text-secondary-foreground flex items-center gap-1 hover:underline"
+                  data-testid="link-customize-character"
+                >
+                  <Sparkles className="w-4 h-4" /> تخصيص الشخصية
+                </Link>
               </div>
               <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                 <div
@@ -176,21 +291,89 @@ export default function Portal() {
           </div>
         </section>
 
-        {/* Daily challenge */}
-        <section className="bg-gradient-to-l from-accent/10 to-primary/10 rounded-3xl border border-accent/20 p-6 flex items-center gap-5">
-          <div className="w-14 h-14 rounded-2xl bg-accent text-white flex items-center justify-center shrink-0">
-            <Flame className="w-7 h-7" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-black text-foreground text-lg">التحدي اليومي</h3>
-            <p className="text-muted-foreground font-medium text-sm">
-              نجهز لك تحدياً جديداً كل يوم لكسب نقاط ومكافآت إضافية.
-            </p>
-          </div>
-          <span className="text-xs font-bold text-accent bg-white px-3 py-1.5 rounded-full border border-accent/20 shrink-0">
-            قريباً
-          </span>
-        </section>
+        {/* Daily challenge + Leaderboard side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Daily challenge */}
+          <section className="bg-gradient-to-l from-accent/10 to-primary/10 rounded-3xl border border-accent/20 p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-accent text-white flex items-center justify-center shrink-0">
+                <Flame className="w-6 h-6" />
+              </div>
+              <h3 className="font-black text-foreground text-lg">التحدي اليومي</h3>
+              {challenge?.completed && (
+                <span className="mr-auto flex items-center gap-1 text-xs font-bold text-white bg-[hsl(150,55%,45%)] px-3 py-1 rounded-full">
+                  <Check className="w-3.5 h-3.5" /> مكتمل
+                </span>
+              )}
+            </div>
+
+            {isGuest ? (
+              <p className="text-muted-foreground font-medium text-sm">
+                سجّل الدخول لخوض التحدي اليومي وكسب النقاط.
+              </p>
+            ) : isChallengeLoading || !challenge ? (
+              <div className="h-16 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <h4 className="font-bold text-foreground">{challenge.title}</h4>
+                  <p className="text-muted-foreground font-medium text-sm mt-1">
+                    {challenge.description}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between gap-3 mt-auto">
+                  <span className="text-xs font-bold text-accent bg-white px-3 py-1.5 rounded-full border border-accent/20 shrink-0 flex items-center gap-1">
+                    <Star className="w-3.5 h-3.5 fill-secondary text-secondary" />
+                    {challenge.pointsReward} نقطة
+                  </span>
+                  <Button
+                    size="sm"
+                    disabled={challenge.completed || isCompletingChallenge}
+                    onClick={handleCompleteChallenge}
+                    data-testid="button-complete-challenge"
+                    className="rounded-xl bg-accent hover:bg-accent/90 text-white font-bold disabled:opacity-60"
+                  >
+                    {isCompletingChallenge ? (
+                      <Loader2 className="w-4 h-4 ml-1.5 animate-spin" />
+                    ) : challenge.completed ? (
+                      <Check className="w-4 h-4 ml-1.5" />
+                    ) : null}
+                    {challenge.completed ? "أنجزت التحدي" : "أكملت التحدي"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </section>
+
+          {/* Leaderboard */}
+          <section className="bg-white rounded-3xl shadow-sm border border-border p-6 flex flex-col">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-12 h-12 rounded-2xl bg-secondary/20 text-secondary-foreground flex items-center justify-center shrink-0">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <h3 className="font-black text-foreground text-lg">لوحة المتصدرين</h3>
+            </div>
+
+            {isLeaderboardLoading || !leaderboard ? (
+              <div className="h-24 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : leaderboard.top.length === 0 ? (
+              <p className="text-muted-foreground font-medium text-sm">
+                لا يوجد طلاب حتى الآن — كن أول المتصدرين!
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {leaderboard.top.map((entry) => (
+                  <LeaderboardRow key={entry.rank} {...entry} />
+                ))}
+                {leaderboard.me && <LeaderboardRow {...leaderboard.me} detached />}
+              </div>
+            )}
+          </section>
+        </div>
 
         {/* Latest achievements */}
         <section className="bg-white rounded-3xl shadow-sm border border-border p-6">
@@ -214,8 +397,11 @@ export default function Portal() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <ComingSoonCard icon={Play} label="الألعاب التعليمية" colorClass="bg-accent/15 text-accent" />
             <ComingSoonCard icon={BookOpen} label="المكتبة" colorClass="bg-primary/15 text-primary" />
-            <ComingSoonCard icon={Users} label="لوحة المتصدرين" colorClass="bg-secondary/20 text-secondary-foreground" />
+            <ComingSoonCard icon={Award} label="جميع الإنجازات" colorClass="bg-secondary/20 text-secondary-foreground" />
             <ComingSoonCard icon={MessageCircle} label="الشات العام" colorClass="bg-[hsl(180,60%,90%)] text-[hsl(180,60%,35%)]" />
+            <ComingSoonCard icon={Sparkles} label="ورشة القصص بالذكاء الاصطناعي" colorClass="bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)]" />
+            <ComingSoonCard icon={Users} label="الأصدقاء" colorClass="bg-[hsl(335,75%,94%)] text-[hsl(335,75%,50%)]" />
+            <ComingSoonCard icon={Settings} label="الإعدادات" colorClass="bg-muted text-muted-foreground" />
           </div>
         </section>
       </main>
