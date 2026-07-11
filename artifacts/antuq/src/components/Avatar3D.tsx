@@ -119,15 +119,20 @@ const PET_URLS: Record<string, string> = {
 
 // Per-accessory placement tuned by eye near the character's head/face, since
 // each generated GLB has its own scale and pivot.
+// Tuned against the human character's actual head geometry: analyzing the
+// grounded/normalized boy+girl meshes shows the head occupies roughly the
+// top quarter of CHARACTER_HEIGHT (from ~75% up to 100%), with the head
+// widest (~0.47 raw units, i.e. ~0.8 world units across) around 80-88%
+// height and narrowing toward the crown at the very top.
 const ACCESSORY_PLACEMENT: Record<
   string,
   { position: [number, number, number]; scale: number; rotation?: [number, number, number] }
 > = {
-  glasses: { position: [0, 1.48, 0.32], scale: 0.34 },
-  crown: { position: [0, 1.78, 0], scale: 0.4 },
-  bow: { position: [0.32, 1.68, 0.15], scale: 0.28 },
-  star: { position: [0.4, 1.05, 0.3], scale: 0.24 },
-  cap: { position: [0, 1.75, -0.02], scale: 0.46 },
+  glasses: { position: [0, 1.44, 0.26], scale: 0.3 },
+  crown: { position: [0, 1.66, 0], scale: 0.38 },
+  bow: { position: [0.26, 1.52, 0.08], scale: 0.24 },
+  star: { position: [0.4, 1.05, 0.28], scale: 0.2 },
+  cap: { position: [0, 1.6, -0.02], scale: 0.42 },
 };
 
 // Loads a GLTF and re-centers/grounds it so arbitrarily-scaled generated
