@@ -21,9 +21,6 @@ export default function Home() {
           <img src="/logo.svg" alt="انطق" className="h-10 md:h-12 w-auto" />
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" className="font-bold text-foreground hover:text-primary hidden md:flex rounded-xl" asChild>
-            <Link href="/schools">للمدارس</Link>
-          </Button>
           <Button className="font-bold bg-primary hover:bg-primary/90 text-white rounded-xl px-6 h-11" asChild>
             <Link href="/sign-in">ابدأ الآن</Link>
           </Button>
