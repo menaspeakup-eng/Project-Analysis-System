@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, SignUp, Show, useClerk, useAuth } from '@clerk/react';
+import { ClerkProvider, SignIn, Show, useClerk, useAuth } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
@@ -10,6 +10,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 import Home from "@/pages/home";
 import Portal from "@/pages/portal";
+import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
+import Schools from "@/pages/schools";
 import NotFound from "@/pages/not-found";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -71,7 +74,8 @@ const clerkAppearance = {
     socialButtonsBlockButton: "border border-[hsl(40,20%,90%)] hover:bg-[hsl(40,33%,98%)] rounded-xl h-12 transition-colors",
     formButtonPrimary: "bg-[hsl(15,85%,55%)] hover:bg-[hsl(15,85%,45%)] text-white font-bold rounded-xl h-12 text-lg shadow-sm transition-all",
     formFieldInput: "bg-[hsl(40,33%,98%)] border border-[hsl(40,20%,90%)] rounded-xl h-12 text-[hsl(200,40%,15%)] focus:ring-2 focus:ring-[hsl(15,85%,55%)] px-4",
-    footerAction: "bg-[hsl(40,33%,98%)] p-4 rounded-b-2xl border-t border-[hsl(40,20%,90%)]",
+    // Single sign-in flow only — no separate sign-up page, so the "create an account" footer link is hidden.
+    footerAction: "hidden",
     dividerLine: "bg-[hsl(40,20%,90%)]",
     alert: "bg-[hsl(350,80%,95%)] border border-[hsl(350,80%,55%)] text-[hsl(350,80%,55%)]",
     otpCodeFieldInput: "border border-[hsl(40,20%,90%)] rounded-xl text-[hsl(200,40%,15%)]",
@@ -105,23 +109,9 @@ function SignInPage() {
       </div>
       
       <div className="relative z-10 w-full max-w-[440px]">
-        <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
-      </div>
-    </div>
-  );
-}
-
-function SignUpPage() {
-  return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-secondary/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-[-10%] left-[-10%] w-[30rem] h-[30rem] bg-primary/10 rounded-full blur-3xl"></div>
-      </div>
-      
-      <div className="relative z-10 w-full max-w-[440px]">
-        <SignUp routing="path" path={`${basePath}/sign-up`} signInUrl={`${basePath}/sign-in`} />
+        {/* Single sign-in flow: Google auto-creates a new account on first use,
+            so signUpUrl points back to this same page instead of a separate sign-up screen. */}
+        <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-in`} />
       </div>
     </div>
   );
@@ -158,22 +148,12 @@ function ClerkProviderWithRoutes() {
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
+      signUpUrl={`${basePath}/sign-in`}
       localization={{
         signIn: {
           start: {
-            title: "مرحباً بك مجدداً",
-            subtitle: "قم بتسجيل الدخول لمتابعة التعلم",
-            actionText: "ليس لديك حساب؟",
-            actionLink: "إنشاء حساب جديد",
-          },
-        },
-        signUp: {
-          start: {
-            title: "إنشاء حساب جديد",
-            subtitle: "ابدأ رحلة التعلم الممتعة اليوم",
-            actionText: "لديك حساب بالفعل؟",
-            actionLink: "تسجيل الدخول",
+            title: "مرحباً بك في انطق",
+            subtitle: "سجّل دخولك للمتابعة — سيتم إنشاء حسابك تلقائياً في أول مرة",
           },
         },
         socialButtonsBlockButton: "تسجيل الدخول باستخدام {{provider|titleize}}",
@@ -191,8 +171,10 @@ function ClerkProviderWithRoutes() {
           <Switch>
             <Route path="/" component={HomeRedirect} />
             <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
             <Route path="/portal" component={Portal} />
+            <Route path="/terms" component={Terms} />
+            <Route path="/privacy" component={Privacy} />
+            <Route path="/schools" component={Schools} />
             <Route component={NotFound} />
           </Switch>
           <Toaster />

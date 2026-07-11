@@ -22,10 +22,10 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="ghost" className="font-bold text-foreground hover:text-primary hidden md:flex rounded-xl" asChild>
-            <Link href="/sign-in">تسجيل الدخول</Link>
+            <Link href="/schools">للمدارس</Link>
           </Button>
           <Button className="font-bold bg-primary hover:bg-primary/90 text-white rounded-xl px-6 h-11" asChild>
-            <Link href="/sign-up">ابدأ الآن</Link>
+            <Link href="/sign-in">ابدأ الآن</Link>
           </Button>
         </div>
       </header>
@@ -49,7 +49,7 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
             <Button size="lg" className="w-full sm:w-auto text-lg h-14 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all hover:-translate-y-1" asChild>
-               <Link href="/sign-up">
+               <Link href="/sign-in">
                  سجل مجاناً
                  <ArrowLeft className="w-5 h-5 mr-2" />
                </Link>
@@ -207,8 +207,8 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/10 p-4 rounded-3xl backdrop-blur-sm border border-white/20 max-w-fit mx-auto">
             <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-lg font-bold rounded-2xl bg-white text-primary hover:bg-background shadow-lg transition-all hover:scale-105" asChild>
-               <Link href="/sign-up">
-                 إنشاء حساب للطفل
+               <Link href="/sign-in">
+                 ابدأ الآن مجاناً
                </Link>
             </Button>
             <Button size="lg" variant="ghost" className="w-full sm:w-auto h-14 px-8 text-lg font-bold rounded-2xl text-white hover:bg-white/20 transition-all" onClick={handleGuestContinue}>
@@ -226,9 +226,9 @@ export default function Home() {
             <span className="font-bold text-muted-foreground">© {new Date().getFullYear()} انطق. منصة تعليمية.</span>
           </div>
           <div className="flex items-center gap-6 text-sm font-bold text-muted-foreground">
-            <a href="#" className="hover:text-primary transition-colors">شروط الاستخدام</a>
-            <a href="#" className="hover:text-primary transition-colors">سياسة الخصوصية</a>
-            <a href="#" className="hover:text-primary transition-colors">للمدارس</a>
+            <Link href="/terms" className="hover:text-primary transition-colors">شروط الاستخدام</Link>
+            <Link href="/privacy" className="hover:text-primary transition-colors">سياسة الخصوصية</Link>
+            <Link href="/schools" className="hover:text-primary transition-colors">للمدارس</Link>
           </div>
         </div>
       </footer>

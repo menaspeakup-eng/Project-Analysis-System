@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth, useUser, useClerk } from "@clerk/react";
 import { useLocation } from "wouter";
 import { LogOut, User as UserIcon, Star, Play, Trophy } from "lucide-react";
@@ -11,6 +11,13 @@ export default function Portal() {
   const [, setLocation] = useLocation();
 
   const isGuest = localStorage.getItem("antuq-guest") === "true";
+  const [avatarFailed, setAvatarFailed] = useState(false);
+
+  // Google sometimes populates fullName without splitting it into first/last name,
+  // so fall back through fullName before the generic placeholder.
+  const displayName = isGuest
+    ? "الزائر الصغير"
+    : user?.firstName || user?.fullName || "صديقنا البطل";
 
   useEffect(() => {
     if (isLoaded && !isSignedIn && !isGuest) {
@@ -41,15 +48,21 @@ export default function Portal() {
       <header className="w-full p-4 md:px-8 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-border z-10">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary overflow-hidden">
-            {isSignedIn && user?.imageUrl ? (
-              <img src={user.imageUrl} alt="Profile" className="w-full h-full object-cover" />
+            {isSignedIn && user?.imageUrl && !avatarFailed ? (
+              <img
+                src={user.imageUrl}
+                alt={displayName}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={() => setAvatarFailed(true)}
+              />
             ) : (
               <UserIcon className="w-6 h-6" />
             )}
           </div>
           <div>
             <h2 className="font-bold text-foreground text-lg">
-              {isGuest ? "الزائر الصغير" : user?.firstName || "صديقنا البطل"}
+              {displayName}
             </h2>
             <div className="flex items-center gap-1 text-sm text-secondary-foreground font-bold">
               <Star className="w-4 h-4 fill-secondary text-secondary" />
