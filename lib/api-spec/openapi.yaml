@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: student
+    description: Student profile operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /student/me:
+    get:
+      operationId: getStudentProfile
+      tags: [student]
+      summary: Get the signed-in student's profile
+      description: Returns the current student's profile, creating one on first visit (JIT-provisioned from the Clerk account).
+      responses:
+        "200":
+          description: Student profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentProfile"
+        "401":
+          description: Not signed in
 components:
   schemas:
     HealthStatus:
@@ -33,4 +50,14 @@ components:
           type: string
       required:
         - status
+    StudentProfile:
+      type: object
+      properties:
+        name:
+          type: string
+        points:
+          type: integer
+      required:
+        - name
+        - points
 
