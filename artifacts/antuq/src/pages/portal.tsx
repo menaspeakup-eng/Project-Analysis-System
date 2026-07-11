@@ -257,7 +257,7 @@ export default function Portal() {
             <Avatar3D
               bgColor={avatarConfig.bgColor}
               gender={avatarConfig.gender}
-              accessories={avatarConfig.accessories}
+              accessory={avatarConfig.accessories[0] ?? "none"}
               pet={avatarConfig.pet}
               className="w-32 h-32 md:w-36 md:h-36 rounded-2xl border-4 border-white shadow-lg transition-transform group-hover:scale-105"
             />

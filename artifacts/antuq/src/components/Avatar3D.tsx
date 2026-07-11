@@ -12,11 +12,16 @@ import {
 
 import boyUrl from "@assets/generated_models/character-boy.glb?url";
 import girlUrl from "@assets/generated_models/character-girl.glb?url";
-import glassesUrl from "@assets/generated_models/accessory-glasses.glb?url";
-import crownUrl from "@assets/generated_models/accessory-crown.glb?url";
-import bowUrl from "@assets/generated_models/accessory-bow.glb?url";
-import starUrl from "@assets/generated_models/accessory-star.glb?url";
-import capUrl from "@assets/generated_models/accessory-cap.glb?url";
+import boyGlassesUrl from "@assets/generated_models/character-boy-glasses.glb?url";
+import boyBowUrl from "@assets/generated_models/character-boy-bow.glb?url";
+import boyStarUrl from "@assets/generated_models/character-boy-star.glb?url";
+import boyCrownUrl from "@assets/generated_models/character-boy-crown.glb?url";
+import boyCapUrl from "@assets/generated_models/character-boy-cap.glb?url";
+import girlGlassesUrl from "@assets/generated_models/character-girl-glasses.glb?url";
+import girlBowUrl from "@assets/generated_models/character-girl-bow.glb?url";
+import girlStarUrl from "@assets/generated_models/character-girl-star.glb?url";
+import girlCrownUrl from "@assets/generated_models/character-girl-crown.glb?url";
+import girlCapUrl from "@assets/generated_models/character-girl-cap.glb?url";
 import petCatUrl from "@assets/generated_models/pet-cat.glb?url";
 import petDogUrl from "@assets/generated_models/pet-dog.glb?url";
 import petRabbitUrl from "@assets/generated_models/pet-rabbit.glb?url";
@@ -94,23 +99,33 @@ class Avatar3DErrorBoundary extends Component<
   }
 }
 
-// Character is normalized to this height (world units); accessory/pet
-// placement below is tuned relative to this so it lines up regardless of the
-// raw scale/pivot the generated GLB happened to ship with.
+// Character is normalized to this height (world units); pet placement below
+// is tuned relative to this so it lines up regardless of the raw
+// scale/pivot the generated GLB happened to ship with.
 const CHARACTER_HEIGHT = 1.7;
 const PET_HEIGHT = 0.55;
 
-const CHARACTER_URLS: Record<string, string> = {
-  male: boyUrl,
-  female: girlUrl,
-};
-
-const ACCESSORY_URLS: Record<string, string> = {
-  glasses: glassesUrl,
-  crown: crownUrl,
-  bow: bowUrl,
-  star: starUrl,
-  cap: capUrl,
+// Each gender+accessory combo is its own complete, pre-modeled 3D character
+// (accessory sculpted onto the body by the model generator itself, not
+// composited on top of a generic body at runtime -- see the note in
+// avatarPresets.ts). "none" is the bare character with no accessory.
+const CHARACTER_URLS: Record<string, Record<string, string>> = {
+  male: {
+    none: boyUrl,
+    glasses: boyGlassesUrl,
+    bow: boyBowUrl,
+    star: boyStarUrl,
+    crown: boyCrownUrl,
+    cap: boyCapUrl,
+  },
+  female: {
+    none: girlUrl,
+    glasses: girlGlassesUrl,
+    bow: girlBowUrl,
+    star: girlStarUrl,
+    crown: girlCrownUrl,
+    cap: girlCapUrl,
+  },
 };
 
 const PET_URLS: Record<string, string> = {
@@ -119,40 +134,6 @@ const PET_URLS: Record<string, string> = {
   rabbit: petRabbitUrl,
   bird: petBirdUrl,
   turtle: petTurtleUrl,
-};
-
-// Per-accessory placement tuned against the human character's actual head
-// geometry and each accessory's real bounding box (checked with
-// `gltf-transform inspect` against the generated GLBs, since the preview
-// tools available in this environment can't render WebGL for a visual
-// check). The head occupies roughly the top quarter of CHARACTER_HEIGHT
-// (from ~75% up to 100%), and is about 0.75-0.8 world units wide.
-//
-// `scale` is the accessory's target on-screen size (its larger raw X or Y
-// dimension -- see `useGroundedScene`'s `maxXY`) as a fraction of
-// CHARACTER_HEIGHT. Some of these generated props are much deeper
-// (front-to-back) than they are wide or tall -- e.g. the bow's raw Z extent
-// is ~4x its raw X width -- so sizing off the single largest raw dimension
-// (old behavior) made them either huge or tiny depending on which axis won.
-// X/Y is what the camera actually sees, so it's the right thing to size by.
-const ACCESSORY_PLACEMENT: Record<
-  string,
-  { position: [number, number, number]; scale: number; rotation?: [number, number, number] }
-> = {
-  // Raw maxXY=0.937 (X, lens-to-lens width). Target ~0.45 world units across
-  // the face, resting at eye level.
-  glasses: { position: [0, 1.41, 0.24], scale: 0.265 },
-  // Raw maxXY=0.871 (X, diameter). Target ~0.5 world units, resting on the
-  // scalp just above the head-top.
-  crown: { position: [0, 1.62, 0], scale: 0.294 },
-  // Raw maxXY=0.754 (Y -- this model is taller than wide). Target ~0.25
-  // world units, tucked to the side near the hairline.
-  bow: { position: [0.22, 1.5, 0.05], scale: 0.147 },
-  // Raw maxXY=0.911 (Y). Target ~0.28 world units, held out to the side.
-  star: { position: [0.4, 0.85, 0.28], scale: 0.165 },
-  // Raw maxXY=0.9998 (X, brim width). Target ~0.75 world units, sitting
-  // lower over the head than the crown.
-  cap: { position: [0, 1.52, -0.02], scale: 0.441 },
 };
 
 // Loads a GLTF and re-centers/grounds it so arbitrarily-scaled generated
@@ -169,47 +150,18 @@ function useGroundedScene(url: string) {
     cloned.position.x -= center.x;
     cloned.position.z -= center.z;
     cloned.position.y -= box.min.y;
-    // Some generated assets (glasses, bows, stars, ...) are wide/flat rather
-    // than tall, so their Y-height can be much smaller than their width or
-    // depth. Scaling those purely by height blew them up to several times
-    // the intended size. The camera looks down the Z axis, so only X
-    // (left/right) and Y (up/down) are visually apparent -- Z is depth and,
-    // for several of these generated props, happens to be the largest raw
-    // dimension for reasons unrelated to how big the object actually looks
-    // (e.g. a bow's "front-to-back" extent from its generation pose). Use
-    // the larger of X/Y as the normalization target instead, so accessories
-    // are sized by how big they actually appear on screen.
-    const maxXY = Math.max(size.x, size.y) || 1;
-    return { object: cloned, height: size.y || 1, maxXY };
+    return { object: cloned, height: size.y || 1 };
   }, [scene]);
 }
 
-function CharacterMesh({ gender }: { gender: string }) {
-  const url = CHARACTER_URLS[gender] ?? CHARACTER_URLS.male;
+function CharacterMesh({ gender, accessory }: { gender: string; accessory: string }) {
+  const genderUrls = CHARACTER_URLS[gender] ?? CHARACTER_URLS.male;
+  const url = genderUrls[accessory] ?? genderUrls.none;
   const { object, height } = useGroundedScene(url);
   const scale = CHARACTER_HEIGHT / height;
   return (
     <group scale={scale}>
       <primitive object={object} />
-    </group>
-  );
-}
-
-function AccessoryMesh({ accessory }: { accessory: string }) {
-  const url = ACCESSORY_URLS[accessory];
-  const placement = ACCESSORY_PLACEMENT[accessory];
-  // eslint-disable-next-line react-hooks/rules-of-hooks -- url/placement are stable per accessory key
-  const { object, maxXY } = url ? useGroundedScene(url) : { object: null, maxXY: 1 };
-  if (!url || !placement || !object) return null;
-  // Normalize by the accessory's largest on-screen dimension (X or Y, not
-  // raw depth) so flat/wide props like glasses or a bow don't balloon or
-  // shrink just because of an incidental front-to-back extent.
-  const scale = (placement.scale * CHARACTER_HEIGHT) / maxXY;
-  return (
-    <group position={placement.position} rotation={placement.rotation}>
-      <group scale={scale}>
-        <primitive object={object} />
-      </group>
     </group>
   );
 }
@@ -233,13 +185,13 @@ function PetMesh({ pet }: { pet: string }) {
 
 function Scene({
   gender,
-  accessories,
+  accessory,
   pet,
   interactive,
   autoRotate,
 }: {
   gender: string;
-  accessories: string[];
+  accessory: string;
   pet: string;
   interactive: boolean;
   autoRotate: boolean;
@@ -251,10 +203,7 @@ function Scene({
       <directionalLight position={[-2, 1, -1]} intensity={0.35} />
       <Environment preset="city" environmentIntensity={0.25} />
       <group position={[pet !== "none" ? -0.35 : 0, -0.85, 0]}>
-        <CharacterMesh gender={gender} />
-        {accessories.map((accessory) => (
-          <AccessoryMesh key={accessory} accessory={accessory} />
-        ))}
+        <CharacterMesh gender={gender} accessory={accessory} />
         {pet !== "none" && <PetMesh pet={pet} />}
       </group>
       {interactive ? (
@@ -282,7 +231,7 @@ function CanvasFallback() {
 export function Avatar3D({
   bgColor,
   gender,
-  accessories,
+  accessory = "none",
   pet,
   interactive = false,
   autoRotate = true,
@@ -290,7 +239,8 @@ export function Avatar3D({
 }: {
   bgColor: string;
   gender: string;
-  accessories: string[];
+  /** Which single accessory (if any) this character is wearing. Defaults to "none". */
+  accessory?: string;
   pet: string;
   /** When true, the student can drag to rotate the model. */
   interactive?: boolean;
@@ -300,7 +250,13 @@ export function Avatar3D({
 }) {
   const preset = AVATAR_BG_COLORS[bgColor] ?? AVATAR_BG_COLORS.orange;
   const fallback = (
-    <Avatar2DFallback bgColor={bgColor} gender={gender} accessories={accessories} pet={pet} className={className} />
+    <Avatar2DFallback
+      bgColor={bgColor}
+      gender={gender}
+      accessories={accessory === "none" ? [] : [accessory]}
+      pet={pet}
+      className={className}
+    />
   );
 
   if (!isWebGLAvailable()) {
@@ -328,7 +284,7 @@ export function Avatar3D({
           >
             <Scene
               gender={gender}
-              accessories={accessories}
+              accessory={accessory}
               pet={pet}
               interactive={interactive}
               autoRotate={autoRotate}

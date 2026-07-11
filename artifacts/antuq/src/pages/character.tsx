@@ -17,7 +17,7 @@ import {
   levelForPoints,
   isAccessoryUnlocked,
   isPetUnlocked,
-  toggleAccessory,
+  selectAccessory,
 } from "@/lib/avatarPresets";
 
 export default function CharacterEdit() {
@@ -31,9 +31,13 @@ export default function CharacterEdit() {
 
   const [bgColor, setBgColor] = useState("orange");
   const [gender, setGender] = useState("male");
-  const [accessories, setAccessories] = useState<string[]>([]);
+  const [accessory, setAccessory] = useState("none");
   const [pet, setPet] = useState("none");
   const [saved, setSaved] = useState(false);
+  // Transient "try it on" preview for locked items — tapping a locked
+  // accessory/pet shows it on the 3D model without unlocking or saving it.
+  const [previewAccessory, setPreviewAccessory] = useState<string | null>(null);
+  const [previewPet, setPreviewPet] = useState<string | null>(null);
 
   // Guests have no account, so there's nowhere to persist points yet — they always start at 0.
   const points = isGuest ? 0 : profile?.points ?? 0;
@@ -43,7 +47,7 @@ export default function CharacterEdit() {
     if (profile?.avatarConfig) {
       setBgColor(profile.avatarConfig.bgColor);
       setGender(profile.avatarConfig.gender);
-      setAccessories(profile.avatarConfig.accessories);
+      setAccessory(profile.avatarConfig.accessories[0] ?? "none");
       setPet(profile.avatarConfig.pet);
     }
   }, [profile?.avatarConfig]);
@@ -70,7 +74,14 @@ export default function CharacterEdit() {
       return;
     }
     updateAvatar(
-      { data: { bgColor, gender: gender as "male" | "female", accessories, pet } },
+      {
+        data: {
+          bgColor,
+          gender: gender as "male" | "female",
+          accessories: accessory === "none" ? [] : [accessory],
+          pet,
+        },
+      },
       {
         onSuccess: () => {
           setSaved(true);
@@ -79,6 +90,11 @@ export default function CharacterEdit() {
       },
     );
   };
+
+  // Locked-item previews only affect what's shown on the 3D model, never
+  // what gets saved.
+  const displayAccessory = previewAccessory ?? accessory;
+  const displayPet = previewPet ?? pet;
 
   return (
     <div className="min-h-[100dvh] bg-background relative overflow-hidden flex flex-col selection:bg-primary/20">
@@ -107,12 +123,16 @@ export default function CharacterEdit() {
           <Avatar3D
             bgColor={bgColor}
             gender={gender}
-            accessories={accessories}
-            pet={pet}
+            accessory={displayAccessory}
+            pet={displayPet}
             interactive
             className="w-56 h-56 md:w-64 md:h-64 rounded-3xl border-4 border-white shadow-lg"
           />
-          <p className="text-muted-foreground font-medium text-sm">اسحب لتدوير شخصيتك — هكذا ستظهر في الصفحة الرئيسية</p>
+          <p className="text-muted-foreground font-medium text-sm">
+            {previewAccessory || previewPet
+              ? "👀 هذه معاينة فقط — افتح المستوى المطلوب لتتمكن من حفظها"
+              : "اسحب لتدوير شخصيتك — هكذا ستظهر في الصفحة الرئيسية"}
+          </p>
         </section>
 
         {/* Gender picker */}
@@ -168,25 +188,34 @@ export default function CharacterEdit() {
         <section className="bg-white rounded-3xl shadow-sm border border-border p-6">
           <h3 className="font-black text-foreground mb-1">الإكسسوارات</h3>
           <p className="text-muted-foreground text-xs font-medium mb-4">
-            اختر أكثر من إكسسوار لتركيب طقم كامل!
+            اضغط على أي إكسسوار لتجربته على شخصيتك، حتى لو لم تفتحه بعد!
           </p>
           <div className="flex flex-wrap gap-3">
             {Object.entries(AVATAR_ACCESSORIES).map(([key, preset]) => {
               const unlocked = isAccessoryUnlocked(key, level);
-              const selected = accessories.includes(key);
+              const selected = unlocked && accessory === key;
+              const previewing = !unlocked && previewAccessory === key;
               return (
                 <button
                   key={key}
                   type="button"
-                  disabled={!unlocked}
-                  onClick={() => unlocked && setAccessories((current) => toggleAccessory(current, key))}
+                  onClick={() => {
+                    if (unlocked) {
+                      setPreviewAccessory(null);
+                      setAccessory((current) => selectAccessory(current, key));
+                    } else {
+                      setPreviewAccessory((current) => (current === key ? null : key));
+                    }
+                  }}
                   data-testid={`button-accessory-${key}`}
                   className={`relative flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border-2 transition-all ${
-                    !unlocked
-                      ? "border-border opacity-50 cursor-not-allowed"
-                      : selected
-                        ? "border-primary bg-primary/5"
-                        : "border-border"
+                    selected
+                      ? "border-primary bg-primary/5"
+                      : previewing
+                        ? "border-secondary border-dashed bg-secondary/5"
+                        : !unlocked
+                          ? "border-border opacity-60"
+                          : "border-border"
                   }`}
                 >
                   {!unlocked && (
@@ -194,7 +223,7 @@ export default function CharacterEdit() {
                       <Lock className="w-3 h-3 text-muted-foreground" />
                     </span>
                   )}
-                  {unlocked && selected && (
+                  {selected && (
                     <span className="absolute -top-1.5 -left-1.5 bg-primary rounded-full p-1 border border-white">
                       <Check className="w-3 h-3 text-white" />
                     </span>
@@ -202,14 +231,18 @@ export default function CharacterEdit() {
                   <span className="text-2xl">{preset.emoji ?? "🚫"}</span>
                   <span
                     className={`text-xs font-bold ${
-                      !unlocked ? "text-muted-foreground" : selected ? "text-primary" : "text-muted-foreground"
+                      selected
+                        ? "text-primary"
+                        : previewing
+                          ? "text-secondary-foreground"
+                          : "text-muted-foreground"
                     }`}
                   >
                     {preset.label}
                   </span>
                   {!unlocked && (
                     <span className="text-[10px] font-bold text-muted-foreground">
-                      يُفتح بالمستوى {preset.unlockLevel}
+                      {previewing ? "تجربة الآن 👀" : `يُفتح بالمستوى ${preset.unlockLevel}`}
                     </span>
                   )}
                 </button>
@@ -220,23 +253,36 @@ export default function CharacterEdit() {
 
         {/* Pet picker */}
         <section className="bg-white rounded-3xl shadow-sm border border-border p-6">
-          <h3 className="font-black text-foreground mb-4">الحيوان الأليف</h3>
+          <h3 className="font-black text-foreground mb-1">الحيوان الأليف</h3>
+          <p className="text-muted-foreground text-xs font-medium mb-4">
+            اضغط على أي حيوان لتجربته، حتى لو لم تفتحه بعد!
+          </p>
           <div className="flex flex-wrap gap-3">
             {Object.entries(AVATAR_PETS).map(([key, preset]) => {
               const unlocked = isPetUnlocked(key, level);
+              const selected = unlocked && pet === key;
+              const previewing = !unlocked && previewPet === key;
               return (
                 <button
                   key={key}
                   type="button"
-                  disabled={!unlocked}
-                  onClick={() => unlocked && setPet(key)}
+                  onClick={() => {
+                    if (unlocked) {
+                      setPreviewPet(null);
+                      setPet(key);
+                    } else {
+                      setPreviewPet((current) => (current === key ? null : key));
+                    }
+                  }}
                   data-testid={`button-pet-${key}`}
                   className={`relative flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border-2 transition-all ${
-                    !unlocked
-                      ? "border-border opacity-50 cursor-not-allowed"
-                      : pet === key
-                        ? "border-primary bg-primary/5"
-                        : "border-border"
+                    selected
+                      ? "border-primary bg-primary/5"
+                      : previewing
+                        ? "border-secondary border-dashed bg-secondary/5"
+                        : !unlocked
+                          ? "border-border opacity-60"
+                          : "border-border"
                   }`}
                 >
                   {!unlocked && (
@@ -247,14 +293,18 @@ export default function CharacterEdit() {
                   <span className="text-2xl">{preset.emoji ?? "🚫"}</span>
                   <span
                     className={`text-xs font-bold ${
-                      !unlocked ? "text-muted-foreground" : pet === key ? "text-primary" : "text-muted-foreground"
+                      selected
+                        ? "text-primary"
+                        : previewing
+                          ? "text-secondary-foreground"
+                          : "text-muted-foreground"
                     }`}
                   >
                     {preset.label}
                   </span>
                   {!unlocked && (
                     <span className="text-[10px] font-bold text-muted-foreground">
-                      يُفتح بالمستوى {preset.unlockLevel}
+                      {previewing ? "تجربة الآن 👀" : `يُفتح بالمستوى ${preset.unlockLevel}`}
                     </span>
                   )}
                 </button>

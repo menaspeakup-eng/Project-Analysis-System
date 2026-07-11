@@ -1,7 +1,15 @@
 // Shared avatar preset system: a background color, a gender-based 3D
-// character, a set of simultaneously-worn accessories, and one pet
-// companion. Used by the portal hero and the character-edit page so their
-// previews and gating stay in sync.
+// character, and one pet companion. Used by the portal hero and the
+// character-edit page so their previews and gating stay in sync.
+//
+// Accessories are rendered as a single fully pre-modeled 3D character
+// (character + accessory sculpted together in one GLB, generated per
+// gender+accessory combo -- see Avatar3D.tsx's CHARACTER_URLS), not as a
+// separate piece composited on top of a generic body at runtime. That
+// runtime-compositing approach couldn't reliably size/place generated
+// accessory props on the character, so a kid can only wear one accessory
+// at a time now (no mixing pieces into an outfit), in exchange for it
+// always looking correct.
 //
 // Unlock levels here must be kept in sync with
 // `artifacts/api-server/src/lib/avatarUnlocks.ts`, which enforces the same
@@ -27,21 +35,15 @@ export const AVATAR_GENDERS: Record<string, { label: string; emoji: string }> = 
   female: { label: "بنت", emoji: "👧" },
 };
 
-// Each accessory occupies a "slot" so a kid can combine pieces into a full
-// outfit (e.g. glasses + crown + bow) while pieces that would visually
-// collide on the model (crown and cap both sit on the head) stay mutually
-// exclusive within their slot.
-export type AccessorySlot = "face" | "head" | "accent";
-
 export const AVATAR_ACCESSORIES: Record<
   string,
-  { label: string; emoji: string | null; unlockLevel: number; slot: AccessorySlot }
+  { label: string; emoji: string | null; unlockLevel: number }
 > = {
-  glasses: { label: "نظارة", emoji: "🕶️", unlockLevel: 1, slot: "face" },
-  bow: { label: "فيونكة", emoji: "🎀", unlockLevel: 2, slot: "accent" },
-  star: { label: "نجمة", emoji: "🌟", unlockLevel: 3, slot: "accent" },
-  crown: { label: "تاج", emoji: "👑", unlockLevel: 4, slot: "head" },
-  cap: { label: "قبعة", emoji: "🧢", unlockLevel: 5, slot: "head" },
+  glasses: { label: "نظارة", emoji: "🕶️", unlockLevel: 1 },
+  bow: { label: "فيونكة", emoji: "🎀", unlockLevel: 2 },
+  star: { label: "نجمة", emoji: "🌟", unlockLevel: 3 },
+  crown: { label: "تاج", emoji: "👑", unlockLevel: 4 },
+  cap: { label: "قبعة", emoji: "🧢", unlockLevel: 5 },
 };
 
 export const AVATAR_PETS: Record<
@@ -67,17 +69,13 @@ export function avatarAccessoryEmojis(accessories: string[]): string[] {
     .filter((emoji): emoji is string => !!emoji);
 }
 
-// Toggles one accessory on/off within `current`, enforcing at most one
-// accessory per slot (see AVATAR_ACCESSORIES) so newly-added pieces don't
-// visually collide with whatever already occupies that slot.
-export function toggleAccessory(current: string[], accessory: string): string[] {
-  const preset = AVATAR_ACCESSORIES[accessory];
-  if (!preset) return current;
-  if (current.includes(accessory)) {
-    return current.filter((a) => a !== accessory);
-  }
-  const withoutSameSlot = current.filter((a) => AVATAR_ACCESSORIES[a]?.slot !== preset.slot);
-  return [...withoutSameSlot, accessory];
+// A student can only wear one accessory at a time (see the note above
+// AVATAR_ACCESSORIES): each accessory is its own fully pre-modeled 3D
+// character, so there's nothing to "combine". Tapping the already-selected
+// accessory clears it back to "none"; tapping a different one replaces it.
+export function selectAccessory(current: string, accessory: string): string {
+  if (!AVATAR_ACCESSORIES[accessory]) return current;
+  return current === accessory ? "none" : accessory;
 }
 
 export function avatarPetEmoji(pet: string): string | null {
