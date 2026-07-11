@@ -17,6 +17,7 @@ import {
   levelForPoints,
   isAccessoryUnlocked,
   isPetUnlocked,
+  toggleAccessory,
 } from "@/lib/avatarPresets";
 
 export default function CharacterEdit() {
@@ -30,7 +31,7 @@ export default function CharacterEdit() {
 
   const [bgColor, setBgColor] = useState("orange");
   const [gender, setGender] = useState("male");
-  const [accessory, setAccessory] = useState("none");
+  const [accessories, setAccessories] = useState<string[]>([]);
   const [pet, setPet] = useState("none");
   const [saved, setSaved] = useState(false);
 
@@ -42,7 +43,7 @@ export default function CharacterEdit() {
     if (profile?.avatarConfig) {
       setBgColor(profile.avatarConfig.bgColor);
       setGender(profile.avatarConfig.gender);
-      setAccessory(profile.avatarConfig.accessory);
+      setAccessories(profile.avatarConfig.accessories);
       setPet(profile.avatarConfig.pet);
     }
   }, [profile?.avatarConfig]);
@@ -69,7 +70,7 @@ export default function CharacterEdit() {
       return;
     }
     updateAvatar(
-      { data: { bgColor, gender: gender as "male" | "female", accessory, pet } },
+      { data: { bgColor, gender: gender as "male" | "female", accessories, pet } },
       {
         onSuccess: () => {
           setSaved(true);
@@ -106,7 +107,7 @@ export default function CharacterEdit() {
           <Avatar3D
             bgColor={bgColor}
             gender={gender}
-            accessory={accessory}
+            accessories={accessories}
             pet={pet}
             interactive
             className="w-56 h-56 md:w-64 md:h-64 rounded-3xl border-4 border-white shadow-lg"
@@ -165,21 +166,25 @@ export default function CharacterEdit() {
 
         {/* Accessory picker */}
         <section className="bg-white rounded-3xl shadow-sm border border-border p-6">
-          <h3 className="font-black text-foreground mb-4">الإكسسوار</h3>
+          <h3 className="font-black text-foreground mb-1">الإكسسوارات</h3>
+          <p className="text-muted-foreground text-xs font-medium mb-4">
+            اختر أكثر من إكسسوار لتركيب طقم كامل!
+          </p>
           <div className="flex flex-wrap gap-3">
             {Object.entries(AVATAR_ACCESSORIES).map(([key, preset]) => {
               const unlocked = isAccessoryUnlocked(key, level);
+              const selected = accessories.includes(key);
               return (
                 <button
                   key={key}
                   type="button"
                   disabled={!unlocked}
-                  onClick={() => unlocked && setAccessory(key)}
+                  onClick={() => unlocked && setAccessories((current) => toggleAccessory(current, key))}
                   data-testid={`button-accessory-${key}`}
                   className={`relative flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border-2 transition-all ${
                     !unlocked
                       ? "border-border opacity-50 cursor-not-allowed"
-                      : accessory === key
+                      : selected
                         ? "border-primary bg-primary/5"
                         : "border-border"
                   }`}
@@ -189,10 +194,15 @@ export default function CharacterEdit() {
                       <Lock className="w-3 h-3 text-muted-foreground" />
                     </span>
                   )}
+                  {unlocked && selected && (
+                    <span className="absolute -top-1.5 -left-1.5 bg-primary rounded-full p-1 border border-white">
+                      <Check className="w-3 h-3 text-white" />
+                    </span>
+                  )}
                   <span className="text-2xl">{preset.emoji ?? "🚫"}</span>
                   <span
                     className={`text-xs font-bold ${
-                      !unlocked ? "text-muted-foreground" : accessory === key ? "text-primary" : "text-muted-foreground"
+                      !unlocked ? "text-muted-foreground" : selected ? "text-primary" : "text-muted-foreground"
                     }`}
                   >
                     {preset.label}

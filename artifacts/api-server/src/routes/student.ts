@@ -16,7 +16,7 @@ import {
   CompleteDailyChallengeResponse,
 } from "@workspace/api-zod";
 import { dailyChallengeBank, bankIndexForDate } from "../lib/dailyChallengeBank";
-import { isAccessoryUnlocked, isPetUnlocked } from "../lib/avatarUnlocks";
+import { isAccessoriesUnlocked, isPetUnlocked } from "../lib/avatarUnlocks";
 
 const router: IRouter = Router();
 
@@ -94,7 +94,7 @@ router.patch("/student/avatar", async (req, res) => {
   const body = UpdateStudentAvatarBody.parse(req.body);
   const student = await getOrCreateStudent(userId);
 
-  if (!isAccessoryUnlocked(body.accessory, student.points)) {
+  if (!isAccessoriesUnlocked(body.accessories, student.points)) {
     res.status(400).json({ error: "هذا الإكسسوار غير مفتوح بعد" });
     return;
   }

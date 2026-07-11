@@ -1,6 +1,7 @@
 // Shared avatar preset system: a background color, a gender-based 3D
-// character, one accessory, and one pet companion. Used by the portal hero
-// and the character-edit page so their previews and gating stay in sync.
+// character, a set of simultaneously-worn accessories, and one pet
+// companion. Used by the portal hero and the character-edit page so their
+// previews and gating stay in sync.
 //
 // Unlock levels here must be kept in sync with
 // `artifacts/api-server/src/lib/avatarUnlocks.ts`, which enforces the same
@@ -26,16 +27,21 @@ export const AVATAR_GENDERS: Record<string, { label: string; emoji: string }> = 
   female: { label: "بنت", emoji: "👧" },
 };
 
+// Each accessory occupies a "slot" so a kid can combine pieces into a full
+// outfit (e.g. glasses + crown + bow) while pieces that would visually
+// collide on the model (crown and cap both sit on the head) stay mutually
+// exclusive within their slot.
+export type AccessorySlot = "face" | "head" | "accent";
+
 export const AVATAR_ACCESSORIES: Record<
   string,
-  { label: string; emoji: string | null; unlockLevel: number }
+  { label: string; emoji: string | null; unlockLevel: number; slot: AccessorySlot }
 > = {
-  none: { label: "بدون", emoji: null, unlockLevel: 1 },
-  glasses: { label: "نظارة", emoji: "🕶️", unlockLevel: 1 },
-  bow: { label: "فيونكة", emoji: "🎀", unlockLevel: 2 },
-  star: { label: "نجمة", emoji: "🌟", unlockLevel: 3 },
-  crown: { label: "تاج", emoji: "👑", unlockLevel: 4 },
-  cap: { label: "قبعة", emoji: "🧢", unlockLevel: 5 },
+  glasses: { label: "نظارة", emoji: "🕶️", unlockLevel: 1, slot: "face" },
+  bow: { label: "فيونكة", emoji: "🎀", unlockLevel: 2, slot: "accent" },
+  star: { label: "نجمة", emoji: "🌟", unlockLevel: 3, slot: "accent" },
+  crown: { label: "تاج", emoji: "👑", unlockLevel: 4, slot: "head" },
+  cap: { label: "قبعة", emoji: "🧢", unlockLevel: 5, slot: "head" },
 };
 
 export const AVATAR_PETS: Record<
@@ -55,8 +61,23 @@ export function avatarBgStyle(bgColor: string): { backgroundImage: string } {
   return { backgroundImage: `linear-gradient(to bottom, ${preset.from}, ${preset.to})` };
 }
 
-export function avatarAccessoryEmoji(accessory: string): string | null {
-  return AVATAR_ACCESSORIES[accessory]?.emoji ?? null;
+export function avatarAccessoryEmojis(accessories: string[]): string[] {
+  return accessories
+    .map((accessory) => AVATAR_ACCESSORIES[accessory]?.emoji)
+    .filter((emoji): emoji is string => !!emoji);
+}
+
+// Toggles one accessory on/off within `current`, enforcing at most one
+// accessory per slot (see AVATAR_ACCESSORIES) so newly-added pieces don't
+// visually collide with whatever already occupies that slot.
+export function toggleAccessory(current: string[], accessory: string): string[] {
+  const preset = AVATAR_ACCESSORIES[accessory];
+  if (!preset) return current;
+  if (current.includes(accessory)) {
+    return current.filter((a) => a !== accessory);
+  }
+  const withoutSameSlot = current.filter((a) => AVATAR_ACCESSORIES[a]?.slot !== preset.slot);
+  return [...withoutSameSlot, accessory];
 }
 
 export function avatarPetEmoji(pet: string): string | null {
@@ -66,6 +87,10 @@ export function avatarPetEmoji(pet: string): string | null {
 export function isAccessoryUnlocked(accessory: string, level: number): boolean {
   const preset = AVATAR_ACCESSORIES[accessory];
   return !!preset && level >= preset.unlockLevel;
+}
+
+export function areAccessoriesUnlocked(accessories: string[], level: number): boolean {
+  return accessories.every((accessory) => isAccessoryUnlocked(accessory, level));
 }
 
 export function isPetUnlocked(pet: string, level: number): boolean {

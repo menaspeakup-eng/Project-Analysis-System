@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import {
   AVATAR_BG_COLORS,
   AVATAR_GENDERS,
-  avatarAccessoryEmoji,
+  avatarAccessoryEmojis,
   avatarPetEmoji,
 } from "@/lib/avatarPresets";
 
@@ -38,19 +38,19 @@ function isWebGLAvailable(): boolean {
 function Avatar2DFallback({
   bgColor,
   gender,
-  accessory,
+  accessories,
   pet,
   className,
 }: {
   bgColor: string;
   gender: string;
-  accessory: string;
+  accessories: string[];
   pet: string;
   className: string;
 }) {
   const preset = AVATAR_BG_COLORS[bgColor] ?? AVATAR_BG_COLORS.orange;
   const personEmoji = AVATAR_GENDERS[gender]?.emoji ?? AVATAR_GENDERS.male.emoji;
-  const accessoryEmoji = avatarAccessoryEmoji(accessory);
+  const accessoryEmojis = avatarAccessoryEmojis(accessories);
   const petEmoji = avatarPetEmoji(pet);
   return (
     <div
@@ -60,9 +60,13 @@ function Avatar2DFallback({
       <span className="text-6xl" aria-hidden="true">
         {personEmoji}
       </span>
-      {accessoryEmoji && (
-        <span className="absolute top-1 text-3xl" aria-hidden="true">
-          {accessoryEmoji}
+      {accessoryEmojis.length > 0 && (
+        <span className="absolute top-1 flex gap-0.5" aria-hidden="true">
+          {accessoryEmojis.map((emoji, index) => (
+            <span key={index} className="text-3xl">
+              {emoji}
+            </span>
+          ))}
         </span>
       )}
       {petEmoji && (
@@ -197,13 +201,13 @@ function PetMesh({ pet }: { pet: string }) {
 
 function Scene({
   gender,
-  accessory,
+  accessories,
   pet,
   interactive,
   autoRotate,
 }: {
   gender: string;
-  accessory: string;
+  accessories: string[];
   pet: string;
   interactive: boolean;
   autoRotate: boolean;
@@ -216,7 +220,9 @@ function Scene({
       <Environment preset="city" environmentIntensity={0.25} />
       <group position={[pet !== "none" ? -0.35 : 0, -0.85, 0]}>
         <CharacterMesh gender={gender} />
-        {accessory !== "none" && <AccessoryMesh accessory={accessory} />}
+        {accessories.map((accessory) => (
+          <AccessoryMesh key={accessory} accessory={accessory} />
+        ))}
         {pet !== "none" && <PetMesh pet={pet} />}
       </group>
       {interactive ? (
@@ -244,7 +250,7 @@ function CanvasFallback() {
 export function Avatar3D({
   bgColor,
   gender,
-  accessory,
+  accessories,
   pet,
   interactive = false,
   autoRotate = true,
@@ -252,7 +258,7 @@ export function Avatar3D({
 }: {
   bgColor: string;
   gender: string;
-  accessory: string;
+  accessories: string[];
   pet: string;
   /** When true, the student can drag to rotate the model. */
   interactive?: boolean;
@@ -262,7 +268,7 @@ export function Avatar3D({
 }) {
   const preset = AVATAR_BG_COLORS[bgColor] ?? AVATAR_BG_COLORS.orange;
   const fallback = (
-    <Avatar2DFallback bgColor={bgColor} gender={gender} accessory={accessory} pet={pet} className={className} />
+    <Avatar2DFallback bgColor={bgColor} gender={gender} accessories={accessories} pet={pet} className={className} />
   );
 
   if (!isWebGLAvailable()) {
@@ -288,7 +294,13 @@ export function Avatar3D({
               );
             }}
           >
-            <Scene gender={gender} accessory={accessory} pet={pet} interactive={interactive} autoRotate={autoRotate} />
+            <Scene
+              gender={gender}
+              accessories={accessories}
+              pet={pet}
+              interactive={interactive}
+              autoRotate={autoRotate}
+            />
           </Canvas>
         </Suspense>
       </div>

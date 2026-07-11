@@ -7,9 +7,8 @@ export function levelForPoints(points: number): number {
   return Math.floor(points / POINTS_PER_LEVEL) + 1;
 }
 
-// Accessory unlock levels. "none" has no lock (always available).
+// Accessory unlock levels.
 export const ACCESSORY_UNLOCK_LEVEL: Record<string, number> = {
-  none: 1,
   glasses: 1,
   bow: 2,
   star: 3,
@@ -31,6 +30,12 @@ export function isAccessoryUnlocked(accessory: string, points: number): boolean 
   const required = ACCESSORY_UNLOCK_LEVEL[accessory];
   if (required === undefined) return false;
   return levelForPoints(points) >= required;
+}
+
+// Kids can now wear several accessories together (a full outfit), so the
+// server must check every item in the requested set, not just one.
+export function isAccessoriesUnlocked(accessories: string[], points: number): boolean {
+  return accessories.every((accessory) => isAccessoryUnlocked(accessory, points));
 }
 
 export function isPetUnlocked(pet: string, points: number): boolean {

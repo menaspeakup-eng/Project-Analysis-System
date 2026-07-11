@@ -12,16 +12,39 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 // Avatar customization is a small preset system (background color, gender-based
-// 3D character model, one accessory, and one pet companion) rather than freeform
-// art, since there's no per-user illustration pipeline yet. Accessory and pet
-// choices are gated by student level on the server (see student.ts route) —
-// gender and bgColor are always freely selectable.
-export const avatarConfigSchema = z.object({
-  bgColor: z.string().default("orange"),
-  accessory: z.string().default("none"),
-  gender: z.enum(["male", "female"]).default("male"),
-  pet: z.string().default("none"),
-});
+// 3D character model, a set of simultaneously-worn accessories, and one pet
+// companion) rather than freeform art, since there's no per-user illustration
+// pipeline yet. Accessory and pet choices are gated by student level on the
+// server (see student.ts route) — gender and bgColor are always freely
+// selectable.
+//
+// `accessories` replaced the old single-`accessory` string field so kids can
+// wear a full outfit instead of one item. Existing rows in the DB still have
+// the legacy `accessory` string (jsonb columns don't get their zod schema's
+// defaults backfilled — see MEMORY topic drizzle-jsonb-default-backfill), so
+// this migrates them into a one-item array on read instead of silently
+// discarding the student's old pick.
+function migrateLegacyAccessory(value: unknown): unknown {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const obj = value as Record<string, unknown>;
+    if (!("accessories" in obj) && "accessory" in obj) {
+      const legacy = obj.accessory;
+      const accessories = typeof legacy === "string" && legacy !== "none" ? [legacy] : [];
+      return { ...obj, accessories };
+    }
+  }
+  return value;
+}
+
+export const avatarConfigSchema = z.preprocess(
+  migrateLegacyAccessory,
+  z.object({
+    bgColor: z.string().default("orange"),
+    accessories: z.array(z.string()).default([]),
+    gender: z.enum(["male", "female"]).default("male"),
+    pet: z.string().default("none"),
+  }),
+);
 export type AvatarConfig = z.infer<typeof avatarConfigSchema>;
 
 // One row per authenticated Clerk user who has landed on the student home page.

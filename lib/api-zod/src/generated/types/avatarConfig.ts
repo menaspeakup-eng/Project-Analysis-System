@@ -9,7 +9,7 @@ import type { AvatarConfigGender } from './avatarConfigGender';
 
 export interface AvatarConfig {
   bgColor: string;
-  accessory: string;
+  accessories: string[];
   gender: AvatarConfigGender;
   pet: string;
 }

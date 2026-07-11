@@ -19,7 +19,7 @@ export const AvatarConfigGender = {
 
 export interface AvatarConfig {
   bgColor: string;
-  accessory: string;
+  accessories: string[];
   gender: AvatarConfigGender;
   pet: string;
 }

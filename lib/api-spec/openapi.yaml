@@ -118,8 +118,10 @@ components:
       properties:
         bgColor:
           type: string
-        accessory:
-          type: string
+        accessories:
+          type: array
+          items:
+            type: string
         gender:
           type: string
           enum: [male, female]
@@ -127,7 +129,7 @@ components:
           type: string
       required:
         - bgColor
-        - accessory
+        - accessories
         - gender
         - pet
     StudentProfile:

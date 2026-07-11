@@ -26,7 +26,7 @@ export const GetStudentProfileResponse = zod.object({
   "points": zod.number(),
   "avatarConfig": zod.object({
   "bgColor": zod.string(),
-  "accessory": zod.string(),
+  "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
   "pet": zod.string()
 })
@@ -38,7 +38,7 @@ export const GetStudentProfileResponse = zod.object({
  */
 export const UpdateStudentAvatarBody = zod.object({
   "bgColor": zod.string(),
-  "accessory": zod.string(),
+  "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
   "pet": zod.string()
 })
@@ -48,7 +48,7 @@ export const UpdateStudentAvatarResponse = zod.object({
   "points": zod.number(),
   "avatarConfig": zod.object({
   "bgColor": zod.string(),
-  "accessory": zod.string(),
+  "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
   "pet": zod.string()
 })
@@ -87,7 +87,7 @@ export const GetLeaderboardResponse = zod.object({
   "points": zod.number(),
   "avatarConfig": zod.object({
   "bgColor": zod.string(),
-  "accessory": zod.string(),
+  "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
   "pet": zod.string()
 }),
@@ -99,7 +99,7 @@ export const GetLeaderboardResponse = zod.object({
   "points": zod.number(),
   "avatarConfig": zod.object({
   "bgColor": zod.string(),
-  "accessory": zod.string(),
+  "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
   "pet": zod.string()
 }),

@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar3D } from "@/components/Avatar3D";
-import { avatarBgStyle, avatarAccessoryEmoji, AVATAR_GENDERS } from "@/lib/avatarPresets";
+import { avatarBgStyle, avatarAccessoryEmojis, AVATAR_GENDERS } from "@/lib/avatarPresets";
 
 const POINTS_PER_LEVEL = 100;
 
@@ -66,11 +66,11 @@ function LeaderboardRow({
   rank: number;
   name: string;
   points: number;
-  avatarConfig: { bgColor: string; accessory: string; gender: string };
+  avatarConfig: { bgColor: string; accessories: string[]; gender: string };
   isMe: boolean;
   detached?: boolean;
 }) {
-  const emoji = avatarAccessoryEmoji(avatarConfig.accessory);
+  const emojis = avatarAccessoryEmojis(avatarConfig.accessories);
   const personEmoji = AVATAR_GENDERS[avatarConfig.gender]?.emoji ?? AVATAR_GENDERS.male.emoji;
   const medalColors: Record<number, string> = {
     1: "text-secondary-foreground bg-secondary/30",
@@ -99,9 +99,9 @@ function LeaderboardRow({
         <span className="text-lg" aria-hidden="true">
           {personEmoji}
         </span>
-        {emoji && (
+        {emojis.length > 0 && (
           <span className="absolute -top-1 text-[10px]" aria-hidden="true">
-            {emoji}
+            {emojis[0]}
           </span>
         )}
       </div>
@@ -152,7 +152,7 @@ export default function Portal() {
   const progressPercent = (levelProgress / POINTS_PER_LEVEL) * 100;
   const avatarConfig = profile?.avatarConfig ?? {
     bgColor: "orange",
-    accessory: "none",
+    accessories: [],
     gender: "male",
     pet: "none",
   };
@@ -241,7 +241,7 @@ export default function Portal() {
             <Avatar3D
               bgColor={avatarConfig.bgColor}
               gender={avatarConfig.gender}
-              accessory={avatarConfig.accessory}
+              accessories={avatarConfig.accessories}
               pet={avatarConfig.pet}
               className="w-32 h-32 md:w-36 md:h-36 rounded-2xl border-4 border-white shadow-lg transition-transform group-hover:scale-105"
             />
