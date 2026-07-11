@@ -122,25 +122,37 @@ const PET_URLS: Record<string, string> = {
 };
 
 // Per-accessory placement tuned against the human character's actual head
-// geometry: analyzing the grounded/normalized boy+girl meshes shows the
-// head occupies roughly the top quarter of CHARACTER_HEIGHT (from ~75% up
-// to 100%), and is about 0.75-0.8 world units wide at its widest.
+// geometry and each accessory's real bounding box (checked with
+// `gltf-transform inspect` against the generated GLBs, since the preview
+// tools available in this environment can't render WebGL for a visual
+// check). The head occupies roughly the top quarter of CHARACTER_HEIGHT
+// (from ~75% up to 100%), and is about 0.75-0.8 world units wide.
 //
-// `scale` is the accessory's target size (its largest raw dimension,
-// whichever axis that is) as a fraction of CHARACTER_HEIGHT -- see
-// `useGroundedScene`'s `maxDim`. Sizing by the largest dimension (not raw
-// height) matters here because several of these props are wide/flat rather
-// than tall (glasses, bow, star), so scaling them to a target height alone
-// previously blew them up several times too large.
+// `scale` is the accessory's target on-screen size (its larger raw X or Y
+// dimension -- see `useGroundedScene`'s `maxXY`) as a fraction of
+// CHARACTER_HEIGHT. Some of these generated props are much deeper
+// (front-to-back) than they are wide or tall -- e.g. the bow's raw Z extent
+// is ~4x its raw X width -- so sizing off the single largest raw dimension
+// (old behavior) made them either huge or tiny depending on which axis won.
+// X/Y is what the camera actually sees, so it's the right thing to size by.
 const ACCESSORY_PLACEMENT: Record<
   string,
   { position: [number, number, number]; scale: number; rotation?: [number, number, number] }
 > = {
-  glasses: { position: [0, 1.44, 0.26], scale: 0.22 },
-  crown: { position: [0, 1.66, 0], scale: 0.4 },
-  bow: { position: [0.24, 1.56, 0.06], scale: 0.16 },
-  star: { position: [0.4, 1.05, 0.28], scale: 0.13 },
-  cap: { position: [0, 1.6, -0.02], scale: 0.42 },
+  // Raw maxXY=0.937 (X, lens-to-lens width). Target ~0.45 world units across
+  // the face, resting at eye level.
+  glasses: { position: [0, 1.41, 0.24], scale: 0.265 },
+  // Raw maxXY=0.871 (X, diameter). Target ~0.5 world units, resting on the
+  // scalp just above the head-top.
+  crown: { position: [0, 1.62, 0], scale: 0.294 },
+  // Raw maxXY=0.754 (Y -- this model is taller than wide). Target ~0.25
+  // world units, tucked to the side near the hairline.
+  bow: { position: [0.22, 1.5, 0.05], scale: 0.147 },
+  // Raw maxXY=0.911 (Y). Target ~0.28 world units, held out to the side.
+  star: { position: [0.4, 0.85, 0.28], scale: 0.165 },
+  // Raw maxXY=0.9998 (X, brim width). Target ~0.75 world units, sitting
+  // lower over the head than the crown.
+  cap: { position: [0, 1.52, -0.02], scale: 0.441 },
 };
 
 // Loads a GLTF and re-centers/grounds it so arbitrarily-scaled generated
@@ -160,11 +172,15 @@ function useGroundedScene(url: string) {
     // Some generated assets (glasses, bows, stars, ...) are wide/flat rather
     // than tall, so their Y-height can be much smaller than their width or
     // depth. Scaling those purely by height blew them up to several times
-    // the intended size. Track the largest dimension too, so callers that
-    // aren't specifically person/pet-shaped can normalize against that
-    // instead and avoid oversized accessories.
-    const maxDim = Math.max(size.x, size.y, size.z) || 1;
-    return { object: cloned, height: size.y || 1, maxDim };
+    // the intended size. The camera looks down the Z axis, so only X
+    // (left/right) and Y (up/down) are visually apparent -- Z is depth and,
+    // for several of these generated props, happens to be the largest raw
+    // dimension for reasons unrelated to how big the object actually looks
+    // (e.g. a bow's "front-to-back" extent from its generation pose). Use
+    // the larger of X/Y as the normalization target instead, so accessories
+    // are sized by how big they actually appear on screen.
+    const maxXY = Math.max(size.x, size.y) || 1;
+    return { object: cloned, height: size.y || 1, maxXY };
   }, [scene]);
 }
 
@@ -183,12 +199,12 @@ function AccessoryMesh({ accessory }: { accessory: string }) {
   const url = ACCESSORY_URLS[accessory];
   const placement = ACCESSORY_PLACEMENT[accessory];
   // eslint-disable-next-line react-hooks/rules-of-hooks -- url/placement are stable per accessory key
-  const { object, maxDim } = url ? useGroundedScene(url) : { object: null, maxDim: 1 };
+  const { object, maxXY } = url ? useGroundedScene(url) : { object: null, maxXY: 1 };
   if (!url || !placement || !object) return null;
-  // Normalize by the accessory's largest dimension (not height) so flat/wide
-  // props like glasses or a bow don't balloon in size just because they're
-  // short from top to bottom.
-  const scale = (placement.scale * CHARACTER_HEIGHT) / maxDim;
+  // Normalize by the accessory's largest on-screen dimension (X or Y, not
+  // raw depth) so flat/wide props like glasses or a bow don't balloon or
+  // shrink just because of an incidental front-to-back extent.
+  const scale = (placement.scale * CHARACTER_HEIGHT) / maxXY;
   return (
     <group position={placement.position} rotation={placement.rotation}>
       <group scale={scale}>
