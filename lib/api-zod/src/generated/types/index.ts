@@ -7,6 +7,7 @@
  */
 
 export * from './avatarConfig';
+export * from './avatarConfigGender';
 export * from './dailyChallenge';
 export * from './dailyChallengeCompletion';
 export * from './healthStatus';

@@ -120,9 +120,16 @@ components:
           type: string
         accessory:
           type: string
+        gender:
+          type: string
+          enum: [male, female]
+        pet:
+          type: string
       required:
         - bgColor
         - accessory
+        - gender
+        - pet
     StudentProfile:
       type: object
       properties:

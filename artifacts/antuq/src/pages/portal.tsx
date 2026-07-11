@@ -29,8 +29,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar3D } from "@/components/Avatar3D";
-import avatarMascot from "@assets/generated_images/avatar-mascot.png";
-import { avatarBgStyle, avatarAccessoryEmoji } from "@/lib/avatarPresets";
+import { avatarBgStyle, avatarAccessoryEmoji, AVATAR_GENDERS } from "@/lib/avatarPresets";
 
 const POINTS_PER_LEVEL = 100;
 
@@ -67,11 +66,12 @@ function LeaderboardRow({
   rank: number;
   name: string;
   points: number;
-  avatarConfig: { bgColor: string; accessory: string };
+  avatarConfig: { bgColor: string; accessory: string; gender: string };
   isMe: boolean;
   detached?: boolean;
 }) {
   const emoji = avatarAccessoryEmoji(avatarConfig.accessory);
+  const personEmoji = AVATAR_GENDERS[avatarConfig.gender]?.emoji ?? AVATAR_GENDERS.male.emoji;
   const medalColors: Record<number, string> = {
     1: "text-secondary-foreground bg-secondary/30",
     2: "text-[hsl(200,15%,45%)] bg-[hsl(200,15%,90%)]",
@@ -93,10 +93,12 @@ function LeaderboardRow({
         {rank <= 3 ? <Crown className="w-4 h-4" /> : rank}
       </span>
       <div
-        className="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-white shadow-sm relative"
+        className="w-9 h-9 rounded-xl overflow-hidden shrink-0 border-2 border-white shadow-sm relative flex items-center justify-center"
         style={avatarBgStyle(avatarConfig.bgColor)}
       >
-        <img src={avatarMascot} alt="" className="w-full h-full object-cover" />
+        <span className="text-lg" aria-hidden="true">
+          {personEmoji}
+        </span>
         {emoji && (
           <span className="absolute -top-1 text-[10px]" aria-hidden="true">
             {emoji}
@@ -148,7 +150,12 @@ export default function Portal() {
   const levelProgress = points % POINTS_PER_LEVEL;
   const level = Math.floor(points / POINTS_PER_LEVEL) + 1;
   const progressPercent = (levelProgress / POINTS_PER_LEVEL) * 100;
-  const avatarConfig = profile?.avatarConfig ?? { bgColor: "orange", accessory: "none" };
+  const avatarConfig = profile?.avatarConfig ?? {
+    bgColor: "orange",
+    accessory: "none",
+    gender: "male",
+    pet: "none",
+  };
 
   useEffect(() => {
     if (isLoaded && !isSignedIn && !isGuest) {
@@ -233,8 +240,10 @@ export default function Portal() {
           >
             <Avatar3D
               bgColor={avatarConfig.bgColor}
+              gender={avatarConfig.gender}
               accessory={avatarConfig.accessory}
-              className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-white shadow-lg transition-transform group-hover:scale-105"
+              pet={avatarConfig.pet}
+              className="w-32 h-32 md:w-36 md:h-36 rounded-2xl border-4 border-white shadow-lg transition-transform group-hover:scale-105"
             />
             <span className="absolute -bottom-1 -left-1 bg-accent text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md border-2 border-white">
               المستوى {level}

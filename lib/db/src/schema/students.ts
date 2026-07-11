@@ -11,12 +11,16 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-// Avatar customization is a small preset system (background color + one
-// accessory emoji overlay on the mascot image) rather than freeform art,
-// since there's no per-user illustration pipeline yet.
+// Avatar customization is a small preset system (background color, gender-based
+// 3D character model, one accessory, and one pet companion) rather than freeform
+// art, since there's no per-user illustration pipeline yet. Accessory and pet
+// choices are gated by student level on the server (see student.ts route) —
+// gender and bgColor are always freely selectable.
 export const avatarConfigSchema = z.object({
   bgColor: z.string().default("orange"),
   accessory: z.string().default("none"),
+  gender: z.enum(["male", "female"]).default("male"),
+  pet: z.string().default("none"),
 });
 export type AvatarConfig = z.infer<typeof avatarConfigSchema>;
 

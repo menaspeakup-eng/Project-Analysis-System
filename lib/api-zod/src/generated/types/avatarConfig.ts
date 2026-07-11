@@ -5,8 +5,11 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AvatarConfigGender } from './avatarConfigGender';
 
 export interface AvatarConfig {
   bgColor: string;
   accessory: string;
+  gender: AvatarConfigGender;
+  pet: string;
 }

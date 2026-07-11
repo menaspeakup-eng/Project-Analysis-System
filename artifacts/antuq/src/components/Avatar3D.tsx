@@ -3,18 +3,28 @@ import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment } from "@react-three/drei";
 import * as THREE from "three";
 import { Loader2 } from "lucide-react";
-import { AVATAR_BG_COLORS, avatarAccessoryEmoji } from "@/lib/avatarPresets";
-import avatarMascotImg from "@assets/generated_images/avatar-mascot.png";
+import {
+  AVATAR_BG_COLORS,
+  AVATAR_GENDERS,
+  avatarAccessoryEmoji,
+  avatarPetEmoji,
+} from "@/lib/avatarPresets";
 
-import mascotUrl from "@assets/generated_models/mascot-owl.glb?url";
+import boyUrl from "@assets/generated_models/character-boy.glb?url";
+import girlUrl from "@assets/generated_models/character-girl.glb?url";
 import glassesUrl from "@assets/generated_models/accessory-glasses.glb?url";
 import crownUrl from "@assets/generated_models/accessory-crown.glb?url";
 import bowUrl from "@assets/generated_models/accessory-bow.glb?url";
 import starUrl from "@assets/generated_models/accessory-star.glb?url";
 import capUrl from "@assets/generated_models/accessory-cap.glb?url";
+import petCatUrl from "@assets/generated_models/pet-cat.glb?url";
+import petDogUrl from "@assets/generated_models/pet-dog.glb?url";
+import petRabbitUrl from "@assets/generated_models/pet-rabbit.glb?url";
+import petBirdUrl from "@assets/generated_models/pet-bird.glb?url";
+import petTurtleUrl from "@assets/generated_models/pet-turtle.glb?url";
 
 // Some browsers/devices (or sandboxed environments) don't expose a usable
-// WebGL context. Detect this up front and fall back to the flat 2D preset
+// WebGL context. Detect this up front and fall back to a flat 2D preset
 // rendering instead of letting three.js throw past an error boundary.
 function isWebGLAvailable(): boolean {
   try {
@@ -25,18 +35,39 @@ function isWebGLAvailable(): boolean {
   }
 }
 
-function Avatar2DFallback({ bgColor, accessory, className }: { bgColor: string; accessory: string; className: string }) {
+function Avatar2DFallback({
+  bgColor,
+  gender,
+  accessory,
+  pet,
+  className,
+}: {
+  bgColor: string;
+  gender: string;
+  accessory: string;
+  pet: string;
+  className: string;
+}) {
   const preset = AVATAR_BG_COLORS[bgColor] ?? AVATAR_BG_COLORS.orange;
-  const emoji = avatarAccessoryEmoji(accessory);
+  const personEmoji = AVATAR_GENDERS[gender]?.emoji ?? AVATAR_GENDERS.male.emoji;
+  const accessoryEmoji = avatarAccessoryEmoji(accessory);
+  const petEmoji = avatarPetEmoji(pet);
   return (
     <div
       className={`relative flex items-center justify-center ${className}`}
       style={{ backgroundImage: `linear-gradient(to bottom, ${preset.from}, ${preset.to})` }}
     >
-      <img src={avatarMascotImg} alt="شخصية الطالب" className="w-full h-full object-cover" />
-      {emoji && (
+      <span className="text-6xl" aria-hidden="true">
+        {personEmoji}
+      </span>
+      {accessoryEmoji && (
         <span className="absolute top-1 text-3xl" aria-hidden="true">
-          {emoji}
+          {accessoryEmoji}
+        </span>
+      )}
+      {petEmoji && (
+        <span className="absolute bottom-1 left-1 text-2xl" aria-hidden="true">
+          {petEmoji}
         </span>
       )}
     </div>
@@ -59,10 +90,16 @@ class Avatar3DErrorBoundary extends Component<
   }
 }
 
-// Mascot is normalized to this height (world units); accessory placement below
-// is tuned relative to this so it lines up with the owl's head regardless of
-// the raw scale/pivot the generated GLB happened to ship with.
-const MASCOT_HEIGHT = 1.6;
+// Character is normalized to this height (world units); accessory/pet
+// placement below is tuned relative to this so it lines up regardless of the
+// raw scale/pivot the generated GLB happened to ship with.
+const CHARACTER_HEIGHT = 1.7;
+const PET_HEIGHT = 0.55;
+
+const CHARACTER_URLS: Record<string, string> = {
+  male: boyUrl,
+  female: girlUrl,
+};
 
 const ACCESSORY_URLS: Record<string, string> = {
   glasses: glassesUrl,
@@ -72,17 +109,25 @@ const ACCESSORY_URLS: Record<string, string> = {
   cap: capUrl,
 };
 
-// Per-accessory placement tuned by eye near the owl's head/face, since each
-// generated GLB has its own scale and pivot.
+const PET_URLS: Record<string, string> = {
+  cat: petCatUrl,
+  dog: petDogUrl,
+  rabbit: petRabbitUrl,
+  bird: petBirdUrl,
+  turtle: petTurtleUrl,
+};
+
+// Per-accessory placement tuned by eye near the character's head/face, since
+// each generated GLB has its own scale and pivot.
 const ACCESSORY_PLACEMENT: Record<
   string,
   { position: [number, number, number]; scale: number; rotation?: [number, number, number] }
 > = {
-  glasses: { position: [0, 1.08, 0.42], scale: 0.4 },
-  crown: { position: [0, 1.62, 0], scale: 0.42 },
-  bow: { position: [0.35, 1.5, 0.25], scale: 0.32 },
-  star: { position: [0.6, 1.35, 0.1], scale: 0.3 },
-  cap: { position: [0, 1.58, -0.02], scale: 0.5 },
+  glasses: { position: [0, 1.48, 0.32], scale: 0.34 },
+  crown: { position: [0, 1.78, 0], scale: 0.4 },
+  bow: { position: [0.32, 1.68, 0.15], scale: 0.28 },
+  star: { position: [0.4, 1.05, 0.3], scale: 0.24 },
+  cap: { position: [0, 1.75, -0.02], scale: 0.46 },
 };
 
 // Loads a GLTF and re-centers/grounds it so arbitrarily-scaled generated
@@ -103,9 +148,10 @@ function useGroundedScene(url: string) {
   }, [scene]);
 }
 
-function MascotMesh() {
-  const { object, height } = useGroundedScene(mascotUrl);
-  const scale = MASCOT_HEIGHT / height;
+function CharacterMesh({ gender }: { gender: string }) {
+  const url = CHARACTER_URLS[gender] ?? CHARACTER_URLS.male;
+  const { object, height } = useGroundedScene(url);
+  const scale = CHARACTER_HEIGHT / height;
   return (
     <group scale={scale}>
       <primitive object={object} />
@@ -119,7 +165,7 @@ function AccessoryMesh({ accessory }: { accessory: string }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks -- url/placement are stable per accessory key
   const { object, height } = url ? useGroundedScene(url) : { object: null, height: 1 };
   if (!url || !placement || !object) return null;
-  const scale = (placement.scale * MASCOT_HEIGHT) / height;
+  const scale = (placement.scale * CHARACTER_HEIGHT) / height;
   return (
     <group position={placement.position} rotation={placement.rotation}>
       <group scale={scale}>
@@ -129,16 +175,44 @@ function AccessoryMesh({ accessory }: { accessory: string }) {
   );
 }
 
-function Scene({ accessory, interactive, autoRotate }: { accessory: string; interactive: boolean; autoRotate: boolean }) {
+function PetMesh({ pet }: { pet: string }) {
+  const url = PET_URLS[pet];
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- url is stable per pet key
+  const { object, height } = url ? useGroundedScene(url) : { object: null, height: 1 };
+  if (!url || !object) return null;
+  const scale = PET_HEIGHT / height;
+  return (
+    <group position={[0.85, 0, 0.15]} rotation={[0, -0.4, 0]}>
+      <group scale={scale}>
+        <primitive object={object} />
+      </group>
+    </group>
+  );
+}
+
+function Scene({
+  gender,
+  accessory,
+  pet,
+  interactive,
+  autoRotate,
+}: {
+  gender: string;
+  accessory: string;
+  pet: string;
+  interactive: boolean;
+  autoRotate: boolean;
+}) {
   return (
     <>
       <ambientLight intensity={0.9} />
       <directionalLight position={[2, 3, 2]} intensity={1.1} />
       <directionalLight position={[-2, 1, -1]} intensity={0.35} />
       <Environment preset="city" environmentIntensity={0.25} />
-      <group position={[0, -0.8, 0]}>
-        <MascotMesh />
+      <group position={[pet !== "none" ? -0.35 : 0, -0.85, 0]}>
+        <CharacterMesh gender={gender} />
         {accessory !== "none" && <AccessoryMesh accessory={accessory} />}
+        {pet !== "none" && <PetMesh pet={pet} />}
       </group>
       {interactive ? (
         <OrbitControls
@@ -164,13 +238,17 @@ function CanvasFallback() {
 
 export function Avatar3D({
   bgColor,
+  gender,
   accessory,
+  pet,
   interactive = false,
   autoRotate = true,
   className = "",
 }: {
   bgColor: string;
+  gender: string;
   accessory: string;
+  pet: string;
   /** When true, the student can drag to rotate the model. */
   interactive?: boolean;
   /** When true (default), the model spins on its own; disabled while dragging. */
@@ -178,7 +256,9 @@ export function Avatar3D({
   className?: string;
 }) {
   const preset = AVATAR_BG_COLORS[bgColor] ?? AVATAR_BG_COLORS.orange;
-  const fallback = <Avatar2DFallback bgColor={bgColor} accessory={accessory} className={className} />;
+  const fallback = (
+    <Avatar2DFallback bgColor={bgColor} gender={gender} accessory={accessory} pet={pet} className={className} />
+  );
 
   if (!isWebGLAvailable()) {
     return fallback;
@@ -192,7 +272,7 @@ export function Avatar3D({
       >
         <Suspense fallback={<CanvasFallback />}>
           <Canvas
-            camera={{ position: [0, 0.15, 3.1], fov: 32 }}
+            camera={{ position: [0, 0.15, pet !== "none" ? 3.6 : 3.1], fov: 32 }}
             gl={{ antialias: true, alpha: true }}
             dpr={[1, 1.5]}
             onCreated={({ gl }) => {
@@ -203,7 +283,7 @@ export function Avatar3D({
               );
             }}
           >
-            <Scene accessory={accessory} interactive={interactive} autoRotate={autoRotate} />
+            <Scene gender={gender} accessory={accessory} pet={pet} interactive={interactive} autoRotate={autoRotate} />
           </Canvas>
         </Suspense>
       </div>
@@ -211,4 +291,5 @@ export function Avatar3D({
   );
 }
 
-useGLTF.preload(mascotUrl);
+useGLTF.preload(boyUrl);
+useGLTF.preload(girlUrl);

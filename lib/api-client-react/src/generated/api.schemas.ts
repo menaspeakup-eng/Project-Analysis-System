@@ -9,9 +9,19 @@ export interface HealthStatus {
   status: string;
 }
 
+export type AvatarConfigGender = typeof AvatarConfigGender[keyof typeof AvatarConfigGender];
+
+
+export const AvatarConfigGender = {
+  male: 'male',
+  female: 'female',
+} as const;
+
 export interface AvatarConfig {
   bgColor: string;
   accessory: string;
+  gender: AvatarConfigGender;
+  pet: string;
 }
 
 export interface StudentProfile {
