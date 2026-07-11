@@ -7,13 +7,8 @@ import {
 } from "@workspace/api-client-react";
 import { ArrowRight, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import avatarMascot from "@assets/generated_images/avatar-mascot.png";
-import {
-  AVATAR_BG_COLORS,
-  AVATAR_ACCESSORIES,
-  avatarBgStyle,
-  avatarAccessoryEmoji,
-} from "@/lib/avatarPresets";
+import { Avatar3D } from "@/components/Avatar3D";
+import { AVATAR_BG_COLORS, AVATAR_ACCESSORIES, avatarBgStyle } from "@/lib/avatarPresets";
 
 export default function CharacterEdit() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -67,8 +62,6 @@ export default function CharacterEdit() {
     );
   };
 
-  const accessoryEmoji = avatarAccessoryEmoji(accessory);
-
   return (
     <div className="min-h-[100dvh] bg-background relative overflow-hidden flex flex-col selection:bg-primary/20">
       <header className="w-full p-4 md:px-8 flex items-center gap-3 bg-white/80 backdrop-blur-md border-b border-border z-10 sticky top-0">
@@ -93,18 +86,13 @@ export default function CharacterEdit() {
 
         {/* Preview */}
         <section className="flex flex-col items-center gap-4">
-          <div
-            className="w-40 h-40 md:w-48 md:h-48 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden relative"
-            style={avatarBgStyle(bgColor)}
-          >
-            <img src={avatarMascot} alt="معاينة الشخصية" className="w-full h-full object-cover" />
-            {accessoryEmoji && (
-              <span className="absolute top-2 text-4xl md:text-5xl drop-shadow" aria-hidden="true">
-                {accessoryEmoji}
-              </span>
-            )}
-          </div>
-          <p className="text-muted-foreground font-medium text-sm">هكذا ستبدو شخصيتك في الصفحة الرئيسية</p>
+          <Avatar3D
+            bgColor={bgColor}
+            accessory={accessory}
+            interactive
+            className="w-56 h-56 md:w-64 md:h-64 rounded-full border-4 border-white shadow-lg"
+          />
+          <p className="text-muted-foreground font-medium text-sm">اسحب لتدوير شخصيتك — هكذا ستظهر في الصفحة الرئيسية</p>
         </section>
 
         {/* Background color picker */}

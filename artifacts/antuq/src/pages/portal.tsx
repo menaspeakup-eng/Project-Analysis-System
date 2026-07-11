@@ -28,6 +28,7 @@ import {
   Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar3D } from "@/components/Avatar3D";
 import avatarMascot from "@assets/generated_images/avatar-mascot.png";
 import { avatarBgStyle, avatarAccessoryEmoji } from "@/lib/avatarPresets";
 
@@ -148,7 +149,6 @@ export default function Portal() {
   const level = Math.floor(points / POINTS_PER_LEVEL) + 1;
   const progressPercent = (levelProgress / POINTS_PER_LEVEL) * 100;
   const avatarConfig = profile?.avatarConfig ?? { bgColor: "orange", accessory: "none" };
-  const accessoryEmoji = avatarAccessoryEmoji(avatarConfig.accessory);
 
   useEffect(() => {
     if (isLoaded && !isSignedIn && !isGuest) {
@@ -231,17 +231,11 @@ export default function Portal() {
             aria-label="تعديل الشخصية"
             className="relative shrink-0 group cursor-pointer block"
           >
-            <div
-              className="w-32 h-32 md:w-36 md:h-36 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden relative transition-transform group-hover:scale-105"
-              style={avatarBgStyle(avatarConfig.bgColor)}
-            >
-              <img src={avatarMascot} alt="شخصية الطالب" className="w-full h-full object-cover" />
-              {accessoryEmoji && (
-                <span className="absolute top-1 text-3xl" aria-hidden="true">
-                  {accessoryEmoji}
-                </span>
-              )}
-            </div>
+            <Avatar3D
+              bgColor={avatarConfig.bgColor}
+              accessory={avatarConfig.accessory}
+              className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-white shadow-lg transition-transform group-hover:scale-105"
+            />
             <span className="absolute -bottom-1 -left-1 bg-accent text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md border-2 border-white">
               المستوى {level}
             </span>
