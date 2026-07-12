@@ -151,9 +151,10 @@ export default function Portal() {
     query: { enabled: !!isSignedIn } as never,
   });
 
-  const { data: challenge, isLoading: isChallengeLoading } = useGetDailyChallenge({
-    query: { enabled: !!isSignedIn } as never,
-  });
+  const { data: challenge, isLoading: isChallengeLoading, isError: isChallengeError } =
+    useGetDailyChallenge({
+      query: { enabled: !!isSignedIn } as never,
+    });
 
   const { mutate: completeChallenge, isPending: isCompletingChallenge } =
     useCompleteDailyChallenge();
@@ -354,10 +355,14 @@ export default function Portal() {
               <p className="text-muted-foreground font-medium text-sm">
                 سجّل الدخول لخوض التحدي اليومي وكسب النقاط.
               </p>
-            ) : isChallengeLoading || !challenge ? (
+            ) : isChallengeLoading ? (
               <div className="h-16 flex items-center justify-center">
                 <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
               </div>
+            ) : isChallengeError || !challenge ? (
+              <p className="text-muted-foreground font-medium text-sm">
+                أنت غير مرتبط بصف حالياً. تواصل مع معلمك لإضافتك إلى صف.
+              </p>
             ) : (
               <>
                 <div>

@@ -104,14 +104,21 @@ export type InsertClass = typeof classesTable.$inferInsert;
 // A small rotating bank of reading/pronunciation prompts is used to derive
 // "today's challenge" deterministically (see student route) instead of
 // requiring a teacher to author content — there is no authoring tool yet.
-export const dailyChallengesTable = pgTable("daily_challenges", {
-  id: serial("id").primaryKey(),
-  forDate: date("for_date").notNull().unique(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  pointsReward: integer("points_reward").notNull().default(20),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const dailyChallengesTable = pgTable(
+  "daily_challenges",
+  {
+    id: serial("id").primaryKey(),
+    classId: integer("class_id")
+      .notNull()
+      .references(() => classesTable.id),
+    forDate: date("for_date").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    pointsReward: integer("points_reward").notNull().default(20),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [unique().on(table.classId, table.forDate)],
+);
 
 export type DailyChallenge = typeof dailyChallengesTable.$inferSelect;
 

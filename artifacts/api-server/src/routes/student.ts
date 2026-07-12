@@ -93,17 +93,20 @@ function todayDateString(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-async function getOrCreateTodayChallenge() {
+async function getOrCreateTodayChallenge(classId: number) {
   const forDate = todayDateString();
   const existing = await db.query.dailyChallengesTable.findFirst({
-    where: eq(dailyChallengesTable.forDate, forDate),
+    where: and(
+      eq(dailyChallengesTable.classId, classId),
+      eq(dailyChallengesTable.forDate, forDate),
+    ),
   });
   if (existing) return existing;
 
-  const bankEntry = dailyChallengeBank[bankIndexForDate(new Date())];
+  const bankEntry = dailyChallengeBank[bankIndexForDate(new Date(), classId)];
   const [created] = await db
     .insert(dailyChallengesTable)
-    .values({ forDate, ...bankEntry })
+    .values({ forDate, classId, ...bankEntry })
     .onConflictDoNothing()
     .returning();
 
@@ -111,7 +114,10 @@ async function getOrCreateTodayChallenge() {
 
   // Lost a race with a concurrent request — read back the row it created.
   const raceWinner = await db.query.dailyChallengesTable.findFirst({
-    where: eq(dailyChallengesTable.forDate, forDate),
+    where: and(
+      eq(dailyChallengesTable.classId, classId),
+      eq(dailyChallengesTable.forDate, forDate),
+    ),
   });
   return raceWinner!;
 }
@@ -188,7 +194,12 @@ router.get("/student/daily-challenge", async (req, res) => {
   }
 
   const student = await getOrCreateStudent(userId);
-  const challenge = await getOrCreateTodayChallenge();
+  if (!student.classId) {
+    res.status(404).json({ error: "لم يُخصص لك صف بعد — تواصل مع معلمك." });
+    return;
+  }
+
+  const challenge = await getOrCreateTodayChallenge(student.classId);
 
   const completion = await db.query.studentChallengeCompletionsTable.findFirst({
     where: and(
@@ -214,7 +225,12 @@ router.post("/student/daily-challenge/complete", async (req, res) => {
   }
 
   const student = await getOrCreateStudent(userId);
-  const challenge = await getOrCreateTodayChallenge();
+  if (!student.classId) {
+    res.status(404).json({ error: "لم يُخصص لك صف بعد — تواصل مع معلمك." });
+    return;
+  }
+
+  const challenge = await getOrCreateTodayChallenge(student.classId);
 
   const existingCompletion = await db.query.studentChallengeCompletionsTable.findFirst({
     where: and(

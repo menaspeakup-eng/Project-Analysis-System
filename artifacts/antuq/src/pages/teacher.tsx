@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth, useClerk, useUser } from "@clerk/react";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import {
   useGetIdentityMe,
   useGetTeacherClasses,
@@ -15,12 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -63,9 +62,6 @@ export default function Teacher() {
   });
 
   const canPreview = identity?.isAdmin && previewTeacherId != null;
-  // Admin preview passes the teacher's platform student id via URL. The
-  // teacher's own view uses the current session (no teacherId param) because the
-  // backend resolves it from identity.
   const teacherIdParam = canPreview ? previewTeacherId : undefined;
 
   const { data: classesData, isLoading: isClassesLoading } = useGetTeacherClasses(
@@ -84,6 +80,7 @@ export default function Teacher() {
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
   const [editingPoints, setEditingPoints] = useState<{ id: number; points: number } | null>(null);
   const [claiming, setClaiming] = useState<number | null>(null);
+  const [selectedClass, setSelectedClass] = useState<TeacherClass | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -200,121 +197,103 @@ export default function Teacher() {
       </header>
 
       <main className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-8 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section className="space-y-4">
-            <h2 className="font-black text-foreground text-lg flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-primary" />
-              صفوفي
-            </h2>
-            {isClassesLoading ? (
-              <div className="h-24 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-              </div>
-            ) : classes.length === 0 ? (
-              <Card className="rounded-3xl border-border shadow-sm">
-                <CardContent className="p-6 text-center text-muted-foreground font-medium">
-                  لا يوجد صفوف مرتبطة بك بعد — تواصل مع الأدmin لإنشاء صف.
-                </CardContent>
-              </Card>
-            ) : (
-              classes.map((cls) => (
+        <section className="space-y-4">
+          <h2 className="font-black text-foreground text-lg flex items-center gap-2">
+            <GraduationCap className="w-5 h-5 text-primary" />
+            صفوفي
+          </h2>
+          {isClassesLoading ? (
+            <div className="h-24 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            </div>
+          ) : classes.length === 0 ? (
+            <Card className="rounded-3xl border-border shadow-sm">
+              <CardContent className="p-6 text-center text-muted-foreground font-medium">
+                لا يوجد صفوف مرتبطة بك بعد — تواصل مع الأدمن لإنشاء صف.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {classes.map((cls) => (
                 <ClassCard
                   key={cls.id}
                   cls={cls}
-                  renaming={renaming}
-                  onStartRename={(s) => setRenaming({ id: s.id, name: s.name })}
-                  onRename={handleRename}
-                  onRenameChange={(name) => setRenaming((prev) => (prev ? { ...prev, name } : null))}
-                  onCancelRename={() => setRenaming(null)}
-                  editingPoints={editingPoints}
-                  onStartEditPoints={(s) => setEditingPoints({ id: s.id, points: s.points })}
-                  onPointsChange={(points) => setEditingPoints((prev) => (prev ? { ...prev, points } : null))}
-                  onUpdatePoints={handleUpdatePoints}
-                  onCancelEditPoints={() => setEditingPoints(null)}
-                  onRemove={handleRemove}
+                  onOpen={() => setSelectedClass(cls)}
                 />
-              ))
-            )}
-          </section>
-
-          <section className="space-y-4">
-            <h2 className="font-black text-foreground text-lg flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              طلاب غير مرتبطين بصف
-            </h2>
-            {isUnclaimedLoading ? (
-              <div className="h-24 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-              </div>
-            ) : unclaimed.length === 0 ? (
-              <Card className="rounded-3xl border-border shadow-sm">
-                <CardContent className="p-6 text-center text-muted-foreground font-medium">
-                  لا يوجد طلاب غير مرتبطين حالياً.
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="rounded-3xl border-border shadow-sm">
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto rounded-2xl">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/50">
-                          <TableHead className="font-bold">الطالب</TableHead>
-                          <TableHead className="font-bold">النقاط</TableHead>
-                          <TableHead className="font-bold text-left">إضافة لصف</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {unclaimed.map((s) => (
-                          <TableRow key={s.id}>
-                            <TableCell className="font-bold">{s.name}</TableCell>
-                            <TableCell>{s.points}</TableCell>
-                            <TableCell>
-                              {claiming === s.id ? (
-                                <Select
-                                  onValueChange={(v) => handleClaim(s.id, Number(v))}
-                                  defaultValue=""
-                                >
-                                  <SelectTrigger className="w-36 h-9 rounded-xl border-border bg-[hsl(40,33%,98%)]">
-                                    <SelectValue placeholder="اختر صفاً" />
-                                  </SelectTrigger>
-                                  <SelectContent className="rounded-xl">
-                                    {classes.map((c) => (
-                                      <SelectItem key={c.id} value={c.id.toString()}>
-                                        {c.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="rounded-xl h-8 font-bold"
-                                  onClick={() => setClaiming(s.id)}
-                                >
-                                  <UserPlus className="w-4 h-4 ml-1" />
-                                  إضافة
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </section>
-        </div>
+              ))}
+            </div>
+          )}
+        </section>
       </main>
+
+      {selectedClass && (
+        <ClassStudentsDialog
+          cls={selectedClass}
+          unclaimed={unclaimed}
+          isUnclaimedLoading={isUnclaimedLoading}
+          renaming={renaming}
+          onStartRename={(s) => setRenaming({ id: s.id, name: s.name })}
+          onRename={handleRename}
+          onRenameChange={(name) => setRenaming((prev) => (prev ? { ...prev, name } : null))}
+          onCancelRename={() => setRenaming(null)}
+          editingPoints={editingPoints}
+          onStartEditPoints={(s) => setEditingPoints({ id: s.id, points: s.points })}
+          onPointsChange={(points) => setEditingPoints((prev) => (prev ? { ...prev, points } : null))}
+          onUpdatePoints={handleUpdatePoints}
+          onCancelEditPoints={() => setEditingPoints(null)}
+          onRemove={handleRemove}
+          claiming={claiming}
+          onStartClaim={(s) => setClaiming(s.id)}
+          onCancelClaim={() => setClaiming(null)}
+          onClaim={(studentId) => handleClaim(studentId, selectedClass.id)}
+          onClose={() => setSelectedClass(null)}
+        />
+      )}
     </div>
   );
 }
 
 function ClassCard({
   cls,
+  onOpen,
+}: {
+  cls: TeacherClass;
+  onOpen: () => void;
+}) {
+  const count = cls.students.length;
+  return (
+    <Card className="rounded-3xl border-border shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-black flex items-center gap-2">
+          <GraduationCap className="w-5 h-5 text-primary" />
+          {cls.name}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-3 text-sm font-bold text-muted-foreground">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            <Users className="w-5 h-5" />
+          </div>
+          <span>
+            {count === 0 ? "لا يوجد طلاب" : `${count} ${count === 1 ? "طالب" : "طلاب"}`}
+          </span>
+        </div>
+        <Button
+          className="w-full rounded-xl font-bold h-10"
+          onClick={onOpen}
+        >
+          <Users className="w-4 h-4 ml-2" />
+          عرض الطلاب
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ClassStudentsDialog({
+  cls,
+  unclaimed,
+  isUnclaimedLoading,
   renaming,
   onStartRename,
   onRename,
@@ -326,8 +305,15 @@ function ClassCard({
   onUpdatePoints,
   onCancelEditPoints,
   onRemove,
+  claiming,
+  onStartClaim,
+  onCancelClaim,
+  onClaim,
+  onClose,
 }: {
   cls: TeacherClass;
+  unclaimed: TeacherStudent[];
+  isUnclaimedLoading: boolean;
   renaming: { id: number; name: string } | null;
   onStartRename: (s: TeacherStudent) => void;
   onRename: (id: number, name: string) => void;
@@ -339,133 +325,218 @@ function ClassCard({
   onUpdatePoints: (id: number, points: number) => void;
   onCancelEditPoints: () => void;
   onRemove: (id: number) => void;
+  claiming: number | null;
+  onStartClaim: (s: TeacherStudent) => void;
+  onCancelClaim: () => void;
+  onClaim: (studentId: number) => void;
+  onClose: () => void;
 }) {
   return (
-    <Card className="rounded-3xl border-border shadow-sm">
-      <CardHeader>
-        <CardTitle className="text-lg font-black flex items-center gap-2">
-          <GraduationCap className="w-5 h-5 text-primary" />
-          {cls.name}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {cls.students.length === 0 ? (
-          <p className="text-muted-foreground font-medium text-sm py-4 text-center">
-            لا يوجد طلاب في هذا الصف بعد.
-          </p>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-border">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-bold">الطالب</TableHead>
-                  <TableHead className="font-bold">النقاط</TableHead>
-                  <TableHead className="font-bold text-left">إجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cls.students.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-bold">
-                      {renaming?.id === s.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={renaming.name}
-                            onChange={(e) => onRenameChange(e.target.value)}
-                            className="h-8 w-32 rounded-xl border-border"
-                            autoFocus
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 rounded-full text-primary"
-                            onClick={() => onRename(s.id, renaming.name)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 rounded-full text-muted-foreground"
-                            onClick={onCancelRename}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        s.name
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {editingPoints?.id === s.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={editingPoints.points}
-                            onChange={(e) => onPointsChange(Number(e.target.value))}
-                            className="h-8 w-20 rounded-xl border-border"
-                            autoFocus
-                          />
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 rounded-full text-primary"
-                            onClick={() => onUpdatePoints(s.id, editingPoints.points)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 rounded-full text-muted-foreground"
-                            onClick={onCancelEditPoints}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="font-black text-secondary-foreground">{s.points}</span>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 rounded-full text-muted-foreground"
-                            onClick={() => onStartEditPoints(s)}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="rounded-xl h-8 font-bold text-muted-foreground"
-                          onClick={() => onStartRename(s)}
-                        >
-                          <Pencil className="w-4 h-4 ml-1" />
-                          تعديل
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="rounded-xl h-8 font-bold text-destructive hover:bg-destructive/10"
-                          onClick={() => onRemove(s.id)}
-                        >
-                          <Trash2 className="w-4 h-4 ml-1" />
-                          إزالة
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
+        <DialogHeader className="text-right">
+          <DialogTitle className="text-xl font-black flex items-center gap-2">
+            <GraduationCap className="w-6 h-6 text-primary" />
+            طلاب {cls.name}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Current students */}
+          <section className="space-y-3">
+            <h3 className="font-bold text-foreground flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" />
+              طلاب الصف
+            </h3>
+            {cls.students.length === 0 ? (
+              <p className="text-muted-foreground font-medium text-sm py-4 text-center bg-muted/30 rounded-2xl">
+                لا يوجد طلاب في هذا الصف بعد.
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">الطالب</TableHead>
+                      <TableHead className="font-bold">النقاط</TableHead>
+                      <TableHead className="font-bold text-left">إجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cls.students.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-bold">
+                          {renaming?.id === s.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={renaming.name}
+                                onChange={(e) => onRenameChange(e.target.value)}
+                                className="h-8 w-32 rounded-xl border-border"
+                                autoFocus
+                              />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 rounded-full text-primary"
+                                onClick={() => onRename(s.id, renaming.name)}
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 rounded-full text-muted-foreground"
+                                onClick={onCancelRename}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            s.name
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {editingPoints?.id === s.id ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                value={editingPoints.points}
+                                onChange={(e) => onPointsChange(Number(e.target.value))}
+                                className="h-8 w-20 rounded-xl border-border"
+                                autoFocus
+                              />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 rounded-full text-primary"
+                                onClick={() => onUpdatePoints(s.id, editingPoints.points)}
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 rounded-full text-muted-foreground"
+                                onClick={onCancelEditPoints}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-secondary-foreground">{s.points}</span>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 rounded-full text-muted-foreground"
+                                onClick={() => onStartEditPoints(s)}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="rounded-xl h-8 font-bold text-muted-foreground"
+                              onClick={() => onStartRename(s)}
+                            >
+                              <Pencil className="w-4 h-4 ml-1" />
+                              تعديل
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="rounded-xl h-8 font-bold text-destructive hover:bg-destructive/10"
+                              onClick={() => onRemove(s.id)}
+                            >
+                              <Trash2 className="w-4 h-4 ml-1" />
+                              إزالة
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </section>
+
+          {/* Add unclaimed students */}
+          <section className="space-y-3 border-t border-border pt-4">
+            <h3 className="font-bold text-foreground flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-primary" />
+              إضافة طلاب للصف
+            </h3>
+            {isUnclaimedLoading ? (
+              <div className="h-16 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+              </div>
+            ) : unclaimed.length === 0 ? (
+              <p className="text-muted-foreground font-medium text-sm py-4 text-center bg-muted/30 rounded-2xl">
+                لا يوجد طلاب غير مرتبطين حالياً.
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-bold">الطالب</TableHead>
+                      <TableHead className="font-bold">النقاط</TableHead>
+                      <TableHead className="font-bold text-left">إضافة</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {unclaimed.map((s) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="font-bold">{s.name}</TableCell>
+                        <TableCell>{s.points}</TableCell>
+                        <TableCell>
+                          {claiming === s.id ? (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                className="rounded-xl h-8 font-bold"
+                                onClick={() => onClaim(s.id)}
+                              >
+                                <Check className="w-4 h-4 ml-1" />
+                                تأكيد
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="rounded-xl h-8 font-bold text-muted-foreground"
+                                onClick={onCancelClaim}
+                              >
+                                <X className="w-4 h-4 ml-1" />
+                                إلغاء
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl h-8 font-bold"
+                              onClick={() => onStartClaim(s)}
+                            >
+                              <UserPlus className="w-4 h-4 ml-1" />
+                              إضافة
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </section>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

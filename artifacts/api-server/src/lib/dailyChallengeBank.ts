@@ -59,9 +59,10 @@ export const dailyChallengeBank: Array<{
 ];
 
 // Deterministic day-of-year index, stable regardless of timezone drift within a day.
-export function bankIndexForDate(date: Date): number {
+// classId is mixed in so students in different classes see different challenges.
+export function bankIndexForDate(date: Date, classId: number): number {
   const start = new Date(date.getFullYear(), 0, 0);
   const diff = date.getTime() - start.getTime();
   const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-  return dayOfYear % dailyChallengeBank.length;
+  return (dayOfYear + classId * 31) % dailyChallengeBank.length;
 }
