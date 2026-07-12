@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetTeacherGames,
@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Pencil, Plus, Save, Star, Users, RotateCcw, Trash2 } from "lucide-react";
+import { Gamepad2, Pencil, Plus, Save, Star, Users, RotateCcw, Trash2, BarChart3 } from "lucide-react";
 import type { GameType } from "@/lib/gameTypes";
 
 const GAME_TYPE_LABELS: Record<GameType, string> = {
@@ -108,7 +108,9 @@ const emptyItemFor = (type: GameType): GameItem => {
 
 export default function TeacherGames() {
   const queryClient = useQueryClient();
-  const [selectedGame, setSelectedGame] = useState<TeacherGame | null>(null);
+  const [itemsGame, setItemsGame] = useState<TeacherGame | null>(null);
+  const [metaGame, setMetaGame] = useState<TeacherGame | null>(null);
+  const [statsGame, setStatsGame] = useState<TeacherGame | null>(null);
   const [items, setItems] = useState<GameItem[]>([]);
   const [metaForm, setMetaForm] = useState({
     name: "",
@@ -121,23 +123,29 @@ export default function TeacherGames() {
 
   const { data, isLoading } = useGetTeacherGames(undefined, { query: { enabled: true } as never });
   const { data: itemsData } = useGetTeacherGameWords(
-    selectedGame?.id ?? 0,
+    itemsGame?.id ?? 0,
     undefined,
-    { query: { enabled: !!selectedGame } as never },
+    { query: { enabled: !!itemsGame } as never },
   );
   const { mutate: updateGame } = useUpdateTeacherGame();
   const { mutate: updateItems } = useUpdateTeacherGameWords();
   const { mutate: createGame } = useCreateTeacherGame();
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (itemsData && itemsGame) {
+      const payloads = (itemsData.items ?? []).map((it) => it.payload as unknown as GameItem);
+      setItems(payloads.length > 0 ? payloads : [emptyItemFor(itemsGame.type as GameType)]);
+    }
+  }, [itemsData, itemsGame]);
+
   const openItems = (game: TeacherGame) => {
-    setSelectedGame(game);
-    const payloads = (itemsData?.items ?? []).map((it) => it.payload as unknown as GameItem);
-    setItems(payloads.length > 0 ? payloads : [emptyItemFor(game.type as GameType)]);
+    setItemsGame(game);
+    setItems([emptyItemFor(game.type as GameType)]);
   };
 
   const openMeta = (game: TeacherGame) => {
-    setSelectedGame(game);
+    setMetaGame(game);
     setMetaForm({
       name: game.name,
       description: game.description ?? "",
@@ -146,31 +154,35 @@ export default function TeacherGames() {
     });
   };
 
+  const openStats = (game: TeacherGame) => {
+    setStatsGame(game);
+  };
+
   const handleSaveItems = () => {
-    if (!selectedGame) return;
+    if (!itemsGame) return;
     const cleaned = items.map((it) => {
       const { id, order, ...rest } = it as GameItem & { id?: number; order?: number };
       return rest;
     });
     updateItems(
-      { id: selectedGame.id, data: { items: cleaned } },
+      { id: itemsGame.id, data: { items: cleaned } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
           queryClient.invalidateQueries({
-            queryKey: [`/api/teacher/games/${selectedGame.id}/words`],
+            queryKey: [`/api/teacher/games/${itemsGame.id}/words`],
           });
-          setSelectedGame(null);
+          setItemsGame(null);
         },
       },
     );
   };
 
   const handleSaveMeta = () => {
-    if (!selectedGame) return;
+    if (!metaGame) return;
     updateGame(
       {
-        id: selectedGame.id,
+        id: metaGame.id,
         data: {
           name: metaForm.name.trim() || undefined,
           description: metaForm.description.trim() || undefined,
@@ -181,7 +193,7 @@ export default function TeacherGames() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
-          setSelectedGame(null);
+          setMetaGame(null);
         },
       },
     );
@@ -257,7 +269,7 @@ export default function TeacherGames() {
     }
   };
 
-  const selectedType = (selectedGame?.type ?? createForm.type) as GameType;
+  const selectedType = (itemsGame?.type ?? createForm.type) as GameType;
 
   const renderItemFields = (item: GameItem, idx: number): React.ReactNode => {
     switch (selectedType) {
@@ -451,13 +463,13 @@ export default function TeacherGames() {
                     متوسط الأخطاء: {g.stats.avgMistakes}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button
-                    className="rounded-xl h-9 font-bold flex-1"
+                    className="rounded-xl h-9 font-bold"
                     onClick={() => openItems(g)}
                   >
                     <Pencil className="w-4 h-4 ml-1" />
-                    تعديل المحتوى
+                    المحتوى
                   </Button>
                   <Button
                     variant="outline"
@@ -465,17 +477,24 @@ export default function TeacherGames() {
                     onClick={() => openMeta(g)}
                   >
                     <RotateCcw className="w-4 h-4 ml-1" />
-                    إعدادات
+                    الإعدادات
                   </Button>
                   <Button
-                    size="icon"
                     variant="outline"
-                    className="rounded-xl h-9 w-9 border-border text-destructive hover:text-destructive hover:bg-destructive/5"
+                    className="rounded-xl h-9 font-bold border-border"
+                    onClick={() => openStats(g)}
+                  >
+                    <BarChart3 className="w-4 h-4 ml-1" />
+                    الإحصائيات
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl h-9 font-bold border-border text-destructive hover:text-destructive hover:bg-destructive/5"
                     onClick={() => handleDeleteGame(g)}
                     disabled={isDeleting === g.id}
-                    aria-label="حذف اللعبة"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 ml-1" />
+                    حذف
                   </Button>
                 </div>
               </CardContent>
@@ -484,18 +503,18 @@ export default function TeacherGames() {
         </div>
       )}
 
-      {selectedGame && itemsData && (
-        <Dialog open onOpenChange={(open) => { if (!open) setSelectedGame(null); }}>
+      {itemsGame && (
+        <Dialog open onOpenChange={(open) => { if (!open) setItemsGame(null); }}>
           <DialogContent className="sm:max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
             <DialogHeader className="text-right">
               <DialogTitle className="text-xl font-black flex items-center gap-2">
                 <Pencil className="w-6 h-6 text-accent" />
-                تعديل محتوى: {selectedGame.name}
+                تعديل محتوى: {itemsGame.name}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground font-medium">
-                حفظ التعديلات سينشر نسخة جديدة (v{selectedGame.version + 1}) ويسمح للطلاب بلعبها مرة أخرى.
+                حفظ التعديلات سينشر نسخة جديدة (v{itemsGame.version + 1}) ويسمح للطلاب بلعبها مرة أخرى.
               </p>
               <div className="space-y-4">
                 {items.map((item, idx) => (
@@ -532,11 +551,14 @@ export default function TeacherGames() {
         </Dialog>
       )}
 
-      {selectedGame && !itemsData && (
-        <Dialog open onOpenChange={(open) => { if (!open) setSelectedGame(null); }}>
+      {metaGame && (
+        <Dialog open onOpenChange={(open) => { if (!open) setMetaGame(null); }}>
           <DialogContent className="sm:max-w-md rounded-3xl" dir="rtl">
             <DialogHeader className="text-right">
-              <DialogTitle className="text-xl font-black">إعدادات اللعبة</DialogTitle>
+              <DialogTitle className="text-xl font-black flex items-center gap-2">
+                <RotateCcw className="w-6 h-6 text-primary" />
+                إعدادات اللعبة: {metaGame.name}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -636,6 +658,37 @@ export default function TeacherGames() {
                 <Plus className="w-4 h-4 ml-1" />
                 إنشاء
               </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {statsGame && (
+        <Dialog open onOpenChange={(open) => { if (!open) setStatsGame(null); }}>
+          <DialogContent className="sm:max-w-md rounded-3xl" dir="rtl">
+            <DialogHeader className="text-right">
+              <DialogTitle className="text-xl font-black flex items-center gap-2">
+                <BarChart3 className="w-6 h-6 text-primary" />
+                إحصائيات اللعبة: {statsGame.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="bg-background rounded-2xl p-4 border border-border flex items-center justify-between">
+                <span className="font-bold text-muted-foreground">عدد المحاولات</span>
+                <span className="font-black text-foreground text-lg">{statsGame.stats.plays}</span>
+              </div>
+              <div className="bg-background rounded-2xl p-4 border border-border flex items-center justify-between">
+                <span className="font-bold text-muted-foreground">متوسط الأخطاء</span>
+                <span className="font-black text-foreground text-lg">{statsGame.stats.avgMistakes}</span>
+              </div>
+              <div className="bg-background rounded-2xl p-4 border border-border flex items-center justify-between">
+                <span className="font-bold text-muted-foreground">متوسط المدة</span>
+                <span className="font-black text-foreground text-lg">{statsGame.stats.avgDuration ? `${Math.round(statsGame.stats.avgDuration / 1000)} ث` : "—"}</span>
+              </div>
+              <div className="bg-background rounded-2xl p-4 border border-border flex items-center justify-between">
+                <span className="font-bold text-muted-foreground">النسخة الحالية</span>
+                <span className="font-black text-foreground text-lg">v{statsGame.version}</span>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
