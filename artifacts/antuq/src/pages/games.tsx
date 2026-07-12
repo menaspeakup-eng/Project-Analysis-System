@@ -15,6 +15,15 @@ const GAME_TYPE_LABELS: Record<GameType, string> = {
   "arrange-sentences": "ترتيب الجمل",
 };
 
+const GAME_TYPE_IMAGES: Record<GameType, string> = {
+  "match-sentence-picture": "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
+  "arrange-sentence": "https://cdn-icons-png.flaticon.com/512/2922/2922506.png",
+  "choose-picture": "https://cdn-icons-png.flaticon.com/512/3659/3659898.png",
+  "choose-sentence": "https://cdn-icons-png.flaticon.com/512/2913/2913360.png",
+  "complete-sentence": "https://cdn-icons-png.flaticon.com/512/3659/3659898.png",
+  "arrange-sentences": "https://cdn-icons-png.flaticon.com/512/2922/2922506.png",
+};
+
 export default function Games() {
   const [, setLocation] = useLocation();
   const { data, isLoading } = useGetGames({ query: { enabled: true } as never });
@@ -60,16 +69,12 @@ export default function Games() {
                   game.isLocked ? "opacity-70" : "hover:shadow-md"
                 }`}
               >
-                <div className="h-32 bg-gradient-to-l from-primary/10 to-accent/10 flex items-center justify-center">
-                  {game.imageUrl ? (
-                    <img
-                      src={game.imageUrl}
-                      alt={game.name}
-                      className="h-20 w-20 object-contain"
-                    />
-                  ) : (
-                    <Gamepad2 className="w-16 h-16 text-primary/40" />
-                  )}
+                <div className="h-36 bg-gradient-to-l from-primary/10 to-accent/10 flex items-center justify-center overflow-hidden">
+                  <img
+                    src={game.imageUrl || GAME_TYPE_IMAGES[game.type as GameType] || "https://cdn-icons-png.flaticon.com/512/3062/3062320.png"}
+                    alt={game.name}
+                    className="h-24 w-24 object-contain drop-shadow-sm"
+                  />
                 </div>
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
