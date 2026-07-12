@@ -1144,22 +1144,22 @@ export const GetChatRoomsResponse = zod.object({
   "rooms": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
-  "classId": zod.union([zod.number(),zod.null()])
+  "classId": zod.number()
 }))
 })
 
 
 /**
- * @summary List messages in a chat room
+ * @summary List messages in a class chat
  */
 export const GetChatMessagesParams = zod.object({
-  "classId": zod.coerce.string().describe('\'general\' or a class id')
+  "classId": zod.coerce.number().describe('class id')
 })
 
 export const GetChatMessagesResponse = zod.object({
   "messages": zod.array(zod.object({
   "id": zod.number(),
-  "classId": zod.union([zod.number(),zod.null()]).optional(),
+  "classId": zod.number(),
   "senderId": zod.number(),
   "senderName": zod.string(),
   "senderPoints": zod.number(),
@@ -1173,10 +1173,10 @@ export const GetChatMessagesResponse = zod.object({
 
 
 /**
- * @summary Send a message to a chat room
+ * @summary Send a message to a class chat
  */
 export const SendChatMessageParams = zod.object({
-  "classId": zod.coerce.string().describe('\'general\' or a class id')
+  "classId": zod.coerce.number().describe('class id')
 })
 
 export const sendChatMessageBodyContentMax = 1000;
@@ -1189,7 +1189,7 @@ export const SendChatMessageBody = zod.object({
 
 export const SendChatMessageResponse = zod.object({
   "id": zod.number(),
-  "classId": zod.union([zod.number(),zod.null()]).optional(),
+  "classId": zod.number(),
   "senderId": zod.number(),
   "senderName": zod.string(),
   "senderPoints": zod.number(),
@@ -1212,13 +1212,13 @@ export const DeleteChatMessageResponse = zod.void()
 
 
 /**
- * @summary Mute a student in a chat room
+ * @summary Mute or permanently ban a student in a class chat
  */
 export const MuteChatStudentParams = zod.object({
-  "classId": zod.coerce.string().describe('\'general\' or a class id')
+  "classId": zod.coerce.number().describe('class id')
 })
 
-export const muteChatStudentBodyDurationMinutesMax = 10080;
+export const muteChatStudentBodyDurationMinutesOneMax = 10080;
 
 export const muteChatStudentBodyReasonMax = 500;
 
@@ -1226,7 +1226,7 @@ export const muteChatStudentBodyReasonMax = 500;
 
 export const MuteChatStudentBody = zod.object({
   "studentId": zod.number(),
-  "durationMinutes": zod.number().min(1).max(muteChatStudentBodyDurationMinutesMax),
+  "durationMinutes": zod.union([zod.number().min(1).max(muteChatStudentBodyDurationMinutesOneMax),zod.null()]).describe('null means a permanent ban'),
   "reason": zod.string().max(muteChatStudentBodyReasonMax).optional()
 })
 
@@ -1234,16 +1234,16 @@ export const MuteChatStudentResponse = zod.object({
   "id": zod.number(),
   "studentId": zod.number(),
   "studentName": zod.string(),
-  "mutedUntil": zod.coerce.date(),
+  "mutedUntil": zod.union([zod.coerce.date(),zod.null()]),
   "reason": zod.union([zod.string(),zod.null()]).optional()
 })
 
 
 /**
- * @summary Unmute a student in a chat room
+ * @summary Unmute or unban a student in a class chat
  */
 export const UnmuteChatStudentParams = zod.object({
-  "classId": zod.coerce.string().describe('\'general\' or a class id'),
+  "classId": zod.coerce.number().describe('class id'),
   "studentId": zod.coerce.number()
 })
 
@@ -1251,10 +1251,10 @@ export const UnmuteChatStudentResponse = zod.void()
 
 
 /**
- * @summary List muted students in a chat room
+ * @summary List muted or banned students in a class chat
  */
 export const GetChatMutesParams = zod.object({
-  "classId": zod.coerce.string().describe('\'general\' or a class id')
+  "classId": zod.coerce.number().describe('class id')
 })
 
 export const GetChatMutesResponse = zod.object({
@@ -1262,7 +1262,7 @@ export const GetChatMutesResponse = zod.object({
   "id": zod.number(),
   "studentId": zod.number(),
   "studentName": zod.string(),
-  "mutedUntil": zod.coerce.date(),
+  "mutedUntil": zod.union([zod.coerce.date(),zod.null()]),
   "reason": zod.union([zod.string(),zod.null()]).optional()
 }))
 })

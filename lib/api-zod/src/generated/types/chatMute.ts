@@ -10,6 +10,6 @@ export interface ChatMute {
   id: number;
   studentId: number;
   studentName: string;
-  mutedUntil: Date;
+  mutedUntil: Date | null;
   reason?: string | null;
 }

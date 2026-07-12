@@ -9,7 +9,7 @@ import type { ChatMessageSenderAvatarConfig } from './chatMessageSenderAvatarCon
 
 export interface ChatMessage {
   id: number;
-  classId?: number | null;
+  classId: number;
   senderId: number;
   senderName: string;
   senderPoints: number;

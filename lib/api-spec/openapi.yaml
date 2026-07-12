@@ -840,14 +840,14 @@ paths:
     get:
       operationId: getChatMessages
       tags: [chat]
-      summary: List messages in a chat room
+      summary: List messages in a class chat
       parameters:
         - in: path
           name: classId
           required: true
           schema:
-            type: string
-          description: "'general' or a class id"
+            type: integer
+          description: class id
       responses:
         "200":
           description: Messages list
@@ -862,14 +862,14 @@ paths:
     post:
       operationId: sendChatMessage
       tags: [chat]
-      summary: Send a message to a chat room
+      summary: Send a message to a class chat
       parameters:
         - in: path
           name: classId
           required: true
           schema:
-            type: string
-          description: "'general' or a class id"
+            type: integer
+          description: class id
       requestBody:
         required: true
         content:
@@ -913,14 +913,14 @@ paths:
     post:
       operationId: muteChatStudent
       tags: [chat]
-      summary: Mute a student in a chat room
+      summary: Mute or permanently ban a student in a class chat
       parameters:
         - in: path
           name: classId
           required: true
           schema:
-            type: string
-          description: "'general' or a class id"
+            type: integer
+          description: class id
       requestBody:
         required: true
         content:
@@ -929,7 +929,7 @@ paths:
               $ref: "#/components/schemas/ChatMuteBody"
       responses:
         "201":
-          description: Student muted
+          description: Student muted or banned
           content:
             application/json:
               schema:
@@ -946,14 +946,14 @@ paths:
     delete:
       operationId: unmuteChatStudent
       tags: [chat]
-      summary: Unmute a student in a chat room
+      summary: Unmute or unban a student in a class chat
       parameters:
         - in: path
           name: classId
           required: true
           schema:
-            type: string
-          description: "'general' or a class id"
+            type: integer
+          description: class id
         - in: path
           name: studentId
           required: true
@@ -961,7 +961,7 @@ paths:
             type: integer
       responses:
         "204":
-          description: Student unmuted
+          description: Student unmuted or unbanned
         "401":
           description: Not signed in
         "403":
@@ -970,14 +970,14 @@ paths:
     get:
       operationId: getChatMutes
       tags: [chat]
-      summary: List muted students in a chat room
+      summary: List muted or banned students in a class chat
       parameters:
         - in: path
           name: classId
           required: true
           schema:
-            type: string
-          description: "'general' or a class id"
+            type: integer
+          description: class id
       responses:
         "200":
           description: Mutes list
@@ -2036,9 +2036,7 @@ components:
         name:
           type: string
         classId:
-          oneOf:
-            - type: integer
-            - type: "null"
+          type: integer
       required:
         - id
         - name
@@ -2058,9 +2056,7 @@ components:
         id:
           type: integer
         classId:
-          oneOf:
-            - type: integer
-            - type: "null"
+          type: integer
         senderId:
           type: integer
         senderName:
@@ -2081,6 +2077,7 @@ components:
           format: date-time
       required:
         - id
+        - classId
         - senderId
         - senderName
         - senderPoints
@@ -2117,8 +2114,10 @@ components:
         studentName:
           type: string
         mutedUntil:
-          type: string
-          format: date-time
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
         reason:
           oneOf:
             - type: string
@@ -2143,9 +2142,12 @@ components:
         studentId:
           type: integer
         durationMinutes:
-          type: integer
-          minimum: 1
-          maximum: 10080
+          oneOf:
+            - type: integer
+              minimum: 1
+              maximum: 10080
+            - type: "null"
+          description: null means a permanent ban
         reason:
           type: string
           maxLength: 500

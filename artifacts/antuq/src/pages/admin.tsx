@@ -44,7 +44,9 @@ import {
   UserCheck,
   UserX,
   Trash2,
+  MessageCircle,
 } from "lucide-react";
+import { ChatPanel } from "@/components/chat/chat-panel";
 import type { AdminUser, AdminClass, TeacherStudent } from "@workspace/api-client-react";
 
 export default function Admin() {
@@ -214,6 +216,10 @@ export default function Admin() {
               <GraduationCap className="w-4 h-4 ml-2" />
               الصفوف
             </TabsTrigger>
+            <TabsTrigger value="chat" className="rounded-lg px-4 font-bold data-[state=active]:bg-primary data-[state=active]:text-white">
+              <MessageCircle className="w-4 h-4 ml-2" />
+              الشات
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="users" className="mt-6 space-y-4">
@@ -371,6 +377,14 @@ export default function Admin() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="chat" className="mt-6 space-y-4">
+            <Card className="rounded-3xl border-border shadow-sm overflow-hidden">
+              <div className="flex flex-col h-[70dvh]">
+                <ChatPanel backUrl="/admin" />
+              </div>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

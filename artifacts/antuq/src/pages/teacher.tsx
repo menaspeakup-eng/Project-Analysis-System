@@ -46,6 +46,7 @@ import {
 import type { TeacherClass, TeacherStudent } from "@workspace/api-client-react";
 import TeacherChallenges from "./teacher-challenges";
 import TeacherGames from "./teacher-games";
+import { ChatPanel } from "@/components/chat/chat-panel";
 
 function getTeacherIdFromUrl(): number | null {
   const raw = new URLSearchParams(window.location.search).get("teacherId");
@@ -153,7 +154,7 @@ export default function Teacher() {
 
   const classes = classesData?.classes ?? [];
   const unclaimed = unclaimedData?.students ?? [];
-  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges">("students");
+  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges" | "chat">("students");
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -193,14 +194,6 @@ export default function Teacher() {
           </span>
           <Button
             variant="ghost"
-            className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
-            onClick={() => setLocation("/chat")}
-          >
-            <MessageCircle className="w-5 h-5 ml-2" />
-            <span className="font-bold hidden sm:inline">الشات</span>
-          </Button>
-          <Button
-            variant="ghost"
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
             onClick={() => signOut({ redirectUrl: "/" })}
           >
@@ -235,6 +228,14 @@ export default function Teacher() {
           >
             <Flame className="w-4 h-4 ml-2" />
             التحديات
+          </Button>
+          <Button
+            variant={activeTab === "chat" ? "default" : "ghost"}
+            className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "chat" ? "bg-primary text-white" : "text-muted-foreground"}`}
+            onClick={() => setActiveTab("chat")}
+          >
+            <MessageCircle className="w-4 h-4 ml-2" />
+            الشات
           </Button>
         </div>
 
@@ -271,6 +272,12 @@ export default function Teacher() {
         {activeTab === "games" && <TeacherGames classes={classes} />}
 
         {activeTab === "challenges" && <TeacherChallenges teacherIdParam={teacherIdParam} classes={classes} />}
+
+        {activeTab === "chat" && (
+          <section className="flex flex-col min-h-[70dvh] rounded-3xl border border-border bg-white overflow-hidden shadow-sm">
+            <ChatPanel backUrl="/teacher" />
+          </section>
+        )}
       </main>
 
       {selectedClass && (

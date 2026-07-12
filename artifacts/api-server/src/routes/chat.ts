@@ -7,7 +7,7 @@ import {
   chatMessagesTable,
   chatMutesTable,
 } from "@workspace/db";
-import { eq, and, desc, sql, isNull } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 import {
   resolveIdentity,
   requireIdentity,
@@ -21,63 +21,56 @@ const SendMessageBody = z.object({
 
 const MuteStudentBody = z.object({
   studentId: z.number().int(),
-  durationMinutes: z.number().int().min(1).max(10080), // max 1 week
+  // null = permanent ban; otherwise duration in minutes (max 1 week)
+  durationMinutes: z.union([z.number().int().min(1).max(10080), z.null()]),
   reason: z.string().max(500).optional(),
 });
 
 function parseIntParam(value: string): number | null {
   const n = Number(value);
-  return Number.isFinite(n) ? n : null;
+  return Number.isFinite(n) && Number.isInteger(n) ? n : null;
+}
+
+function parseClassIdParam(value: string): number | null {
+  const id = parseIntParam(value);
+  return id != null && id > 0 ? id : null;
 }
 
 function now(): Date {
   return new Date();
 }
 
-function addMinutes(date: Date, minutes: number): Date {
+function addMinutes(date: Date, minutes: number | null): Date | null {
+  if (minutes == null) return null;
   return new Date(date.getTime() + minutes * 60_000);
-}
-
-function getRoomClassId(
-  classIdParam: string,
-): { classId: number | null; isGeneral: boolean } {
-  if (classIdParam === "general") {
-    return { classId: null, isGeneral: true };
-  }
-  const id = parseIntParam(classIdParam);
-  return { classId: id, isGeneral: false };
 }
 
 async function canAccessRoom(
   identity: NonNullable<Awaited<ReturnType<typeof resolveIdentity>>>,
-  classId: number | null,
+  classId: number,
 ): Promise<boolean> {
   if (identity.isAdmin) return true;
-  if (classId == null) return true; // general chat is open to all
   if (identity.isTeacher && identity.teacherClassIds.includes(classId)) return true;
   return identity.student.classId === classId;
 }
 
 async function canModerateRoom(
   identity: NonNullable<Awaited<ReturnType<typeof resolveIdentity>>>,
-  classId: number | null,
+  classId: number,
 ): Promise<boolean> {
   if (identity.isAdmin) return true;
-  if (classId == null) return false; // only admins can moderate general chat
   return identity.isTeacher && identity.teacherClassIds.includes(classId);
 }
 
-async function isMuted(
-  classId: number | null,
-  studentId: number,
-): Promise<boolean> {
+async function isMuted(classId: number, studentId: number): Promise<boolean> {
   const mute = await db.query.chatMutesTable.findFirst({
     where: and(
-      classId == null ? isNull(chatMutesTable.classId) : eq(chatMutesTable.classId, classId),
+      eq(chatMutesTable.classId, classId),
       eq(chatMutesTable.studentId, studentId),
     ),
   });
   if (!mute) return false;
+  if (mute.mutedUntil == null) return true;
   return new Date(mute.mutedUntil) > now();
 }
 
@@ -95,7 +88,10 @@ async function getSenderProfile(studentId: number) {
   };
 }
 
-function formatMessage(message: typeof chatMessagesTable.$inferSelect, sender: NonNullable<Awaited<ReturnType<typeof getSenderProfile>>>) {
+function formatMessage(
+  message: typeof chatMessagesTable.$inferSelect,
+  sender: NonNullable<Awaited<ReturnType<typeof getSenderProfile>>>,
+) {
   return {
     id: message.id,
     classId: message.classId,
@@ -110,14 +106,12 @@ function formatMessage(message: typeof chatMessagesTable.$inferSelect, sender: N
   };
 }
 
-// List available chat rooms for the current user.
+// List available class chats for the current user.
 router.get("/chat/rooms", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
 
-  const rooms: { id: string; name: string; classId: number | null }[] = [
-    { id: "general", name: "الشات العام", classId: null },
-  ];
+  const rooms: { id: string; name: string; classId: number }[] = [];
 
   if (identity.isAdmin) {
     const classes = await db.query.classesTable.findMany({ orderBy: [classesTable.id] });
@@ -146,21 +140,24 @@ router.get("/chat/rooms", async (req, res) => {
   res.json({ rooms });
 });
 
-// List messages in a room.
+// List messages in a class chat.
 router.get("/chat/rooms/:classId/messages", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
 
-  const { classId } = getRoomClassId(req.params.classId);
+  const classId = parseClassIdParam(req.params.classId);
+  if (classId === null) {
+    res.status(400).json({ error: "معرف الصف غير صالح" });
+    return;
+  }
+
   if (!await canAccessRoom(identity, classId)) {
     res.status(403).json({ error: "لا يمكنك الوصول إلى هذه الغرفة" });
     return;
   }
 
   const messages = await db.query.chatMessagesTable.findMany({
-    where: classId == null
-      ? isNull(chatMessagesTable.classId)
-      : eq(chatMessagesTable.classId, classId),
+    where: eq(chatMessagesTable.classId, classId),
     orderBy: [desc(chatMessagesTable.id)],
     limit: 200,
   });
@@ -175,12 +172,17 @@ router.get("/chat/rooms/:classId/messages", async (req, res) => {
   res.json({ messages: result.reverse() });
 });
 
-// Send a message to a room.
+// Send a message to a class chat.
 router.post("/chat/rooms/:classId/messages", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
 
-  const { classId } = getRoomClassId(req.params.classId);
+  const classId = parseClassIdParam(req.params.classId);
+  if (classId === null) {
+    res.status(400).json({ error: "معرف الصف غير صالح" });
+    return;
+  }
+
   if (!await canAccessRoom(identity, classId)) {
     res.status(403).json({ error: "لا يمكنك الوصول إلى هذه الغرفة" });
     return;
@@ -248,12 +250,17 @@ router.delete("/chat/messages/:id", async (req, res) => {
   res.status(204).send();
 });
 
-// Mute a student in a room.
+// Mute/ban a student in a class chat.
 router.post("/chat/rooms/:classId/mute", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
 
-  const { classId } = getRoomClassId(req.params.classId);
+  const classId = parseClassIdParam(req.params.classId);
+  if (classId === null) {
+    res.status(400).json({ error: "معرف الصف غير صالح" });
+    return;
+  }
+
   if (!await canModerateRoom(identity, classId)) {
     res.status(403).json({ error: "لا يمكنك إدارة هذه الغرفة" });
     return;
@@ -271,14 +278,12 @@ router.post("/chat/rooms/:classId/mute", async (req, res) => {
 
   const mutedUntil = addMinutes(now(), body.durationMinutes);
 
-  // Replace any existing mute for this student in the same room so we don't
-  // create duplicate rows (especially important for the general room where
-  // classId is NULL and the unique constraint allows multiple NULLs).
+  // Replace any existing mute/ban for this student in the same class.
   await db
     .delete(chatMutesTable)
     .where(
       and(
-        classId == null ? isNull(chatMutesTable.classId) : eq(chatMutesTable.classId, classId),
+        eq(chatMutesTable.classId, classId),
         eq(chatMutesTable.studentId, body.studentId),
       ),
     );
@@ -298,12 +303,17 @@ router.post("/chat/rooms/:classId/mute", async (req, res) => {
   });
 });
 
-// Unmute a student in a room.
+// Unmute/unban a student in a class chat.
 router.delete("/chat/rooms/:classId/mute/:studentId", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
 
-  const { classId } = getRoomClassId(req.params.classId);
+  const classId = parseClassIdParam(req.params.classId);
+  if (classId === null) {
+    res.status(400).json({ error: "معرف الصف غير صالح" });
+    return;
+  }
+
   if (!await canModerateRoom(identity, classId)) {
     res.status(403).json({ error: "لا يمكنك إدارة هذه الغرفة" });
     return;
@@ -319,7 +329,7 @@ router.delete("/chat/rooms/:classId/mute/:studentId", async (req, res) => {
     .delete(chatMutesTable)
     .where(
       and(
-        classId == null ? isNull(chatMutesTable.classId) : eq(chatMutesTable.classId, classId),
+        eq(chatMutesTable.classId, classId),
         eq(chatMutesTable.studentId, studentId),
       ),
     );
@@ -327,24 +337,29 @@ router.delete("/chat/rooms/:classId/mute/:studentId", async (req, res) => {
   res.status(204).send();
 });
 
-// List muted students in a room.
+// List muted/banned students in a class chat.
 router.get("/chat/rooms/:classId/mutes", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
 
-  const { classId } = getRoomClassId(req.params.classId);
+  const classId = parseClassIdParam(req.params.classId);
+  if (classId === null) {
+    res.status(400).json({ error: "معرف الصف غير صالح" });
+    return;
+  }
+
   if (!await canModerateRoom(identity, classId)) {
     res.status(403).json({ error: "لا يمكنك إدارة هذه الغرفة" });
     return;
   }
 
   const mutes = await db.query.chatMutesTable.findMany({
-    where: classId == null
-      ? isNull(chatMutesTable.classId)
-      : eq(chatMutesTable.classId, classId),
+    where: eq(chatMutesTable.classId, classId),
   });
 
-  const activeMutes = mutes.filter((m) => new Date(m.mutedUntil) > now());
+  const activeMutes = mutes.filter(
+    (m) => m.mutedUntil == null || new Date(m.mutedUntil) > now(),
+  );
   const studentIds = activeMutes.map((m) => m.studentId);
   const students = studentIds.length
     ? await db.query.studentsTable.findMany({

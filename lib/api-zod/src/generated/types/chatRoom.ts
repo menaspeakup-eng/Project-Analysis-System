@@ -9,5 +9,5 @@
 export interface ChatRoom {
   id: string;
   name: string;
-  classId: number | null;
+  classId: number;
 }

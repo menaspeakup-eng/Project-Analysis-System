@@ -8,11 +8,8 @@
 
 export interface ChatMuteBody {
   studentId: number;
-  /**
-     * @minimum 1
-     * @maximum 10080
-     */
-  durationMinutes: number;
+  /** null means a permanent ban */
+  durationMinutes: number | null;
   /** @maxLength 500 */
   reason?: string;
 }

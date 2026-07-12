@@ -575,7 +575,7 @@ export interface TeacherGameStats {
 export interface ChatRoom {
   id: string;
   name: string;
-  classId: number | null;
+  classId: number;
 }
 
 export interface ChatRoomList {
@@ -586,7 +586,7 @@ export type ChatMessageSenderAvatarConfig = { [key: string]: unknown };
 
 export interface ChatMessage {
   id: number;
-  classId?: number | null;
+  classId: number;
   senderId: number;
   senderName: string;
   senderPoints: number;
@@ -613,7 +613,7 @@ export interface ChatMute {
   id: number;
   studentId: number;
   studentName: string;
-  mutedUntil: string;
+  mutedUntil: string | null;
   reason?: string | null;
 }
 
@@ -623,11 +623,8 @@ export interface ChatMuteList {
 
 export interface ChatMuteBody {
   studentId: number;
-  /**
-     * @minimum 1
-     * @maximum 10080
-     */
-  durationMinutes: number;
+  /** null means a permanent ban */
+  durationMinutes: number | null;
   /** @maxLength 500 */
   reason?: string;
 }
