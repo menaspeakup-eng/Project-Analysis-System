@@ -45,7 +45,7 @@ const SubmitChallengeBody = z.object({
 });
 
 const ReviewSubmissionBody = z.object({
-  status: z.enum(["accepted", "rejected"]),
+  status: z.enum(["accepted", "rejected", "needs_revision"]),
   feedback: z.string().max(1000).optional().or(z.literal("")),
 });
 
@@ -165,12 +165,13 @@ router.get("/teacher/challenges", async (req, res) => {
       })
     : [];
 
-  const countsByChallenge = new Map<number, { pending: number; accepted: number; rejected: number }>();
+  const countsByChallenge = new Map<number, { pending: number; accepted: number; rejected: number; needsRevision: number }>();
   for (const s of submissions) {
-    const existing = countsByChallenge.get(s.challengeId) || { pending: 0, accepted: 0, rejected: 0 };
+    const existing = countsByChallenge.get(s.challengeId) || { pending: 0, accepted: 0, rejected: 0, needsRevision: 0 };
     if (s.status === "pending") existing.pending++;
     else if (s.status === "accepted") existing.accepted++;
     else if (s.status === "rejected") existing.rejected++;
+    else if (s.status === "needs_revision") existing.needsRevision++;
     countsByChallenge.set(s.challengeId, existing);
   }
 
@@ -187,7 +188,7 @@ router.get("/teacher/challenges", async (req, res) => {
     publishedAt: c.publishedAt,
     expiresAt: c.expiresAt,
     isExpired: c.expiresAt < now(),
-    counts: countsByChallenge.get(c.id) || { pending: 0, accepted: 0, rejected: 0 },
+    counts: countsByChallenge.get(c.id) || { pending: 0, accepted: 0, rejected: 0, needsRevision: 0 },
   }));
 
   res.json({ challenges: result });
@@ -333,7 +334,7 @@ router.post("/teacher/submissions/:id/review", async (req, res) => {
     return;
   }
 
-  if (submission.status !== "pending" && submission.status !== "rejected") {
+  if (submission.status === "accepted") {
     res.status(400).json({ error: "لا يمكن مراجعة إجابة تم قبولها مسبقاً" });
     return;
   }

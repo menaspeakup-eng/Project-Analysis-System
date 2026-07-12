@@ -12,4 +12,5 @@ export type ReviewSubmissionBodyStatus = typeof ReviewSubmissionBodyStatus[keyof
 export const ReviewSubmissionBodyStatus = {
   accepted: 'accepted',
   rejected: 'rejected',
+  needs_revision: 'needs_revision',
 } as const;

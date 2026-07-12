@@ -29,6 +29,7 @@ import {
   Square,
   Trash2,
   Volume2,
+  Pencil,
 } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -36,6 +37,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "بانتظار المراجعة",
   accepted: "تم قبوله",
   rejected: "مرفوض",
+  needs_revision: "يحتاج تعديل",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -43,6 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: "bg-[hsl(45,90%,55%)] text-white",
   accepted: "bg-[hsl(150,55%,45%)] text-white",
   rejected: "bg-destructive text-white",
+  needs_revision: "bg-[hsl(35,90%,55%)] text-white",
 };
 
 const SUBMISSION_TYPE_LABELS: Record<string, string> = {
@@ -360,10 +363,10 @@ export default function StudentChallenges() {
                 </span>
               </div>
 
-              {selected.status === "rejected" && selected.teacherFeedback && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-2xl p-4">
-                  <p className="font-bold text-destructive text-sm flex items-center gap-1">
-                    <X className="w-4 h-4" />
+              {(selected.status === "rejected" || selected.status === "needs_revision") && selected.teacherFeedback && (
+                <div className={`border rounded-2xl p-4 ${selected.status === "needs_revision" ? "bg-[hsl(35,90%,95%)] border-[hsl(35,90%,55%)]/20" : "bg-destructive/10 border-destructive/20"}`}>
+                  <p className={`font-bold text-sm flex items-center gap-1 ${selected.status === "needs_revision" ? "text-[hsl(35,90%,45%)]" : "text-destructive"}`}>
+                    {selected.status === "needs_revision" ? <Pencil className="w-4 h-4" /> : <X className="w-4 h-4" />}
                     ملاحظة المعلم:
                   </p>
                   <p className="text-sm text-muted-foreground font-medium mt-1">

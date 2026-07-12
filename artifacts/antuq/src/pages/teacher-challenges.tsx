@@ -35,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Flame, Plus, Trash2, Eye, Check, X, Clock } from "lucide-react";
+import { Flame, Plus, Trash2, Eye, Check, X, Clock, Pencil } from "lucide-react";
 
 interface TeacherChallengesProps {
   teacherIdParam?: number;
@@ -55,6 +55,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "قيد المراجعة",
   accepted: "مقبول",
   rejected: "مرفوض",
+  needs_revision: "يحتاج تعديل",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -62,6 +63,7 @@ const STATUS_COLORS: Record<string, string> = {
   pending: "bg-[hsl(45,90%,55%)] text-white",
   accepted: "bg-[hsl(150,55%,45%)] text-white",
   rejected: "bg-destructive text-white",
+  needs_revision: "bg-[hsl(35,90%,55%)] text-white",
 };
 
 export default function TeacherChallenges({ teacherIdParam, classes }: TeacherChallengesProps) {
@@ -136,7 +138,7 @@ export default function TeacherChallenges({ teacherIdParam, classes }: TeacherCh
     deleteChallenge({ id, params }, { onSuccess: invalidate });
   };
 
-  const handleReview = (submissionId: number, status: "accepted" | "rejected") => {
+  const handleReview = (submissionId: number, status: "accepted" | "rejected" | "needs_revision") => {
     review(
       {
         id: submissionId,
@@ -355,6 +357,9 @@ export default function TeacherChallenges({ teacherIdParam, classes }: TeacherCh
                   <Badge className="rounded-full font-bold bg-destructive text-white">
                     {c.counts.rejected} مرفوض
                   </Badge>
+                  <Badge className="rounded-full font-bold bg-[hsl(35,90%,55%)] text-white">
+                    {c.counts.needsRevision} يحتاج تعديل
+                  </Badge>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
@@ -448,7 +453,7 @@ export default function TeacherChallenges({ teacherIdParam, classes }: TeacherCh
                                   placeholder="ملاحظة (اختياري)"
                                   className="h-16 rounded-xl border-border text-sm"
                                 />
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
                                   <Button
                                     size="sm"
                                     className="rounded-xl h-8 font-bold bg-[hsl(150,55%,45%)] hover:bg-[hsl(150,55%,40%)]"
@@ -456,6 +461,14 @@ export default function TeacherChallenges({ teacherIdParam, classes }: TeacherCh
                                   >
                                     <Check className="w-4 h-4 ml-1" />
                                     قبول
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="rounded-xl h-8 font-bold bg-[hsl(35,90%,55%)] hover:bg-[hsl(35,90%,50%)] text-white"
+                                    onClick={() => handleReview(s.id, "needs_revision")}
+                                  >
+                                    <Pencil className="w-4 h-4 ml-1" />
+                                    طلب تعديل
                                   </Button>
                                   <Button
                                     size="sm"

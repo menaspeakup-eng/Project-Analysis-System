@@ -131,7 +131,7 @@ export const GetStudentChallengesResponse = zod.object({
   "submissionType": zod.enum(['text', 'audio', 'image', 'file', 'mixed']),
   "publishedAt": zod.coerce.date(),
   "expiresAt": zod.coerce.date(),
-  "status": zod.enum(['not_started', 'pending', 'accepted', 'rejected']),
+  "status": zod.enum(['not_started', 'pending', 'accepted', 'rejected', 'needs_revision']),
   "submissionText": zod.union([zod.string(),zod.null()]).optional(),
   "submissionFiles": zod.array(zod.object({
   "name": zod.string(),
@@ -161,7 +161,7 @@ export const GetStudentChallengeByIdResponse = zod.object({
   "submissionType": zod.enum(['text', 'audio', 'image', 'file', 'mixed']),
   "publishedAt": zod.coerce.date(),
   "expiresAt": zod.coerce.date(),
-  "status": zod.enum(['not_started', 'pending', 'accepted', 'rejected']),
+  "status": zod.enum(['not_started', 'pending', 'accepted', 'rejected', 'needs_revision']),
   "submissionText": zod.union([zod.string(),zod.null()]).optional(),
   "submissionFiles": zod.array(zod.object({
   "name": zod.string(),
@@ -197,7 +197,7 @@ export const SubmitStudentChallengeBody = zod.object({
 
 export const SubmitStudentChallengeResponse = zod.object({
   "id": zod.number(),
-  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "status": zod.enum(['pending', 'accepted', 'rejected', 'needs_revision']),
   "submissionText": zod.union([zod.string(),zod.null()]).optional(),
   "submissionFiles": zod.array(zod.object({
   "name": zod.string(),
@@ -233,7 +233,8 @@ export const GetTeacherChallengesResponse = zod.object({
   "counts": zod.object({
   "pending": zod.number(),
   "accepted": zod.number(),
-  "rejected": zod.number()
+  "rejected": zod.number(),
+  "needsRevision": zod.number()
 })
 }))
 })
@@ -286,7 +287,8 @@ export const CreateTeacherChallengeResponse = zod.object({
   "counts": zod.object({
   "pending": zod.number(),
   "accepted": zod.number(),
-  "rejected": zod.number()
+  "rejected": zod.number(),
+  "needsRevision": zod.number()
 })
 })
 
@@ -323,7 +325,7 @@ export const GetTeacherChallengeSubmissionsResponse = zod.object({
   "id": zod.number(),
   "studentId": zod.number(),
   "studentName": zod.string(),
-  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "status": zod.enum(['pending', 'accepted', 'rejected', 'needs_revision']),
   "submissionText": zod.union([zod.string(),zod.null()]).optional(),
   "submissionFiles": zod.array(zod.object({
   "name": zod.string(),
@@ -355,13 +357,13 @@ export const reviewTeacherSubmissionBodyFeedbackMax = 1000;
 
 
 export const ReviewTeacherSubmissionBody = zod.object({
-  "status": zod.enum(['accepted', 'rejected']),
+  "status": zod.enum(['accepted', 'rejected', 'needs_revision']),
   "feedback": zod.string().max(reviewTeacherSubmissionBodyFeedbackMax).optional()
 })
 
 export const ReviewTeacherSubmissionResponse = zod.object({
   "id": zod.number(),
-  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "status": zod.enum(['pending', 'accepted', 'rejected', 'needs_revision']),
   "teacherFeedback": zod.union([zod.string(),zod.null()]).optional(),
   "reviewedAt": zod.union([zod.coerce.date(),zod.null()]).optional(),
   "pointsAwarded": zod.union([zod.number(),zod.null()]).optional()

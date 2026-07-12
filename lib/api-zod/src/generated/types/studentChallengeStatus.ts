@@ -14,4 +14,5 @@ export const StudentChallengeStatus = {
   pending: 'pending',
   accepted: 'accepted',
   rejected: 'rejected',
+  needs_revision: 'needs_revision',
 } as const;

@@ -10,4 +10,5 @@ export type TeacherChallengeCounts = {
   pending: number;
   accepted: number;
   rejected: number;
+  needsRevision: number;
 };

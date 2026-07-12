@@ -743,7 +743,7 @@ components:
           format: date-time
         status:
           type: string
-          enum: [not_started, pending, accepted, rejected]
+          enum: [not_started, pending, accepted, rejected, needs_revision]
         submissionText:
           oneOf:
             - type: string
@@ -800,7 +800,7 @@ components:
           type: integer
         status:
           type: string
-          enum: [pending, accepted, rejected]
+          enum: [pending, accepted, rejected, needs_revision]
         submissionText:
           oneOf:
             - type: string
@@ -862,10 +862,13 @@ components:
               type: integer
             rejected:
               type: integer
+            needsRevision:
+              type: integer
           required:
             - pending
             - accepted
             - rejected
+            - needsRevision
       required:
         - id
         - classId
@@ -941,7 +944,7 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, accepted, rejected]
+          enum: [pending, accepted, rejected, needs_revision]
         submissionText:
           oneOf:
             - type: string
@@ -987,7 +990,7 @@ components:
       properties:
         status:
           type: string
-          enum: [accepted, rejected]
+          enum: [accepted, rejected, needs_revision]
         feedback:
           type: string
           maxLength: 1000
@@ -1000,7 +1003,7 @@ components:
           type: integer
         status:
           type: string
-          enum: [pending, accepted, rejected]
+          enum: [pending, accepted, rejected, needs_revision]
         teacherFeedback:
           oneOf:
             - type: string

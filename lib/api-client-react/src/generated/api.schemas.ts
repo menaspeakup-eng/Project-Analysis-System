@@ -85,6 +85,7 @@ export const StudentChallengeStatus = {
   pending: 'pending',
   accepted: 'accepted',
   rejected: 'rejected',
+  needs_revision: 'needs_revision',
 } as const;
 
 export interface SubmissionFile {
@@ -121,6 +122,7 @@ export const ChallengeSubmissionStatus = {
   pending: 'pending',
   accepted: 'accepted',
   rejected: 'rejected',
+  needs_revision: 'needs_revision',
 } as const;
 
 export interface ChallengeSubmission {
@@ -146,6 +148,7 @@ export type TeacherChallengeCounts = {
   pending: number;
   accepted: number;
   rejected: number;
+  needsRevision: number;
 };
 
 export interface TeacherChallenge {
@@ -217,6 +220,7 @@ export const TeacherSubmissionStatus = {
   pending: 'pending',
   accepted: 'accepted',
   rejected: 'rejected',
+  needs_revision: 'needs_revision',
 } as const;
 
 export interface TeacherSubmission {
@@ -242,6 +246,7 @@ export type ReviewSubmissionBodyStatus = typeof ReviewSubmissionBodyStatus[keyof
 export const ReviewSubmissionBodyStatus = {
   accepted: 'accepted',
   rejected: 'rejected',
+  needs_revision: 'needs_revision',
 } as const;
 
 export interface ReviewSubmissionBody {
@@ -257,6 +262,7 @@ export const ReviewedSubmissionStatus = {
   pending: 'pending',
   accepted: 'accepted',
   rejected: 'rejected',
+  needs_revision: 'needs_revision',
 } as const;
 
 export interface ReviewedSubmission {
