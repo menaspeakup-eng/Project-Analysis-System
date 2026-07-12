@@ -21,9 +21,6 @@ export default function Home() {
           <img src="/logo.svg" alt="انطق" className="h-10 md:h-12 w-auto" />
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="font-bold rounded-xl px-6 h-11 border-border" onClick={handleGuestContinue}>
-            دخول
-          </Button>
           <Button className="font-bold bg-primary hover:bg-primary/90 text-white rounded-xl px-6 h-11" asChild>
             <Link href="/sign-in">ابدأ الآن</Link>
           </Button>
@@ -55,7 +52,7 @@ export default function Home() {
                </Link>
             </Button>
             <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg h-14 px-8 rounded-xl font-bold border-2 border-border hover:bg-accent/5 hover:text-accent hover:border-accent/30 transition-all bg-white" onClick={handleGuestContinue}>
-               دخول
+               المتابعة كزائر
             </Button>
           </div>
           
@@ -212,7 +209,7 @@ export default function Home() {
                </Link>
             </Button>
             <Button size="lg" variant="ghost" className="w-full sm:w-auto h-14 px-8 text-lg font-bold rounded-2xl text-white hover:bg-white/20 transition-all" onClick={handleGuestContinue}>
-               دخول
+               جرب المنصة كزائر
             </Button>
           </div>
         </div>
