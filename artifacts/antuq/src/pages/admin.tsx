@@ -9,6 +9,7 @@ import {
   useToggleAdminTeacher,
   useCreateAdminClass,
   useUpdateAdminClass,
+  useDeleteAdminClass,
   useMoveAdminStudentClass,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -66,6 +67,7 @@ export default function Admin() {
   const { mutate: toggleTeacher } = useToggleAdminTeacher();
   const { mutate: createClass } = useCreateAdminClass();
   const { mutate: updateClass } = useUpdateAdminClass();
+  const { mutate: deleteClass } = useDeleteAdminClass();
   const { mutate: moveStudent } = useMoveAdminStudentClass();
 
   const [newClassName, setNewClassName] = useState("");
@@ -145,6 +147,13 @@ export default function Admin() {
         },
       },
     );
+  };
+
+  const handleDeleteClass = (id: number, name: string) => {
+    if (!window.confirm(`هل أنت متأكد من حذف الصف "${name}"؟ سيُحذف الصف ويُفصل الطلاب المرتبطون به.`)) {
+      return;
+    }
+    deleteClass({ id }, { onSuccess: invalidate });
   };
 
   const handleMoveStudent = (studentId: number, classId: string) => {
@@ -336,6 +345,7 @@ export default function Admin() {
                     allClasses={classes}
                     onAssignTeacher={handleAssignTeacher}
                     onRename={handleRenameClass}
+                    onDelete={handleDeleteClass}
                     onRenameChange={(name) => setRenamingClass((prev) => (prev ? { ...prev, name } : null))}
                     onStartRename={() => setRenamingClass({ id: cls.id, name: cls.name })}
                     onStartMoveStudent={(studentId) => setMovingStudent({ studentId, currentClassId: cls.id })}
@@ -359,6 +369,7 @@ function ClassCard({
   allClasses,
   onAssignTeacher,
   onRename,
+  onDelete,
   onRenameChange,
   onStartRename,
   onStartMoveStudent,
@@ -371,6 +382,7 @@ function ClassCard({
   allClasses: AdminClass[];
   onAssignTeacher: (classId: number, teacherId: string) => void;
   onRename: (id: number, name: string) => void;
+  onDelete: (id: number, name: string) => void;
   onRenameChange: (name: string) => void;
   onStartRename: () => void;
   onStartMoveStudent: (studentId: number) => void;
@@ -430,6 +442,15 @@ function ClassCard({
               onClick={onStartRename}
             >
               تعديل الاسم
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="rounded-xl font-bold h-9 text-destructive hover:bg-destructive/10"
+              onClick={() => onDelete(cls.id, cls.name)}
+            >
+              <Trash2 className="w-4 h-4 ml-1" />
+              حذف
             </Button>
           </div>
         </div>

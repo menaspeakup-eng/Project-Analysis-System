@@ -248,6 +248,25 @@ paths:
           description: Not signed in
         "403":
           description: Not an admin
+    delete:
+      operationId: deleteAdminClass
+      tags: [admin]
+      summary: Delete a class and detach its students
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Class deleted
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+        "404":
+          description: Class not found
   /admin/students/{id}/class:
     patch:
       operationId: moveAdminStudentClass

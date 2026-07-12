@@ -1048,6 +1048,77 @@ export const useUpdateAdminClass = <TError = ErrorType<void>,
       return useMutation(getUpdateAdminClassMutationOptions(options));
     }
 
+export const getDeleteAdminClassUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/classes/${id}`
+}
+
+/**
+ * @summary Delete a class and detach its students
+ */
+export const deleteAdminClass = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteAdminClassUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteAdminClassMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClass>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClass>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteAdminClass'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAdminClass>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAdminClass(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAdminClassMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAdminClass>>>
+
+    export type DeleteAdminClassMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a class and detach its students
+ */
+export const useDeleteAdminClass = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAdminClass>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAdminClass>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteAdminClassMutationOptions(options));
+    }
+
 export const getMoveAdminStudentClassUrl = (id: number,) => {
 
 

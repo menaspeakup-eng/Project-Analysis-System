@@ -311,6 +311,36 @@ router.patch("/admin/classes/:id", async (req, res) => {
   res.json(formatAdminClass(updated, allStudents, teachersById));
 });
 
+router.delete("/admin/classes/:id", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireAdmin(identity);
+
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    res.status(400).json({ error: "معرف الصف غير صالح" });
+    return;
+  }
+
+  const cls = await db.query.classesTable.findFirst({
+    where: eq(classesTable.id, id),
+  });
+  if (!cls) {
+    res.status(404).json({ error: "الصف غير موجود" });
+    return;
+  }
+
+  // Detach all students currently in this class before deleting.
+  await db
+    .update(studentsTable)
+    .set({ classId: null })
+    .where(eq(studentsTable.classId, id));
+
+  await db.delete(classesTable).where(eq(classesTable.id, id));
+
+  res.status(204).send();
+});
+
 router.patch("/admin/students/:id/class", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);

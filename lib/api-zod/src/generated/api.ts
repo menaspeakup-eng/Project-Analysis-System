@@ -313,6 +313,16 @@ export const UpdateAdminClassResponse = zod.object({
 
 
 /**
+ * @summary Delete a class and detach its students
+ */
+export const DeleteAdminClassParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAdminClassResponse = zod.void()
+
+
+/**
  * @summary Move or remove a student from a class
  */
 export const MoveAdminStudentClassParams = zod.object({
