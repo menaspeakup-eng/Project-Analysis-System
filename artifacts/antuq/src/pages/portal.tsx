@@ -423,7 +423,7 @@ export default function Portal() {
             <ComingSoonCard icon={Play} label="الألعاب التعليمية" colorClass="bg-accent/15 text-accent" href="/games" />
             <ComingSoonCard icon={BookOpen} label="المكتبة" colorClass="bg-primary/15 text-primary" />
             <ComingSoonCard icon={Award} label="جميع الإنجازات" colorClass="bg-secondary/20 text-secondary-foreground" />
-            <ComingSoonCard icon={MessageCircle} label="الشات العام" colorClass="bg-[hsl(180,60%,90%)] text-[hsl(180,60%,35%)]" />
+            <ComingSoonCard icon={MessageCircle} label="الشات" colorClass="bg-[hsl(180,60%,90%)] text-[hsl(180,60%,35%)]" href="/chat" />
             <ComingSoonCard icon={Sparkles} label="ورشة القصص بالذكاء الاصطناعي" colorClass="bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)]" />
             <ComingSoonCard icon={Users} label="الأصدقاء" colorClass="bg-[hsl(335,75%,94%)] text-[hsl(335,75%,50%)]" />
             <ComingSoonCard icon={Settings} label="الإعدادات" colorClass="bg-muted text-muted-foreground" />

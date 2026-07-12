@@ -41,6 +41,7 @@ import {
   Eye,
   Gamepad2,
   Flame,
+  MessageCircle,
 } from "lucide-react";
 import type { TeacherClass, TeacherStudent } from "@workspace/api-client-react";
 import TeacherChallenges from "./teacher-challenges";
@@ -190,6 +191,14 @@ export default function Teacher() {
           <span className="hidden sm:inline text-sm font-bold text-muted-foreground">
             {user?.primaryEmailAddress?.emailAddress}
           </span>
+          <Button
+            variant="ghost"
+            className="text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl"
+            onClick={() => setLocation("/chat")}
+          >
+            <MessageCircle className="w-5 h-5 ml-2" />
+            <span className="font-bold hidden sm:inline">الشات</span>
+          </Button>
           <Button
             variant="ghost"
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"

@@ -18,6 +18,7 @@ export interface Identity {
   nameConfirmed: boolean;
   points: number;
   avatarConfig: AvatarConfig;
+  studentId: number;
   classId: number | null;
   className: string | null;
   teacherName: string | null;

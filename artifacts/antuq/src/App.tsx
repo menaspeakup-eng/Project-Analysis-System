@@ -20,6 +20,7 @@ import Games from "@/pages/games";
 import GamePlay from "@/pages/game-play";
 import OnboardingName from "@/pages/onboarding-name";
 import NotFound from "@/pages/not-found";
+import ChatPage from "@/pages/chat";
 import { useGetIdentityMe } from "@workspace/api-client-react";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -194,6 +195,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/teacher" component={Teacher} />
             <Route path="/games" component={Games} />
             <Route path="/games/:id" component={GamePlay} />
+            <Route path="/chat" component={ChatPage} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />
             <Route path="/schools" component={Schools} />

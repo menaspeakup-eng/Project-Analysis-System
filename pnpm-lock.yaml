@@ -637,6 +637,9 @@ importers:
       orval:
         specifier: ^8.20.0
         version: 8.20.0(prettier@3.9.4)(typescript@5.9.3)
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
 
   lib/api-zod:
     dependencies:

@@ -45,6 +45,7 @@ export const GetIdentityMeResponse = zod.object({
   "frame": zod.string().default(getIdentityMeResponseAvatarConfigFrameDefault),
   "badges": zod.array(zod.string()).default(getIdentityMeResponseAvatarConfigBadgesDefault)
 }),
+  "studentId": zod.number(),
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
@@ -1132,6 +1133,137 @@ export const GetTeacherGameStatsResponse = zod.object({
   "mistakes": zod.number(),
   "durationMs": zod.union([zod.number(),zod.null()]).optional(),
   "completedAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary List available chat rooms
+ */
+export const GetChatRoomsResponse = zod.object({
+  "rooms": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "classId": zod.union([zod.number(),zod.null()])
+}))
+})
+
+
+/**
+ * @summary List messages in a chat room
+ */
+export const GetChatMessagesParams = zod.object({
+  "classId": zod.coerce.string().describe('\'general\' or a class id')
+})
+
+export const GetChatMessagesResponse = zod.object({
+  "messages": zod.array(zod.object({
+  "id": zod.number(),
+  "classId": zod.union([zod.number(),zod.null()]).optional(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderPoints": zod.number(),
+  "senderLevel": zod.number(),
+  "senderAvatarConfig": zod.record(zod.string(), zod.unknown()),
+  "content": zod.string(),
+  "isDeleted": zod.boolean(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Send a message to a chat room
+ */
+export const SendChatMessageParams = zod.object({
+  "classId": zod.coerce.string().describe('\'general\' or a class id')
+})
+
+export const sendChatMessageBodyContentMax = 1000;
+
+
+
+export const SendChatMessageBody = zod.object({
+  "content": zod.string().min(1).max(sendChatMessageBodyContentMax)
+})
+
+export const SendChatMessageResponse = zod.object({
+  "id": zod.number(),
+  "classId": zod.union([zod.number(),zod.null()]).optional(),
+  "senderId": zod.number(),
+  "senderName": zod.string(),
+  "senderPoints": zod.number(),
+  "senderLevel": zod.number(),
+  "senderAvatarConfig": zod.record(zod.string(), zod.unknown()),
+  "content": zod.string(),
+  "isDeleted": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a chat message
+ */
+export const DeleteChatMessageParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteChatMessageResponse = zod.void()
+
+
+/**
+ * @summary Mute a student in a chat room
+ */
+export const MuteChatStudentParams = zod.object({
+  "classId": zod.coerce.string().describe('\'general\' or a class id')
+})
+
+export const muteChatStudentBodyDurationMinutesMax = 10080;
+
+export const muteChatStudentBodyReasonMax = 500;
+
+
+
+export const MuteChatStudentBody = zod.object({
+  "studentId": zod.number(),
+  "durationMinutes": zod.number().min(1).max(muteChatStudentBodyDurationMinutesMax),
+  "reason": zod.string().max(muteChatStudentBodyReasonMax).optional()
+})
+
+export const MuteChatStudentResponse = zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "studentName": zod.string(),
+  "mutedUntil": zod.coerce.date(),
+  "reason": zod.union([zod.string(),zod.null()]).optional()
+})
+
+
+/**
+ * @summary Unmute a student in a chat room
+ */
+export const UnmuteChatStudentParams = zod.object({
+  "classId": zod.coerce.string().describe('\'general\' or a class id'),
+  "studentId": zod.coerce.number()
+})
+
+export const UnmuteChatStudentResponse = zod.void()
+
+
+/**
+ * @summary List muted students in a chat room
+ */
+export const GetChatMutesParams = zod.object({
+  "classId": zod.coerce.string().describe('\'general\' or a class id')
+})
+
+export const GetChatMutesResponse = zod.object({
+  "mutes": zod.array(zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "studentName": zod.string(),
+  "mutedUntil": zod.coerce.date(),
+  "reason": zod.union([zod.string(),zod.null()]).optional()
 }))
 })
 

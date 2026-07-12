@@ -46,6 +46,7 @@ export interface Identity {
   nameConfirmed: boolean;
   points: number;
   avatarConfig: AvatarConfig;
+  studentId: number;
   classId: number | null;
   className: string | null;
   teacherName: string | null;
@@ -569,6 +570,66 @@ export interface TeacherGameStats {
   avgDuration: number;
   wordStats: TeacherGameStatsWordStats;
   sessions: GameSession[];
+}
+
+export interface ChatRoom {
+  id: string;
+  name: string;
+  classId: number | null;
+}
+
+export interface ChatRoomList {
+  rooms: ChatRoom[];
+}
+
+export type ChatMessageSenderAvatarConfig = { [key: string]: unknown };
+
+export interface ChatMessage {
+  id: number;
+  classId?: number | null;
+  senderId: number;
+  senderName: string;
+  senderPoints: number;
+  senderLevel: number;
+  senderAvatarConfig: ChatMessageSenderAvatarConfig;
+  content: string;
+  isDeleted: boolean;
+  createdAt: string;
+}
+
+export interface ChatMessageList {
+  messages: ChatMessage[];
+}
+
+export interface ChatSendMessageBody {
+  /**
+     * @minLength 1
+     * @maxLength 1000
+     */
+  content: string;
+}
+
+export interface ChatMute {
+  id: number;
+  studentId: number;
+  studentName: string;
+  mutedUntil: string;
+  reason?: string | null;
+}
+
+export interface ChatMuteList {
+  mutes: ChatMute[];
+}
+
+export interface ChatMuteBody {
+  studentId: number;
+  /**
+     * @minimum 1
+     * @maximum 10080
+     */
+  durationMinutes: number;
+  /** @maxLength 500 */
+  reason?: string;
 }
 
 /**

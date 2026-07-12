@@ -822,6 +822,173 @@ paths:
           description: Not a teacher or admin
         "404":
           description: Game not found
+  /chat/rooms:
+    get:
+      operationId: getChatRooms
+      tags: [chat]
+      summary: List available chat rooms
+      responses:
+        "200":
+          description: Rooms list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatRoomList"
+        "401":
+          description: Not signed in
+  /chat/rooms/{classId}/messages:
+    get:
+      operationId: getChatMessages
+      tags: [chat]
+      summary: List messages in a chat room
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: string
+          description: "'general' or a class id"
+      responses:
+        "200":
+          description: Messages list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessageList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot access this room
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a message to a chat room
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: string
+          description: "'general' or a class id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatSendMessageBody"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot access this room or muted
+  /chat/messages/{id}:
+    delete:
+      operationId: deleteChatMessage
+      tags: [chat]
+      summary: Delete a chat message
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Message deleted
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot delete this message
+        "404":
+          description: Message not found
+  /chat/rooms/{classId}/mute:
+    post:
+      operationId: muteChatStudent
+      tags: [chat]
+      summary: Mute a student in a chat room
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: string
+          description: "'general' or a class id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMuteBody"
+      responses:
+        "201":
+          description: Student muted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMute"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot moderate this room
+        "404":
+          description: Student not found
+  /chat/rooms/{classId}/mute/{studentId}:
+    delete:
+      operationId: unmuteChatStudent
+      tags: [chat]
+      summary: Unmute a student in a chat room
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: string
+          description: "'general' or a class id"
+        - in: path
+          name: studentId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Student unmuted
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot moderate this room
+  /chat/rooms/{classId}/mutes:
+    get:
+      operationId: getChatMutes
+      tags: [chat]
+      summary: List muted students in a chat room
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: string
+          description: "'general' or a class id"
+      responses:
+        "200":
+          description: Mutes list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMuteList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot moderate this room
 components:
   parameters:
     TeacherIdQuery:
@@ -861,6 +1028,8 @@ components:
           type: integer
         avatarConfig:
           $ref: "#/components/schemas/AvatarConfig"
+        studentId:
+          type: integer
         classId:
           oneOf:
             - type: integer
@@ -887,6 +1056,7 @@ components:
         - nameConfirmed
         - points
         - avatarConfig
+        - studentId
         - classId
         - className
         - teacherName
@@ -1858,3 +2028,127 @@ components:
         - avgDuration
         - wordStats
         - sessions
+    ChatRoom:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+      required:
+        - id
+        - name
+        - classId
+    ChatRoomList:
+      type: object
+      properties:
+        rooms:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatRoom"
+      required:
+        - rooms
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+        senderId:
+          type: integer
+        senderName:
+          type: string
+        senderPoints:
+          type: integer
+        senderLevel:
+          type: integer
+        senderAvatarConfig:
+          type: object
+          additionalProperties: true
+        content:
+          type: string
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - senderId
+        - senderName
+        - senderPoints
+        - senderLevel
+        - senderAvatarConfig
+        - content
+        - isDeleted
+        - createdAt
+    ChatMessageList:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+      required:
+        - messages
+    ChatSendMessageBody:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 1000
+      required:
+        - content
+    ChatMute:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        mutedUntil:
+          type: string
+          format: date-time
+        reason:
+          oneOf:
+            - type: string
+            - type: "null"
+      required:
+        - id
+        - studentId
+        - studentName
+        - mutedUntil
+    ChatMuteList:
+      type: object
+      properties:
+        mutes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChatMute"
+      required:
+        - mutes
+    ChatMuteBody:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        durationMinutes:
+          type: integer
+          minimum: 1
+          maximum: 10080
+        reason:
+          type: string
+          maxLength: 500
+      required:
+        - studentId
+        - durationMinutes

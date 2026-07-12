@@ -41,6 +41,7 @@ router.get("/identity/me", async (req, res) => {
     nameConfirmed: identity.student.nameConfirmed,
     points: identity.student.points,
     avatarConfig: identity.student.avatarConfig,
+    studentId: identity.student.id,
     classId: identity.student.classId,
     className,
     teacherName,
