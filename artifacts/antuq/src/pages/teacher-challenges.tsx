@@ -422,17 +422,39 @@ export default function TeacherChallenges({ teacherIdParam, classes }: TeacherCh
                                 </p>
                               )}
                               {s.submissionFiles && s.submissionFiles.length > 0 && (
-                                <div className="flex flex-col gap-1">
+                                <div className="flex flex-col gap-2">
                                   {s.submissionFiles.map((file, idx) => (
-                                    <a
-                                      key={idx}
-                                      href={file.data}
-                                      download={file.name}
-                                      className="text-sm text-primary font-bold underline truncate"
-                                      dir="ltr"
-                                    >
-                                      {file.name}
-                                    </a>
+                                    <div key={idx} className="w-full">
+                                      {file.type.startsWith("audio/") ? (
+                                        <div className="space-y-1">
+                                          <p className="text-xs text-muted-foreground font-medium truncate" dir="ltr">
+                                            {file.name}
+                                          </p>
+                                          <audio src={file.data} controls className="w-full max-w-[220px] h-8" />
+                                        </div>
+                                      ) : file.type.startsWith("image/") ? (
+                                        <div className="space-y-1">
+                                          <p className="text-xs text-muted-foreground font-medium truncate" dir="ltr">
+                                            {file.name}
+                                          </p>
+                                          <img
+                                            src={file.data}
+                                            alt={file.name}
+                                            className="w-24 h-24 rounded-xl object-cover border border-border cursor-pointer"
+                                            onClick={() => window.open(file.data, "_blank")}
+                                          />
+                                        </div>
+                                      ) : (
+                                        <a
+                                          href={file.data}
+                                          download={file.name}
+                                          className="text-sm text-primary font-bold underline truncate"
+                                          dir="ltr"
+                                        >
+                                          {file.name}
+                                        </a>
+                                      )}
+                                    </div>
                                   ))}
                                 </div>
                               )}
