@@ -928,6 +928,7 @@ export const GetTeacherGamesResponse = zod.object({
   "isCompleted": zod.boolean(),
   "isLocked": zod.boolean()
 }).and(zod.object({
+  "classId": zod.union([zod.number(),zod.null()]).optional(),
   "stats": zod.object({
   "plays": zod.number(),
   "uniqueStudents": zod.number(),
@@ -952,7 +953,7 @@ export const createTeacherGameBodyNameMax = 200;
 
 export const createTeacherGameBodyDescriptionMax = 1000;
 
-export const createTeacherGameBodyImageUrlMax = 1000;
+export const createTeacherGameBodyImageUrlMax = 5000000;
 
 export const createTeacherGameBodyPointsRewardMin = 0;
 export const createTeacherGameBodyPointsRewardMax = 1000;
@@ -965,7 +966,8 @@ export const CreateTeacherGameBody = zod.object({
   "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
   "description": zod.string().max(createTeacherGameBodyDescriptionMax).optional(),
   "imageUrl": zod.string().max(createTeacherGameBodyImageUrlMax).optional(),
-  "pointsReward": zod.number().min(createTeacherGameBodyPointsRewardMin).max(createTeacherGameBodyPointsRewardMax).optional()
+  "pointsReward": zod.number().min(createTeacherGameBodyPointsRewardMin).max(createTeacherGameBodyPointsRewardMax).optional(),
+  "classId": zod.union([zod.number(),zod.null()]).optional()
 })
 
 export const CreateTeacherGameResponse = zod.object({
@@ -981,6 +983,7 @@ export const CreateTeacherGameResponse = zod.object({
   "isCompleted": zod.boolean(),
   "isLocked": zod.boolean()
 }).and(zod.object({
+  "classId": zod.union([zod.number(),zod.null()]).optional(),
   "stats": zod.object({
   "plays": zod.number(),
   "uniqueStudents": zod.number(),
@@ -1006,7 +1009,7 @@ export const updateTeacherGameBodyNameMax = 200;
 
 export const updateTeacherGameBodyDescriptionMax = 1000;
 
-export const updateTeacherGameBodyImageUrlMax = 1000;
+export const updateTeacherGameBodyImageUrlMax = 5000000;
 
 export const updateTeacherGameBodyPointsRewardMin = 0;
 export const updateTeacherGameBodyPointsRewardMax = 1000;
@@ -1018,7 +1021,8 @@ export const UpdateTeacherGameBody = zod.object({
   "description": zod.string().max(updateTeacherGameBodyDescriptionMax).optional(),
   "imageUrl": zod.string().max(updateTeacherGameBodyImageUrlMax).optional(),
   "pointsReward": zod.number().min(updateTeacherGameBodyPointsRewardMin).max(updateTeacherGameBodyPointsRewardMax).optional(),
-  "isActive": zod.boolean().optional()
+  "isActive": zod.boolean().optional(),
+  "classId": zod.union([zod.number(),zod.null()]).optional()
 })
 
 export const UpdateTeacherGameResponse = zod.object({
@@ -1034,6 +1038,7 @@ export const UpdateTeacherGameResponse = zod.object({
   "isCompleted": zod.boolean(),
   "isLocked": zod.boolean()
 }).and(zod.object({
+  "classId": zod.union([zod.number(),zod.null()]).optional(),
   "stats": zod.object({
   "plays": zod.number(),
   "uniqueStudents": zod.number(),

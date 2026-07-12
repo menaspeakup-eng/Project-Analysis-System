@@ -259,7 +259,7 @@ export default function Teacher() {
           </section>
         )}
 
-        {activeTab === "games" && <TeacherGames />}
+        {activeTab === "games" && <TeacherGames classes={classes} />}
 
         {activeTab === "challenges" && <TeacherChallenges teacherIdParam={teacherIdParam} classes={classes} />}
       </main>

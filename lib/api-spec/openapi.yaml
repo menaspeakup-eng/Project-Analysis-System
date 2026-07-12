@@ -1687,6 +1687,10 @@ components:
       allOf:
         - $ref: "#/components/schemas/Game"
       properties:
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
         stats:
           $ref: "#/components/schemas/GameStats"
       required:
@@ -1718,11 +1722,15 @@ components:
           maxLength: 1000
         imageUrl:
           type: string
-          maxLength: 1000
+          maxLength: 5000000
         pointsReward:
           type: integer
           minimum: 0
           maximum: 1000
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
       required:
         - slug
         - name
@@ -1739,13 +1747,17 @@ components:
           maxLength: 1000
         imageUrl:
           type: string
-          maxLength: 1000
+          maxLength: 5000000
         pointsReward:
           type: integer
           minimum: 0
           maximum: 1000
         isActive:
           type: boolean
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
       required: []
     GameItem:
       type: object

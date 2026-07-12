@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   db,
   studentsTable,
+  classesTable,
   gamesTable,
   gameItemsTable,
   studentGameSessionsTable,
@@ -28,6 +29,7 @@ const UpdateGameBody = z.object({
   imageUrl: z.string().max(5_000_000).optional().or(z.literal("")),
   pointsReward: z.number().int().min(0).max(1000).optional(),
   isActive: z.boolean().optional(),
+  classId: z.number().int().nullable().optional(),
 });
 
 const CompleteGameBody = z.object({
@@ -41,8 +43,9 @@ const CreateGameBody = z.object({
   name: z.string().min(1).max(200),
   type: GameTypeSchema,
   description: z.string().max(1000).optional().or(z.literal("")),
-  imageUrl: z.string().url().max(1000).optional().or(z.literal("")),
+  imageUrl: z.string().max(5_000_000).optional().or(z.literal("")),
   pointsReward: z.number().int().min(0).max(1000).optional(),
+  classId: z.number().int().optional(),
 });
 
 function parseIntParam(value: string): number | null {
@@ -91,20 +94,29 @@ function validateItems(type: GameType, items: unknown[]) {
   return valid;
 }
 
+function requireGameOwnership(
+  identity: NonNullable<Awaited<ReturnType<typeof resolveIdentity>>>,
+  game: { classId: number | null },
+) {
+  if (identity.isAdmin) return;
+  const allowed = identity.teacherClassIds;
+  if (game.classId == null || allowed.includes(game.classId)) return;
+  const err = new Error("Forbidden") as Error & { status?: number };
+  err.status = 403;
+  throw err;
+}
+
 async function getAccessibleGames(
   identity: NonNullable<Awaited<ReturnType<typeof resolveIdentity>>>,
 ) {
+  const classId = identity.student?.classId ?? null;
   const activeGames = await db.query.gamesTable.findMany({
-    where: eq(gamesTable.isActive, true),
+    where: and(
+      eq(gamesTable.isActive, true),
+      classId === null ? undefined : sql`${gamesTable.classId} IS NULL OR ${gamesTable.classId} = ${classId}`,
+    ),
     orderBy: [gamesTable.id],
   });
-
-  if (activeGames.length === 0) return [];
-
-  const isFullAccess = identity.isTeacher || identity.isAdmin || !!identity.student?.classId;
-  if (!isFullAccess) {
-    return activeGames.slice(0, 1);
-  }
 
   return activeGames;
 }
@@ -118,14 +130,11 @@ async function isGameAccessible(
   });
   if (!game) return false;
 
-  const isFullAccess = identity.isTeacher || identity.isAdmin || !!identity.student?.classId;
-  if (isFullAccess) return true;
+  if (identity.isTeacher || identity.isAdmin) return true;
 
-  const firstActive = await db.query.gamesTable.findFirst({
-    where: eq(gamesTable.isActive, true),
-    orderBy: [gamesTable.id],
-  });
-  return firstActive?.id === gameId;
+  const classId = identity.student?.classId ?? null;
+  if (game.classId == null) return true;
+  return game.classId === classId;
 }
 
 async function getCompletedVersions(
@@ -327,7 +336,14 @@ router.get("/teacher/games", async (req, res) => {
   requireIdentity(identity);
   requireTeacher(identity);
 
+  const allowedClassIds = identity.isAdmin
+    ? null
+    : identity.teacherClassIds;
+
   const games = await db.query.gamesTable.findMany({
+    where: allowedClassIds == null
+      ? undefined
+      : sql`${gamesTable.classId} IS NULL OR ${gamesTable.classId} IN (${allowedClassIds})`,
     orderBy: [gamesTable.id],
   });
 
@@ -381,10 +397,16 @@ router.post("/teacher/games", async (req, res) => {
 
   const body = CreateGameBody.parse(req.body);
 
+  if (body.classId != null && !identity.isAdmin && !identity.teacherClassIds.includes(body.classId)) {
+    res.status(403).json({ error: "لا يمكنك إنشاء لعبة لصف لا تملكه" });
+    return;
+  }
+
   const [game] = await db
     .insert(gamesTable)
     .values({
       slug: body.slug,
+      classId: body.classId ?? null,
       name: body.name,
       type: body.type,
       description: body.description || undefined,
@@ -436,6 +458,13 @@ router.put("/teacher/games/:id", async (req, res) => {
     return;
   }
 
+  requireGameOwnership(identity, game);
+
+  if (body.classId !== undefined && body.classId != null && !identity.isAdmin && !identity.teacherClassIds.includes(body.classId)) {
+    res.status(403).json({ error: "لا يمكنك نقل اللعبة إلى صف لا تملكه" });
+    return;
+  }
+
   const [updated] = await db
     .update(gamesTable)
     .set({
@@ -444,6 +473,7 @@ router.put("/teacher/games/:id", async (req, res) => {
       imageUrl: body.imageUrl ?? game.imageUrl,
       pointsReward: body.pointsReward ?? game.pointsReward,
       isActive: body.isActive ?? game.isActive,
+      classId: body.classId === undefined ? game.classId : (body.classId ?? null),
       updatedAt: now(),
     })
     .where(eq(gamesTable.id, gameId))
@@ -482,6 +512,8 @@ router.delete("/teacher/games/:id", async (req, res) => {
     return;
   }
 
+  requireGameOwnership(identity, game);
+
   await db.transaction(async (tx) => {
     await tx.delete(studentGameSessionsTable).where(eq(studentGameSessionsTable.gameId, gameId));
     await tx.delete(gameItemsTable).where(eq(gameItemsTable.gameId, gameId));
@@ -506,6 +538,12 @@ router.get("/teacher/games/:id/words", async (req, res) => {
   const game = await db.query.gamesTable.findFirst({
     where: eq(gamesTable.id, gameId),
   });
+  if (!game) {
+    res.status(404).json({ error: "اللعبة غير موجودة" });
+    return;
+  }
+
+  requireGameOwnership(identity, game);
 
   const items = await db.query.gameItemsTable.findMany({
     where: eq(gameItemsTable.gameId, gameId),
@@ -514,8 +552,8 @@ router.get("/teacher/games/:id/words", async (req, res) => {
 
   res.json({
     gameId,
-    type: game?.type ?? "match-sentence-picture",
-    version: game?.version ?? 1,
+    type: game.type,
+    version: game.version,
     items: items.map((i) => ({ id: i.id, order: i.itemOrder, payload: i.payload })),
   });
 });
@@ -539,6 +577,8 @@ router.put("/teacher/games/:id/words", async (req, res) => {
     res.status(404).json({ error: "اللعبة غير موجودة" });
     return;
   }
+
+  requireGameOwnership(identity, game);
 
   const body = z
     .object({
@@ -597,6 +637,8 @@ router.get("/teacher/games/:id/stats", async (req, res) => {
     res.status(404).json({ error: "اللعبة غير موجودة" });
     return;
   }
+
+  requireGameOwnership(identity, game);
 
   const sessions = await db.query.studentGameSessionsTable.findMany({
     where: eq(studentGameSessionsTable.gameId, gameId),
@@ -703,6 +745,7 @@ export async function ensureDefaultGames() {
       .insert(gamesTable)
       .values({
         ...def,
+        classId: null,
         isActive: true,
         version: 1,
       })

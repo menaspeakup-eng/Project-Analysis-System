@@ -138,14 +138,39 @@ router.get("/admin/users", async (req, res) => {
 
   const clerkUsers = await fetchAllClerkUsers();
 
-  const dbStudents = await db.query.studentsTable.findMany();
+  let dbStudents = await db.query.studentsTable.findMany();
   const dbByClerkId = new Map(dbStudents.map((s) => [s.clerkUserId, s]));
   const dbByEmail = new Map(dbStudents.map((s) => [normalizeEmail(s.email || ""), s]));
 
+  const ensuredStudents: typeof dbStudents = [];
+  for (const clerkUser of clerkUsers) {
+    let student = dbByClerkId.get(clerkUser.id) || dbByEmail.get(clerkUser.email) || null;
+    if (!student) {
+      const [created] = await db
+        .insert(studentsTable)
+        .values({
+          clerkUserId: clerkUser.id,
+          name: clerkUser.name,
+          email: normalizeEmail(clerkUser.email),
+          role: "student",
+          nameConfirmed: false,
+        })
+        .returning();
+      student = created;
+      ensuredStudents.push(created);
+    }
+  }
+
+  if (ensuredStudents.length > 0) {
+    dbStudents = await db.query.studentsTable.findMany();
+  }
+  const finalByClerkId = new Map(dbStudents.map((s) => [s.clerkUserId, s]));
+  const finalByEmail = new Map(dbStudents.map((s) => [normalizeEmail(s.email || ""), s]));
+
   const users = clerkUsers.map((clerkUser) => {
     const student =
-      dbByClerkId.get(clerkUser.id) ||
-      dbByEmail.get(clerkUser.email) ||
+      finalByClerkId.get(clerkUser.id) ||
+      finalByEmail.get(clerkUser.email) ||
       null;
 
     return {

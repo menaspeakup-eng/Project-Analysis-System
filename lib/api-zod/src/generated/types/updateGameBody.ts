@@ -14,7 +14,7 @@ export interface UpdateGameBody {
   name?: string;
   /** @maxLength 1000 */
   description?: string;
-  /** @maxLength 1000 */
+  /** @maxLength 5000000 */
   imageUrl?: string;
   /**
      * @minimum 0
@@ -22,4 +22,5 @@ export interface UpdateGameBody {
      */
   pointsReward?: number;
   isActive?: boolean;
+  classId?: number | null;
 }

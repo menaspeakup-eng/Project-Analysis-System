@@ -7,7 +7,7 @@ import {
   useUpdateTeacherGameWords,
   useCreateTeacherGame,
 } from "@workspace/api-client-react";
-import type { TeacherGame } from "@workspace/api-client-react";
+import type { TeacherGame, TeacherClass } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ImageUpload from "@/components/ImageUpload";
@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Gamepad2, Pencil, Plus, Save, Star, Users, RotateCcw, Trash2, BarChart3 } from "lucide-react";
+import { Gamepad2, Pencil, Plus, Save, Star, Users, RotateCcw, Trash2, BarChart3, GraduationCap } from "lucide-react";
 import type { GameType } from "@/lib/gameTypes";
 
 const GAME_TYPE_LABELS: Record<GameType, string> = {
@@ -107,7 +107,16 @@ const emptyItemFor = (type: GameType): GameItem => {
   }
 };
 
-export default function TeacherGames() {
+function generateSlug(name: string) {
+  const base = name.trim().replace(/\s+/g, "-").slice(0, 30);
+  return `${base}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+interface TeacherGamesProps {
+  classes: TeacherClass[];
+}
+
+export default function TeacherGames({ classes }: TeacherGamesProps) {
   const queryClient = useQueryClient();
   const [itemsGame, setItemsGame] = useState<TeacherGame | null>(null);
   const [metaGame, setMetaGame] = useState<TeacherGame | null>(null);
@@ -118,9 +127,18 @@ export default function TeacherGames() {
     description: "",
     imageUrl: "",
     pointsReward: 15,
+    classId: null as number | null,
   });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ slug: "", name: "", type: GAME_TYPES[0] as GameType });
+  const [createForm, setCreateForm] = useState<{
+    name: string;
+    type: GameType;
+    classId: number | null;
+  }>({
+    name: "",
+    type: GAME_TYPES[0] as GameType,
+    classId: classes[0]?.id ?? null,
+  });
 
   const { data, isLoading } = useGetTeacherGames(undefined, { query: { enabled: true } as never });
   const { data: itemsData } = useGetTeacherGameWords(
@@ -152,6 +170,7 @@ export default function TeacherGames() {
       description: game.description ?? "",
       imageUrl: game.imageUrl ?? "",
       pointsReward: game.pointsReward,
+      classId: game.classId ?? null,
     });
   };
 
@@ -189,6 +208,7 @@ export default function TeacherGames() {
           description: metaForm.description.trim() || undefined,
           imageUrl: metaForm.imageUrl.trim() || undefined,
           pointsReward: Number(metaForm.pointsReward) || undefined,
+          classId: metaForm.classId,
         },
       },
       {
@@ -213,18 +233,28 @@ export default function TeacherGames() {
   };
 
   const handleCreate = () => {
-    if (!createForm.slug.trim() || !createForm.name.trim()) return;
+    if (!createForm.name.trim()) return;
+    const classId = createForm.classId ?? classes[0]?.id ?? null;
+    if (classId == null) {
+      alert("يجب أن يكون لديك صف واحد على الأقل لإنشاء لعبة.");
+      return;
+    }
     createGame(
       {
         data: {
-          slug: createForm.slug.trim(),
+          slug: generateSlug(createForm.name),
           name: createForm.name.trim(),
           type: createForm.type,
+          classId,
         },
       },
       {
         onSuccess: () => {
-          setCreateForm({ slug: "", name: "", type: GAME_TYPES[0] as GameType });
+          setCreateForm({
+            name: "",
+            type: GAME_TYPES[0] as GameType,
+            classId: classes[0]?.id ?? null,
+          });
           setIsCreateOpen(false);
           queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
         },
@@ -455,6 +485,12 @@ export default function TeacherGames() {
                     <Users className="w-3 h-3 ml-1" />
                     متوسط الأخطاء: {g.stats.avgMistakes}
                   </Badge>
+                  {g.classId != null && (
+                    <Badge variant="outline" className="rounded-full font-bold border-border">
+                      <GraduationCap className="w-3 h-3 ml-1" />
+                      {classes.find((c) => c.id === g.classId)?.name ?? "صف"}
+                    </Badge>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Button
@@ -586,6 +622,25 @@ export default function TeacherGames() {
                   max={1000}
                 />
               </div>
+              <div className="space-y-2">
+                <Label className="font-bold">الصف</Label>
+                <Select
+                  value={metaForm.classId?.toString() ?? "none"}
+                  onValueChange={(value) => setMetaForm((f) => ({ ...f, classId: value === "none" ? null : Number(value) }))}
+                >
+                  <SelectTrigger className="rounded-xl border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">عامة</SelectItem>
+                    {classes.map((c) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button className="w-full rounded-xl font-bold h-11" onClick={handleSaveMeta}>
                 <Save className="w-4 h-4 ml-1" />
                 حفظ الإعدادات
@@ -621,16 +676,6 @@ export default function TeacherGames() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="font-bold">معرف اللعبة (slug)</Label>
-                <Input
-                  value={createForm.slug}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, slug: e.target.value }))}
-                  placeholder="مثال: match-sentence-picture"
-                  className="rounded-xl border-border"
-                  dir="ltr"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label className="font-bold">اسم اللعبة</Label>
                 <Input
                   value={createForm.name}
@@ -639,10 +684,29 @@ export default function TeacherGames() {
                   className="rounded-xl border-border"
                 />
               </div>
+              <div className="space-y-2">
+                <Label className="font-bold">الصف</Label>
+                <Select
+                  value={createForm.classId?.toString() ?? "none"}
+                  onValueChange={(value) => setCreateForm((f) => ({ ...f, classId: value === "none" ? null : Number(value) }))}
+                >
+                  <SelectTrigger className="rounded-xl border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">عامة</SelectItem>
+                    {classes.map((c) => (
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button
                 className="w-full rounded-xl font-bold h-11"
                 onClick={handleCreate}
-                disabled={!createForm.slug.trim() || !createForm.name.trim()}
+                disabled={!createForm.name.trim()}
               >
                 <Plus className="w-4 h-4 ml-1" />
                 إنشاء

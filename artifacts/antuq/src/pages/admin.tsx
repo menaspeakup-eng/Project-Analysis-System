@@ -255,11 +255,26 @@ export default function Admin() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-sm">
-                              {u.className ? (
-                                <span className="text-secondary-foreground font-bold">{u.className}</span>
-                              ) : (
-                                <span className="text-muted-foreground">—</span>
-                              )}
+                              <Select
+                                value={u.classId?.toString() ?? "none"}
+                                onValueChange={(value) => {
+                                  if (u.studentId != null) {
+                                    handleMoveStudent(u.studentId, value);
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="w-40 h-8 rounded-xl border-border bg-[hsl(40,33%,98%)] text-sm font-bold">
+                                  <SelectValue placeholder="اختر صفاً" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl">
+                                  <SelectItem value="none">بدون صف</SelectItem>
+                                  {classes.map((c) => (
+                                    <SelectItem key={c.id} value={c.id.toString()}>
+                                      {c.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
