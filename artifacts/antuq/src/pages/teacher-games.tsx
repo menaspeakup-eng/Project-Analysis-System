@@ -10,6 +10,7 @@ import {
 import type { TeacherGame } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ImageUpload from "@/components/ImageUpload";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -277,12 +278,10 @@ export default function TeacherGames() {
         const i = item as MatchItem;
         return (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              placeholder="رابط الصورة"
-              dir="ltr"
+            <ImageUpload
+              label="صورة العنصر"
               value={i.imageUrl}
-              onChange={(e) => updateItem(idx, { imageUrl: e.target.value })}
-              className="rounded-xl border-border"
+              onChange={(value) => updateItem(idx, { imageUrl: value })}
             />
             <Input
               placeholder="الجملة"
@@ -315,22 +314,18 @@ export default function TeacherGames() {
               onChange={(e) => updateItem(idx, { sentence: e.target.value })}
               className="rounded-xl border-border"
             />
-            <Input
-              placeholder="رابط الصورة الصحيحة"
-              dir="ltr"
+            <ImageUpload
+              label="الصورة الصحيحة"
               value={i.correctImageUrl}
-              onChange={(e) => updateItem(idx, { correctImageUrl: e.target.value })}
-              className="rounded-xl border-border"
+              onChange={(value) => updateItem(idx, { correctImageUrl: value })}
             />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {i.wrongImageUrls.map((url, slot) => (
-                <Input
+                <ImageUpload
                   key={slot}
-                  placeholder={`صورة خاطئة ${slot + 1}`}
-                  dir="ltr"
+                  label={`صورة خاطئة ${slot + 1}`}
                   value={url}
-                  onChange={(e) => updateWrong(idx, "wrongImageUrls", slot, e.target.value)}
-                  className="rounded-xl border-border"
+                  onChange={(value) => updateWrong(idx, "wrongImageUrls", slot, value)}
                 />
               ))}
             </div>
@@ -341,12 +336,10 @@ export default function TeacherGames() {
         const i = item as ChooseSentenceItem;
         return (
           <div className="space-y-3">
-            <Input
-              placeholder="رابط الصورة"
-              dir="ltr"
+            <ImageUpload
+              label="صورة السؤال"
               value={i.imageUrl}
-              onChange={(e) => updateItem(idx, { imageUrl: e.target.value })}
-              className="rounded-xl border-border"
+              onChange={(value) => updateItem(idx, { imageUrl: value })}
             />
             <Input
               placeholder="الجملة الصحيحة"
@@ -577,15 +570,11 @@ export default function TeacherGames() {
                   className="rounded-xl border-border min-h-[80px]"
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="font-bold">رابط الصورة</Label>
-                <Input
-                  value={metaForm.imageUrl}
-                  onChange={(e) => setMetaForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                  className="rounded-xl border-border"
-                  dir="ltr"
-                />
-              </div>
+              <ImageUpload
+                label="صورة بطاقة اللعبة"
+                value={metaForm.imageUrl}
+                onChange={(value) => setMetaForm((f) => ({ ...f, imageUrl: value }))}
+              />
               <div className="space-y-2">
                 <Label className="font-bold">النقاط</Label>
                 <Input

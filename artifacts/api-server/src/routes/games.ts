@@ -25,7 +25,7 @@ const GameTypeSchema = z.enum(GAME_TYPES);
 const UpdateGameBody = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(1000).optional().or(z.literal("")),
-  imageUrl: z.string().url().max(1000).optional().or(z.literal("")),
+  imageUrl: z.string().max(5_000_000).optional().or(z.literal("")),
   pointsReward: z.number().int().min(0).max(1000).optional(),
   isActive: z.boolean().optional(),
 });
@@ -56,7 +56,7 @@ function now(): Date {
 
 const payloadValidators: Record<GameType, z.ZodTypeAny> = {
   "match-sentence-picture": z.object({
-    imageUrl: z.string().min(1).max(1000),
+    imageUrl: z.string().min(1).max(5_000_000),
     sentence: z.string().min(1).max(500),
   }),
   "arrange-sentence": z.object({
@@ -64,11 +64,11 @@ const payloadValidators: Record<GameType, z.ZodTypeAny> = {
   }),
   "choose-picture": z.object({
     sentence: z.string().min(1).max(500),
-    correctImageUrl: z.string().min(1).max(1000),
-    wrongImageUrls: z.array(z.string().min(1).max(1000)).length(3),
+    correctImageUrl: z.string().min(1).max(5_000_000),
+    wrongImageUrls: z.array(z.string().min(1).max(5_000_000)).length(3),
   }),
   "choose-sentence": z.object({
-    imageUrl: z.string().min(1).max(1000),
+    imageUrl: z.string().min(1).max(5_000_000),
     correctSentence: z.string().min(1).max(500),
     wrongSentences: z.array(z.string().min(1).max(500)).length(3),
   }),
