@@ -30,6 +30,10 @@ export interface AvatarConfig {
   accessories: string[];
   gender: AvatarConfigGender;
   pet: string;
+  /** @maxLength 30 */
+  nickname: string;
+  frame: string;
+  badges: string[];
 }
 
 export interface Identity {
@@ -401,6 +405,169 @@ export interface TeacherStudentClass {
   classId: number | null;
 }
 
+export type GameType = typeof GameType[keyof typeof GameType];
+
+
+export const GameType = {
+  'match-sentence-picture': 'match-sentence-picture',
+  'arrange-sentence': 'arrange-sentence',
+  'choose-picture': 'choose-picture',
+  'choose-sentence': 'choose-sentence',
+  'complete-sentence': 'complete-sentence',
+  'arrange-sentences': 'arrange-sentences',
+} as const;
+
+export interface Game {
+  id: number;
+  slug: string;
+  name: string;
+  type: GameType;
+  description?: string | null;
+  imageUrl?: string | null;
+  pointsReward: number;
+  isActive: boolean;
+  version: number;
+  isCompleted: boolean;
+  isLocked: boolean;
+}
+
+export interface GameList {
+  games: Game[];
+}
+
+export type GameDetailItemsItem = { [key: string]: unknown };
+
+export interface GameDetail {
+  id: number;
+  slug: string;
+  name: string;
+  type: GameType;
+  description?: string | null;
+  imageUrl?: string | null;
+  pointsReward: number;
+  version: number;
+  items: GameDetailItemsItem[];
+  isCompleted: boolean;
+}
+
+export interface CompleteGameBody {
+  /** @minimum 0 */
+  score?: number;
+  /** @minimum 0 */
+  mistakes?: number;
+  /** @minimum 0 */
+  durationMs?: number;
+}
+
+export interface GameCompletionResult {
+  id: number;
+  gameId: number;
+  version: number;
+  pointsAwarded: number;
+  completedAt: string;
+}
+
+export interface GameStats {
+  plays: number;
+  uniqueStudents: number;
+  avgMistakes: number;
+  avgDuration: number;
+}
+
+export type TeacherGame = Game & {
+  stats: GameStats;
+};
+
+export interface TeacherGameList {
+  games: TeacherGame[];
+}
+
+export interface CreateGameBody {
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
+  slug: string;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  name: string;
+  type: GameType;
+  /** @maxLength 1000 */
+  description?: string;
+  /** @maxLength 1000 */
+  imageUrl?: string;
+  /**
+     * @minimum 0
+     * @maximum 1000
+     */
+  pointsReward?: number;
+}
+
+export interface UpdateGameBody {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  name?: string;
+  /** @maxLength 1000 */
+  description?: string;
+  /** @maxLength 1000 */
+  imageUrl?: string;
+  /**
+     * @minimum 0
+     * @maximum 1000
+     */
+  pointsReward?: number;
+  isActive?: boolean;
+}
+
+export type GameItemPayload = { [key: string]: unknown };
+
+export interface GameItem {
+  id: number;
+  order: number;
+  payload: GameItemPayload;
+}
+
+export interface GameItemsList {
+  gameId: number;
+  type?: GameType;
+  version?: number;
+  items: GameItem[];
+}
+
+export type UpdateGameItemsBodyItemsItem = { [key: string]: unknown };
+
+export interface UpdateGameItemsBody {
+  /** @maxItems 100 */
+  items: UpdateGameItemsBodyItemsItem[];
+}
+
+export interface GameSession {
+  id: number;
+  studentId: number;
+  studentName: string;
+  version: number;
+  score: number;
+  mistakes: number;
+  durationMs?: number | null;
+  completedAt: string;
+}
+
+export type TeacherGameStatsWordStats = { [key: string]: unknown };
+
+export interface TeacherGameStats {
+  gameId: number;
+  plays: number;
+  uniqueStudents: number;
+  avgMistakes: number;
+  avgDuration: number;
+  wordStats: TeacherGameStatsWordStats;
+  sessions: GameSession[];
+}
+
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */
@@ -441,6 +608,13 @@ export type ReviewTeacherSubmissionParams = {
 teacherId?: TeacherIdQueryParameter;
 };
 
+export type GetLeaderboardParams = {
+/**
+ * Filter leaderboard to a specific class. If omitted and the caller is a signed-in student, their class is used.
+ */
+classId?: number;
+};
+
 export type GetTeacherClassesParams = {
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
@@ -470,6 +644,48 @@ teacherId?: TeacherIdQueryParameter;
 };
 
 export type RemoveTeacherStudentClassParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type GetTeacherGamesParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type CreateTeacherGameParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type UpdateTeacherGameParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type GetTeacherGameWordsParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type UpdateTeacherGameWordsParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type GetTeacherGameStatsParams = {
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */

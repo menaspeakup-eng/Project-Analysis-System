@@ -1,0 +1,618 @@
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useGetTeacherGames,
+  useUpdateTeacherGame,
+  useGetTeacherGameWords,
+  useUpdateTeacherGameWords,
+  useCreateTeacherGame,
+} from "@workspace/api-client-react";
+import type { TeacherGame } from "@workspace/api-client-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Gamepad2, Pencil, Plus, Save, Star, Users, RotateCcw, Trash2 } from "lucide-react";
+import type { GameType } from "@/lib/gameTypes";
+
+const GAME_TYPE_LABELS: Record<GameType, string> = {
+  "match-sentence-picture": "طابق الجملة بالصورة",
+  "arrange-sentence": "رتب الجملة",
+  "choose-picture": "اختر الصورة الصحيحة",
+  "choose-sentence": "اختر الجملة الصحيحة",
+  "complete-sentence": "أكمل الجملة",
+  "arrange-sentences": "ترتيب الجمل",
+};
+
+const GAME_TYPES: GameType[] = [
+  "match-sentence-picture",
+  "arrange-sentence",
+  "choose-picture",
+  "choose-sentence",
+  "complete-sentence",
+  "arrange-sentences",
+];
+
+interface BaseItem {
+  id?: number;
+  order?: number;
+}
+
+interface MatchItem extends BaseItem {
+  imageUrl: string;
+  sentence: string;
+}
+
+interface ArrangeSentenceItem extends BaseItem {
+  sentence: string;
+}
+
+interface ChoosePictureItem extends BaseItem {
+  sentence: string;
+  correctImageUrl: string;
+  wrongImageUrls: [string, string, string];
+}
+
+interface ChooseSentenceItem extends BaseItem {
+  imageUrl: string;
+  correctSentence: string;
+  wrongSentences: [string, string, string];
+}
+
+interface CompleteSentenceItem extends BaseItem {
+  sentence: string;
+  hiddenWord: string;
+  wrongWords: [string, string, string];
+}
+
+interface ArrangeSentencesItem extends BaseItem {
+  sentence: string;
+}
+
+type GameItem = MatchItem | ArrangeSentenceItem | ChoosePictureItem | ChooseSentenceItem | CompleteSentenceItem | ArrangeSentencesItem;
+
+const emptyItemFor = (type: GameType): GameItem => {
+  switch (type) {
+    case "match-sentence-picture":
+      return { imageUrl: "", sentence: "" };
+    case "arrange-sentence":
+      return { sentence: "" };
+    case "choose-picture":
+      return { sentence: "", correctImageUrl: "", wrongImageUrls: ["", "", ""] };
+    case "choose-sentence":
+      return { imageUrl: "", correctSentence: "", wrongSentences: ["", "", ""] };
+    case "complete-sentence":
+      return { sentence: "", hiddenWord: "", wrongWords: ["", "", ""] };
+    case "arrange-sentences":
+      return { sentence: "" };
+    default:
+      return { sentence: "" };
+  }
+};
+
+export default function TeacherGames() {
+  const queryClient = useQueryClient();
+  const [selectedGame, setSelectedGame] = useState<TeacherGame | null>(null);
+  const [items, setItems] = useState<GameItem[]>([]);
+  const [metaForm, setMetaForm] = useState({
+    name: "",
+    description: "",
+    imageUrl: "",
+    pointsReward: 15,
+  });
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ slug: "", name: "", type: GAME_TYPES[0] as GameType });
+
+  const { data, isLoading } = useGetTeacherGames(undefined, { query: { enabled: true } as never });
+  const { data: itemsData } = useGetTeacherGameWords(
+    selectedGame?.id ?? 0,
+    undefined,
+    { query: { enabled: !!selectedGame } as never },
+  );
+  const { mutate: updateGame } = useUpdateTeacherGame();
+  const { mutate: updateItems } = useUpdateTeacherGameWords();
+  const { mutate: createGame } = useCreateTeacherGame();
+
+  const openItems = (game: TeacherGame) => {
+    setSelectedGame(game);
+    const payloads = (itemsData?.items ?? []).map((it) => it.payload as unknown as GameItem);
+    setItems(payloads.length > 0 ? payloads : [emptyItemFor(game.type as GameType)]);
+  };
+
+  const openMeta = (game: TeacherGame) => {
+    setSelectedGame(game);
+    setMetaForm({
+      name: game.name,
+      description: game.description ?? "",
+      imageUrl: game.imageUrl ?? "",
+      pointsReward: game.pointsReward,
+    });
+  };
+
+  const handleSaveItems = () => {
+    if (!selectedGame) return;
+    const cleaned = items.map((it) => {
+      const { id, order, ...rest } = it as GameItem & { id?: number; order?: number };
+      return rest;
+    });
+    updateItems(
+      { id: selectedGame.id, data: { items: cleaned } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
+          queryClient.invalidateQueries({
+            queryKey: [`/api/teacher/games/${selectedGame.id}/words`],
+          });
+          setSelectedGame(null);
+        },
+      },
+    );
+  };
+
+  const handleSaveMeta = () => {
+    if (!selectedGame) return;
+    updateGame(
+      {
+        id: selectedGame.id,
+        data: {
+          name: metaForm.name.trim() || undefined,
+          description: metaForm.description.trim() || undefined,
+          imageUrl: metaForm.imageUrl.trim() || undefined,
+          pointsReward: Number(metaForm.pointsReward) || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
+          setSelectedGame(null);
+        },
+      },
+    );
+  };
+
+  const handleToggleActive = (game: TeacherGame) => {
+    updateGame(
+      { id: game.id, data: { isActive: !game.isActive } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/games"] });
+        },
+      },
+    );
+  };
+
+  const handleCreate = () => {
+    if (!createForm.slug.trim() || !createForm.name.trim()) return;
+    createGame(
+      {
+        data: {
+          slug: createForm.slug.trim(),
+          name: createForm.name.trim(),
+          type: createForm.type,
+        },
+      },
+      {
+        onSuccess: () => {
+          setCreateForm({ slug: "", name: "", type: GAME_TYPES[0] as GameType });
+          setIsCreateOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
+        },
+      },
+    );
+  };
+
+  const updateItem = (index: number, patch: Partial<GameItem>) => {
+    setItems((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...patch } as GameItem;
+      return next;
+    });
+  };
+
+  const updateWrong = (index: number, key: "wrongImageUrls" | "wrongSentences" | "wrongWords", slot: number, value: string) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const item = { ...next[index] } as Record<string, unknown>;
+      const arr = [...(item[key] as string[])];
+      arr[slot] = value;
+      item[key] = arr as [string, string, string];
+      next[index] = item as unknown as GameItem;
+      return next;
+    });
+  };
+
+  const games = data?.games ?? [];
+
+  const selectedType = (selectedGame?.type ?? createForm.type) as GameType;
+
+  const renderItemFields = (item: GameItem, idx: number): React.ReactNode => {
+    switch (selectedType) {
+      case "match-sentence-picture": {
+        const i = item as MatchItem;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              placeholder="رابط الصورة"
+              dir="ltr"
+              value={i.imageUrl}
+              onChange={(e) => updateItem(idx, { imageUrl: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <Input
+              placeholder="الجملة"
+              value={i.sentence}
+              onChange={(e) => updateItem(idx, { sentence: e.target.value })}
+              className="rounded-xl border-border"
+            />
+          </div>
+        );
+      }
+      case "arrange-sentence":
+      case "arrange-sentences": {
+        const i = item as ArrangeSentenceItem | ArrangeSentencesItem;
+        return (
+          <Input
+            placeholder="الجملة"
+            value={i.sentence}
+            onChange={(e) => updateItem(idx, { sentence: e.target.value })}
+            className="rounded-xl border-border"
+          />
+        );
+      }
+      case "choose-picture": {
+        const i = item as ChoosePictureItem;
+        return (
+          <div className="space-y-3">
+            <Input
+              placeholder="الجملة"
+              value={i.sentence}
+              onChange={(e) => updateItem(idx, { sentence: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <Input
+              placeholder="رابط الصورة الصحيحة"
+              dir="ltr"
+              value={i.correctImageUrl}
+              onChange={(e) => updateItem(idx, { correctImageUrl: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {i.wrongImageUrls.map((url, slot) => (
+                <Input
+                  key={slot}
+                  placeholder={`صورة خاطئة ${slot + 1}`}
+                  dir="ltr"
+                  value={url}
+                  onChange={(e) => updateWrong(idx, "wrongImageUrls", slot, e.target.value)}
+                  className="rounded-xl border-border"
+                />
+              ))}
+            </div>
+          </div>
+        );
+      }
+      case "choose-sentence": {
+        const i = item as ChooseSentenceItem;
+        return (
+          <div className="space-y-3">
+            <Input
+              placeholder="رابط الصورة"
+              dir="ltr"
+              value={i.imageUrl}
+              onChange={(e) => updateItem(idx, { imageUrl: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <Input
+              placeholder="الجملة الصحيحة"
+              value={i.correctSentence}
+              onChange={(e) => updateItem(idx, { correctSentence: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <div className="space-y-2">
+              {i.wrongSentences.map((sentence, slot) => (
+                <Input
+                  key={slot}
+                  placeholder={`جملة خاطئة ${slot + 1}`}
+                  value={sentence}
+                  onChange={(e) => updateWrong(idx, "wrongSentences", slot, e.target.value)}
+                  className="rounded-xl border-border"
+                />
+              ))}
+            </div>
+          </div>
+        );
+      }
+      case "complete-sentence": {
+        const i = item as CompleteSentenceItem;
+        return (
+          <div className="space-y-3">
+            <Input
+              placeholder="الجملة الكاملة"
+              value={i.sentence}
+              onChange={(e) => updateItem(idx, { sentence: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <Input
+              placeholder="الكلمة المخفية"
+              value={i.hiddenWord}
+              onChange={(e) => updateItem(idx, { hiddenWord: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {i.wrongWords.map((word, slot) => (
+                <Input
+                  key={slot}
+                  placeholder={`كلمة خاطئة ${slot + 1}`}
+                  value={word}
+                  onChange={(e) => updateWrong(idx, "wrongWords", slot, e.target.value)}
+                  className="rounded-xl border-border"
+                />
+              ))}
+            </div>
+          </div>
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-black text-foreground text-lg flex items-center gap-2">
+          <Gamepad2 className="w-5 h-5 text-accent" />
+          الألعاب التعليمية
+        </h2>
+        <Button className="rounded-xl font-bold h-9" onClick={() => setIsCreateOpen(true)}>
+          <Plus className="w-4 h-4 ml-1" />
+          إضافة لعبة
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="h-24 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+        </div>
+      ) : games.length === 0 ? (
+        <Card className="rounded-3xl border-border shadow-sm">
+          <CardContent className="p-6 text-center text-muted-foreground font-medium">
+            لا توجد ألعاب. ابدأ بإضافة لعبة جديدة.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {games.map((g) => (
+            <Card key={g.id} className="rounded-3xl border-border shadow-sm">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <CardTitle className="text-base font-black truncate">{g.name}</CardTitle>
+                    <p className="text-sm text-muted-foreground font-medium mt-1">
+                      v{g.version} · {GAME_TYPE_LABELS[g.type as GameType]} · {g.stats.plays} محاولات
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={g.isActive}
+                      onCheckedChange={() => handleToggleActive(g)}
+                    />
+                    <Badge className={`rounded-full font-bold ${g.isActive ? "bg-[hsl(150,55%,45%)] text-white" : "bg-muted text-muted-foreground"}`}>
+                      {g.isActive ? "مفعلة" : "متوقفة"}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground font-medium line-clamp-2">
+                  {g.description || "لا يوجد وصف"}
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="rounded-full font-bold border-border">
+                    <Star className="w-3 h-3 ml-1" />
+                    {g.pointsReward} نقطة
+                  </Badge>
+                  <Badge variant="outline" className="rounded-full font-bold border-border">
+                    <Users className="w-3 h-3 ml-1" />
+                    متوسط الأخطاء: {g.stats.avgMistakes}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    className="rounded-xl h-9 font-bold flex-1"
+                    onClick={() => openItems(g)}
+                  >
+                    <Pencil className="w-4 h-4 ml-1" />
+                    تعديل المحتوى
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-xl h-9 font-bold border-border"
+                    onClick={() => openMeta(g)}
+                  >
+                    <RotateCcw className="w-4 h-4 ml-1" />
+                    إعدادات
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {selectedGame && itemsData && (
+        <Dialog open onOpenChange={(open) => { if (!open) setSelectedGame(null); }}>
+          <DialogContent className="sm:max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
+            <DialogHeader className="text-right">
+              <DialogTitle className="text-xl font-black flex items-center gap-2">
+                <Pencil className="w-6 h-6 text-accent" />
+                تعديل محتوى: {selectedGame.name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground font-medium">
+                حفظ التعديلات سينشر نسخة جديدة (v{selectedGame.version + 1}) ويسمح للطلاب بلعبها مرة أخرى.
+              </p>
+              <div className="space-y-4">
+                {items.map((item, idx) => (
+                  <div key={idx} className="border border-border rounded-2xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-muted-foreground">عنصر {idx + 1}</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive font-bold h-8"
+                        onClick={() => setItems((prev) => prev.filter((_, i) => i !== idx))}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {renderItemFields(item, idx)}
+                  </div>
+                ))}
+              </div>
+              <Button
+                variant="outline"
+                className="w-full rounded-xl font-bold h-10 border-dashed border-border"
+                onClick={() => setItems((prev) => [...prev, emptyItemFor(selectedType)])}
+              >
+                <Plus className="w-4 h-4 ml-1" />
+                إضافة عنصر
+              </Button>
+              <Button className="w-full rounded-xl font-bold h-11" onClick={handleSaveItems}>
+                <Save className="w-4 h-4 ml-1" />
+                حفظ وإعادة النشر
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {selectedGame && !itemsData && (
+        <Dialog open onOpenChange={(open) => { if (!open) setSelectedGame(null); }}>
+          <DialogContent className="sm:max-w-md rounded-3xl" dir="rtl">
+            <DialogHeader className="text-right">
+              <DialogTitle className="text-xl font-black">إعدادات اللعبة</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="font-bold">الاسم</Label>
+                <Input
+                  value={metaForm.name}
+                  onChange={(e) => setMetaForm((f) => ({ ...f, name: e.target.value }))}
+                  className="rounded-xl border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">الوصف</Label>
+                <Textarea
+                  value={metaForm.description}
+                  onChange={(e) => setMetaForm((f) => ({ ...f, description: e.target.value }))}
+                  className="rounded-xl border-border min-h-[80px]"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">رابط الصورة</Label>
+                <Input
+                  value={metaForm.imageUrl}
+                  onChange={(e) => setMetaForm((f) => ({ ...f, imageUrl: e.target.value }))}
+                  className="rounded-xl border-border"
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">النقاط</Label>
+                <Input
+                  type="number"
+                  value={metaForm.pointsReward}
+                  onChange={(e) => setMetaForm((f) => ({ ...f, pointsReward: Number(e.target.value) }))}
+                  className="rounded-xl border-border"
+                  min={0}
+                  max={1000}
+                />
+              </div>
+              <Button className="w-full rounded-xl font-bold h-11" onClick={handleSaveMeta}>
+                <Save className="w-4 h-4 ml-1" />
+                حفظ الإعدادات
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {isCreateOpen && (
+        <Dialog open onOpenChange={(open) => { if (!open) setIsCreateOpen(false); }}>
+          <DialogContent className="sm:max-w-md rounded-3xl" dir="rtl">
+            <DialogHeader className="text-right">
+              <DialogTitle className="text-xl font-black">إضافة لعبة جديدة</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="font-bold">نوع اللعبة</Label>
+                <Select
+                  value={createForm.type}
+                  onValueChange={(value) => setCreateForm((f) => ({ ...f, type: value as GameType }))}
+                >
+                  <SelectTrigger className="rounded-xl border-border">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GAME_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {GAME_TYPE_LABELS[type]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">معرف اللعبة (slug)</Label>
+                <Input
+                  value={createForm.slug}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, slug: e.target.value }))}
+                  placeholder="مثال: match-sentence-picture"
+                  className="rounded-xl border-border"
+                  dir="ltr"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">اسم اللعبة</Label>
+                <Input
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="مثال: طابق الجملة بالصورة"
+                  className="rounded-xl border-border"
+                />
+              </div>
+              <Button
+                className="w-full rounded-xl font-bold h-11"
+                onClick={handleCreate}
+                disabled={!createForm.slug.trim() || !createForm.name.trim()}
+              >
+                <Plus className="w-4 h-4 ml-1" />
+                إنشاء
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+    </section>
+  );
+}

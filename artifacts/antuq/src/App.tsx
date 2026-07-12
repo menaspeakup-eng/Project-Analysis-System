@@ -16,6 +16,8 @@ import Privacy from "@/pages/privacy";
 import Schools from "@/pages/schools";
 import Admin from "@/pages/admin";
 import Teacher from "@/pages/teacher";
+import Games from "@/pages/games";
+import GamePlay from "@/pages/game-play";
 import OnboardingName from "@/pages/onboarding-name";
 import NotFound from "@/pages/not-found";
 import { useGetIdentityMe } from "@workspace/api-client-react";
@@ -190,6 +192,8 @@ function ClerkProviderWithRoutes() {
             <Route path="/character" component={CharacterEdit} />
             <Route path="/admin" component={Admin} />
             <Route path="/teacher" component={Teacher} />
+            <Route path="/games" component={Games} />
+            <Route path="/games/:id" component={GamePlay} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />
             <Route path="/schools" component={Schools} />

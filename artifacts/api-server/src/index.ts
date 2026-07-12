@@ -1,5 +1,8 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { ensureDefaultGames } from "./routes/games";
+
+void ensureDefaultGames();
 
 const rawPort = process.env["PORT"];
 

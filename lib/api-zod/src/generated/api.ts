@@ -21,6 +21,12 @@ export const HealthCheckResponse = zod.object({
  * Returns the current user's role (admin/teacher/student), onboarding status, and class/teacher info. Creates a platform row on first visit.
  * @summary Resolve the signed-in user's platform identity and role
  */
+export const getIdentityMeResponseAvatarConfigNicknameDefault = ``;
+export const getIdentityMeResponseAvatarConfigNicknameMax = 30;
+
+export const getIdentityMeResponseAvatarConfigFrameDefault = `none`;
+export const getIdentityMeResponseAvatarConfigBadgesDefault = [];
+
 export const GetIdentityMeResponse = zod.object({
   "userId": zod.string(),
   "email": zod.string(),
@@ -34,7 +40,10 @@ export const GetIdentityMeResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(getIdentityMeResponseAvatarConfigNicknameMax).default(getIdentityMeResponseAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getIdentityMeResponseAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getIdentityMeResponseAvatarConfigBadgesDefault)
 }),
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
@@ -47,6 +56,12 @@ export const GetIdentityMeResponse = zod.object({
  * Returns the current student's profile, creating one on first visit (JIT-provisioned from the Clerk account).
  * @summary Get the signed-in student's profile
  */
+export const getStudentProfileResponseAvatarConfigNicknameDefault = ``;
+export const getStudentProfileResponseAvatarConfigNicknameMax = 30;
+
+export const getStudentProfileResponseAvatarConfigFrameDefault = `none`;
+export const getStudentProfileResponseAvatarConfigBadgesDefault = [];
+
 export const GetStudentProfileResponse = zod.object({
   "name": zod.string(),
   "points": zod.number(),
@@ -54,7 +69,10 @@ export const GetStudentProfileResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(getStudentProfileResponseAvatarConfigNicknameMax).default(getStudentProfileResponseAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getStudentProfileResponseAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getStudentProfileResponseAvatarConfigBadgesDefault)
 }),
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
@@ -75,6 +93,12 @@ export const UpdateStudentNameBody = zod.object({
   "name": zod.string().min(1).max(updateStudentNameBodyNameMax)
 })
 
+export const updateStudentNameResponseAvatarConfigNicknameDefault = ``;
+export const updateStudentNameResponseAvatarConfigNicknameMax = 30;
+
+export const updateStudentNameResponseAvatarConfigFrameDefault = `none`;
+export const updateStudentNameResponseAvatarConfigBadgesDefault = [];
+
 export const UpdateStudentNameResponse = zod.object({
   "name": zod.string(),
   "points": zod.number(),
@@ -82,7 +106,10 @@ export const UpdateStudentNameResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(updateStudentNameResponseAvatarConfigNicknameMax).default(updateStudentNameResponseAvatarConfigNicknameDefault),
+  "frame": zod.string().default(updateStudentNameResponseAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(updateStudentNameResponseAvatarConfigBadgesDefault)
 }),
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
@@ -94,12 +121,27 @@ export const UpdateStudentNameResponse = zod.object({
 /**
  * @summary Update the signed-in student's avatar customization
  */
+export const updateStudentAvatarBodyNicknameDefault = ``;
+export const updateStudentAvatarBodyNicknameMax = 30;
+
+export const updateStudentAvatarBodyFrameDefault = `none`;
+export const updateStudentAvatarBodyBadgesDefault = [];
+
 export const UpdateStudentAvatarBody = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(updateStudentAvatarBodyNicknameMax).default(updateStudentAvatarBodyNicknameDefault),
+  "frame": zod.string().default(updateStudentAvatarBodyFrameDefault),
+  "badges": zod.array(zod.string()).default(updateStudentAvatarBodyBadgesDefault)
 })
+
+export const updateStudentAvatarResponseAvatarConfigNicknameDefault = ``;
+export const updateStudentAvatarResponseAvatarConfigNicknameMax = 30;
+
+export const updateStudentAvatarResponseAvatarConfigFrameDefault = `none`;
+export const updateStudentAvatarResponseAvatarConfigBadgesDefault = [];
 
 export const UpdateStudentAvatarResponse = zod.object({
   "name": zod.string(),
@@ -108,7 +150,10 @@ export const UpdateStudentAvatarResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(updateStudentAvatarResponseAvatarConfigNicknameMax).default(updateStudentAvatarResponseAvatarConfigNicknameDefault),
+  "frame": zod.string().default(updateStudentAvatarResponseAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(updateStudentAvatarResponseAvatarConfigBadgesDefault)
 }),
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
@@ -373,6 +418,21 @@ export const ReviewTeacherSubmissionResponse = zod.object({
 /**
  * @summary Get the top students by points, plus the current student's own rank
  */
+export const GetLeaderboardQueryParams = zod.object({
+  "classId": zod.coerce.number().optional().describe('Filter leaderboard to a specific class. If omitted and the caller is a signed-in student, their class is used.')
+})
+
+export const getLeaderboardResponseTopItemAvatarConfigNicknameDefault = ``;
+export const getLeaderboardResponseTopItemAvatarConfigNicknameMax = 30;
+
+export const getLeaderboardResponseTopItemAvatarConfigFrameDefault = `none`;
+export const getLeaderboardResponseTopItemAvatarConfigBadgesDefault = [];
+export const getLeaderboardResponseMeOneAvatarConfigNicknameDefault = ``;
+export const getLeaderboardResponseMeOneAvatarConfigNicknameMax = 30;
+
+export const getLeaderboardResponseMeOneAvatarConfigFrameDefault = `none`;
+export const getLeaderboardResponseMeOneAvatarConfigBadgesDefault = [];
+
 export const GetLeaderboardResponse = zod.object({
   "top": zod.array(zod.object({
   "rank": zod.number(),
@@ -382,7 +442,10 @@ export const GetLeaderboardResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(getLeaderboardResponseTopItemAvatarConfigNicknameMax).default(getLeaderboardResponseTopItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getLeaderboardResponseTopItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getLeaderboardResponseTopItemAvatarConfigBadgesDefault)
 }),
   "isMe": zod.boolean()
 })),
@@ -394,7 +457,10 @@ export const GetLeaderboardResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(getLeaderboardResponseMeOneAvatarConfigNicknameMax).default(getLeaderboardResponseMeOneAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getLeaderboardResponseMeOneAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getLeaderboardResponseMeOneAvatarConfigBadgesDefault)
 }),
   "isMe": zod.boolean()
 }),zod.null()])
@@ -447,6 +513,12 @@ export const ToggleAdminTeacherResponse = zod.object({
 /**
  * @summary List all classes with their teacher and students
  */
+export const getAdminClassesResponseClassesItemStudentsItemAvatarConfigNicknameDefault = ``;
+export const getAdminClassesResponseClassesItemStudentsItemAvatarConfigNicknameMax = 30;
+
+export const getAdminClassesResponseClassesItemStudentsItemAvatarConfigFrameDefault = `none`;
+export const getAdminClassesResponseClassesItemStudentsItemAvatarConfigBadgesDefault = [];
+
 export const GetAdminClassesResponse = zod.object({
   "classes": zod.array(zod.object({
   "id": zod.number(),
@@ -464,7 +536,10 @@ export const GetAdminClassesResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(getAdminClassesResponseClassesItemStudentsItemAvatarConfigNicknameMax).default(getAdminClassesResponseClassesItemStudentsItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getAdminClassesResponseClassesItemStudentsItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getAdminClassesResponseClassesItemStudentsItemAvatarConfigBadgesDefault)
 })
 }))
 }))
@@ -483,6 +558,12 @@ export const CreateAdminClassBody = zod.object({
   "teacherId": zod.union([zod.number(),zod.null()]).optional()
 })
 
+export const createAdminClassResponseStudentsItemAvatarConfigNicknameDefault = ``;
+export const createAdminClassResponseStudentsItemAvatarConfigNicknameMax = 30;
+
+export const createAdminClassResponseStudentsItemAvatarConfigFrameDefault = `none`;
+export const createAdminClassResponseStudentsItemAvatarConfigBadgesDefault = [];
+
 export const CreateAdminClassResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -499,7 +580,10 @@ export const CreateAdminClassResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(createAdminClassResponseStudentsItemAvatarConfigNicknameMax).default(createAdminClassResponseStudentsItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(createAdminClassResponseStudentsItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(createAdminClassResponseStudentsItemAvatarConfigBadgesDefault)
 })
 }))
 })
@@ -521,6 +605,12 @@ export const UpdateAdminClassBody = zod.object({
   "teacherId": zod.union([zod.number(),zod.null()]).optional()
 })
 
+export const updateAdminClassResponseStudentsItemAvatarConfigNicknameDefault = ``;
+export const updateAdminClassResponseStudentsItemAvatarConfigNicknameMax = 30;
+
+export const updateAdminClassResponseStudentsItemAvatarConfigFrameDefault = `none`;
+export const updateAdminClassResponseStudentsItemAvatarConfigBadgesDefault = [];
+
 export const UpdateAdminClassResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -537,7 +627,10 @@ export const UpdateAdminClassResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(updateAdminClassResponseStudentsItemAvatarConfigNicknameMax).default(updateAdminClassResponseStudentsItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(updateAdminClassResponseStudentsItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(updateAdminClassResponseStudentsItemAvatarConfigBadgesDefault)
 })
 }))
 })
@@ -578,6 +671,12 @@ export const GetTeacherClassesQueryParams = zod.object({
   "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
 })
 
+export const getTeacherClassesResponseClassesItemStudentsItemAvatarConfigNicknameDefault = ``;
+export const getTeacherClassesResponseClassesItemStudentsItemAvatarConfigNicknameMax = 30;
+
+export const getTeacherClassesResponseClassesItemStudentsItemAvatarConfigFrameDefault = `none`;
+export const getTeacherClassesResponseClassesItemStudentsItemAvatarConfigBadgesDefault = [];
+
 export const GetTeacherClassesResponse = zod.object({
   "classes": zod.array(zod.object({
   "id": zod.number(),
@@ -593,7 +692,10 @@ export const GetTeacherClassesResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(getTeacherClassesResponseClassesItemStudentsItemAvatarConfigNicknameMax).default(getTeacherClassesResponseClassesItemStudentsItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getTeacherClassesResponseClassesItemStudentsItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getTeacherClassesResponseClassesItemStudentsItemAvatarConfigBadgesDefault)
 })
 }))
 }))
@@ -607,6 +709,12 @@ export const GetTeacherUnclaimedQueryParams = zod.object({
   "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
 })
 
+export const getTeacherUnclaimedResponseStudentsItemAvatarConfigNicknameDefault = ``;
+export const getTeacherUnclaimedResponseStudentsItemAvatarConfigNicknameMax = 30;
+
+export const getTeacherUnclaimedResponseStudentsItemAvatarConfigFrameDefault = `none`;
+export const getTeacherUnclaimedResponseStudentsItemAvatarConfigBadgesDefault = [];
+
 export const GetTeacherUnclaimedResponse = zod.object({
   "students": zod.array(zod.object({
   "id": zod.number(),
@@ -618,7 +726,10 @@ export const GetTeacherUnclaimedResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(getTeacherUnclaimedResponseStudentsItemAvatarConfigNicknameMax).default(getTeacherUnclaimedResponseStudentsItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getTeacherUnclaimedResponseStudentsItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getTeacherUnclaimedResponseStudentsItemAvatarConfigBadgesDefault)
 })
 }))
 })
@@ -639,6 +750,12 @@ export const ClaimTeacherStudentBody = zod.object({
   "classId": zod.number()
 })
 
+export const claimTeacherStudentResponseAvatarConfigNicknameDefault = ``;
+export const claimTeacherStudentResponseAvatarConfigNicknameMax = 30;
+
+export const claimTeacherStudentResponseAvatarConfigFrameDefault = `none`;
+export const claimTeacherStudentResponseAvatarConfigBadgesDefault = [];
+
 export const ClaimTeacherStudentResponse = zod.object({
   "id": zod.number(),
   "clerkUserId": zod.string(),
@@ -649,7 +766,10 @@ export const ClaimTeacherStudentResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(claimTeacherStudentResponseAvatarConfigNicknameMax).default(claimTeacherStudentResponseAvatarConfigNicknameDefault),
+  "frame": zod.string().default(claimTeacherStudentResponseAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(claimTeacherStudentResponseAvatarConfigBadgesDefault)
 })
 })
 
@@ -674,6 +794,12 @@ export const UpdateTeacherStudentBody = zod.object({
   "points": zod.number().optional()
 })
 
+export const updateTeacherStudentResponseAvatarConfigNicknameDefault = ``;
+export const updateTeacherStudentResponseAvatarConfigNicknameMax = 30;
+
+export const updateTeacherStudentResponseAvatarConfigFrameDefault = `none`;
+export const updateTeacherStudentResponseAvatarConfigBadgesDefault = [];
+
 export const UpdateTeacherStudentResponse = zod.object({
   "id": zod.number(),
   "clerkUserId": zod.string(),
@@ -684,7 +810,10 @@ export const UpdateTeacherStudentResponse = zod.object({
   "bgColor": zod.string(),
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
-  "pet": zod.string()
+  "pet": zod.string(),
+  "nickname": zod.string().max(updateTeacherStudentResponseAvatarConfigNicknameMax).default(updateTeacherStudentResponseAvatarConfigNicknameDefault),
+  "frame": zod.string().default(updateTeacherStudentResponseAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(updateTeacherStudentResponseAvatarConfigBadgesDefault)
 })
 })
 
@@ -703,6 +832,302 @@ export const RemoveTeacherStudentClassQueryParams = zod.object({
 export const RemoveTeacherStudentClassResponse = zod.object({
   "id": zod.number(),
   "classId": zod.union([zod.number(),zod.null()])
+})
+
+
+/**
+ * @summary List games accessible to the signed-in user
+ */
+export const GetGamesResponse = zod.object({
+  "games": zod.array(zod.object({
+  "id": zod.number(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "isActive": zod.boolean(),
+  "version": zod.number(),
+  "isCompleted": zod.boolean(),
+  "isLocked": zod.boolean()
+}))
+})
+
+
+/**
+ * @summary Get a single game with its words
+ */
+export const GetGameByIdParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetGameByIdResponse = zod.object({
+  "id": zod.number(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "version": zod.number(),
+  "items": zod.array(zod.record(zod.string(), zod.unknown())),
+  "isCompleted": zod.boolean()
+})
+
+
+/**
+ * @summary Submit a completed game session and award points
+ */
+export const CompleteGameParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const completeGameBodyScoreMin = 0;
+
+export const completeGameBodyMistakesMin = 0;
+
+export const completeGameBodyDurationMsMin = 0;
+
+
+
+export const CompleteGameBody = zod.object({
+  "score": zod.number().min(completeGameBodyScoreMin).optional(),
+  "mistakes": zod.number().min(completeGameBodyMistakesMin).optional(),
+  "durationMs": zod.number().min(completeGameBodyDurationMsMin).optional()
+})
+
+export const CompleteGameResponse = zod.object({
+  "id": zod.number(),
+  "gameId": zod.number(),
+  "version": zod.number(),
+  "pointsAwarded": zod.number(),
+  "completedAt": zod.coerce.date()
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary List all games for teacher management
+ */
+export const GetTeacherGamesQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const GetTeacherGamesResponse = zod.object({
+  "games": zod.array(zod.object({
+  "id": zod.number(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "isActive": zod.boolean(),
+  "version": zod.number(),
+  "isCompleted": zod.boolean(),
+  "isLocked": zod.boolean()
+}).and(zod.object({
+  "stats": zod.object({
+  "plays": zod.number(),
+  "uniqueStudents": zod.number(),
+  "avgMistakes": zod.number(),
+  "avgDuration": zod.number()
+})
+})))
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Create a new game placeholder
+ */
+export const CreateTeacherGameQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const createTeacherGameBodySlugMax = 50;
+
+export const createTeacherGameBodyNameMax = 200;
+
+export const createTeacherGameBodyDescriptionMax = 1000;
+
+export const createTeacherGameBodyImageUrlMax = 1000;
+
+export const createTeacherGameBodyPointsRewardMin = 0;
+export const createTeacherGameBodyPointsRewardMax = 1000;
+
+
+
+export const CreateTeacherGameBody = zod.object({
+  "slug": zod.string().min(1).max(createTeacherGameBodySlugMax),
+  "name": zod.string().min(1).max(createTeacherGameBodyNameMax),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "description": zod.string().max(createTeacherGameBodyDescriptionMax).optional(),
+  "imageUrl": zod.string().max(createTeacherGameBodyImageUrlMax).optional(),
+  "pointsReward": zod.number().min(createTeacherGameBodyPointsRewardMin).max(createTeacherGameBodyPointsRewardMax).optional()
+})
+
+export const CreateTeacherGameResponse = zod.object({
+  "id": zod.number(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "isActive": zod.boolean(),
+  "version": zod.number(),
+  "isCompleted": zod.boolean(),
+  "isLocked": zod.boolean()
+}).and(zod.object({
+  "stats": zod.object({
+  "plays": zod.number(),
+  "uniqueStudents": zod.number(),
+  "avgMistakes": zod.number(),
+  "avgDuration": zod.number()
+})
+}))
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Update game metadata
+ */
+export const UpdateTeacherGameParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateTeacherGameQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const updateTeacherGameBodyNameMax = 200;
+
+export const updateTeacherGameBodyDescriptionMax = 1000;
+
+export const updateTeacherGameBodyImageUrlMax = 1000;
+
+export const updateTeacherGameBodyPointsRewardMin = 0;
+export const updateTeacherGameBodyPointsRewardMax = 1000;
+
+
+
+export const UpdateTeacherGameBody = zod.object({
+  "name": zod.string().min(1).max(updateTeacherGameBodyNameMax).optional(),
+  "description": zod.string().max(updateTeacherGameBodyDescriptionMax).optional(),
+  "imageUrl": zod.string().max(updateTeacherGameBodyImageUrlMax).optional(),
+  "pointsReward": zod.number().min(updateTeacherGameBodyPointsRewardMin).max(updateTeacherGameBodyPointsRewardMax).optional(),
+  "isActive": zod.boolean().optional()
+})
+
+export const UpdateTeacherGameResponse = zod.object({
+  "id": zod.number(),
+  "slug": zod.string(),
+  "name": zod.string(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "description": zod.union([zod.string(),zod.null()]).optional(),
+  "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "isActive": zod.boolean(),
+  "version": zod.number(),
+  "isCompleted": zod.boolean(),
+  "isLocked": zod.boolean()
+}).and(zod.object({
+  "stats": zod.object({
+  "plays": zod.number(),
+  "uniqueStudents": zod.number(),
+  "avgMistakes": zod.number(),
+  "avgDuration": zod.number()
+})
+}))
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard. Kept at /words for API compatibility.
+ * @summary Get the items for a game
+ */
+export const GetTeacherGameWordsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeacherGameWordsQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const GetTeacherGameWordsResponse = zod.object({
+  "gameId": zod.number(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']).optional(),
+  "version": zod.number().optional(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "order": zod.number(),
+  "payload": zod.record(zod.string(), zod.unknown())
+}))
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Replace items and bump the game version
+ */
+export const UpdateTeacherGameWordsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateTeacherGameWordsQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const updateTeacherGameWordsBodyItemsMax = 100;
+
+
+
+export const UpdateTeacherGameWordsBody = zod.object({
+  "items": zod.array(zod.record(zod.string(), zod.unknown())).max(updateTeacherGameWordsBodyItemsMax)
+})
+
+export const UpdateTeacherGameWordsResponse = zod.object({
+  "gameId": zod.number(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']).optional(),
+  "version": zod.number().optional(),
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "order": zod.number(),
+  "payload": zod.record(zod.string(), zod.unknown())
+}))
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Get statistics for a game
+ */
+export const GetTeacherGameStatsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeacherGameStatsQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const GetTeacherGameStatsResponse = zod.object({
+  "gameId": zod.number(),
+  "plays": zod.number(),
+  "uniqueStudents": zod.number(),
+  "avgMistakes": zod.number(),
+  "avgDuration": zod.number(),
+  "wordStats": zod.record(zod.string(), zod.unknown()),
+  "sessions": zod.array(zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "studentName": zod.string(),
+  "version": zod.number(),
+  "score": zod.number(),
+  "mistakes": zod.number(),
+  "durationMs": zod.union([zod.number(),zod.null()]).optional(),
+  "completedAt": zod.coerce.date()
+}))
 })
 
 

@@ -6,6 +6,7 @@ import adminRouter from "./admin";
 import teacherRouter from "./teacher";
 import challengesRouter from "./challenges";
 import identityRouter from "./identity";
+import gamesRouter from "./games";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(leaderboardRouter);
 router.use(adminRouter);
 router.use(teacherRouter);
 router.use(challengesRouter);
+router.use(gamesRouter);
 
 export default router;

@@ -45,6 +45,9 @@ export const avatarConfigSchema = z.preprocess(
     accessories: z.array(z.string()).default([]),
     gender: z.enum(["male", "female"]).default("male"),
     pet: z.string().default("none"),
+    nickname: z.string().max(30).default(""),
+    frame: z.string().default("none"),
+    badges: z.array(z.string()).default([]),
   }),
 );
 export type AvatarConfig = z.infer<typeof avatarConfigSchema>;

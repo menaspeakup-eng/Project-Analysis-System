@@ -12,4 +12,8 @@ export interface AvatarConfig {
   accessories: string[];
   gender: AvatarConfigGender;
   pet: string;
+  /** @maxLength 30 */
+  nickname: string;
+  frame: string;
+  badges: string[];
 }

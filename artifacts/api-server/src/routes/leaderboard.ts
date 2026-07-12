@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { getAuth } from "@clerk/express";
 import { db, studentsTable, avatarConfigSchema } from "@workspace/db";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { GetLeaderboardResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -11,7 +11,26 @@ const TOP_N = 10;
 router.get("/leaderboard", async (req, res) => {
   const { userId } = getAuth(req);
 
+  const classIdParam = req.query.classId;
+  let classId: number | undefined = undefined;
+  if (classIdParam && typeof classIdParam === "string") {
+    const parsed = Number(classIdParam);
+    if (!Number.isNaN(parsed)) classId = parsed;
+  }
+
+  // If no explicit class filter is provided and the user is a signed-in student,
+  // automatically scope the leaderboard to that student's class.
+  if (classId === undefined && userId) {
+    const student = await db.query.studentsTable.findFirst({
+      where: eq(studentsTable.clerkUserId, userId),
+    });
+    if (student?.classId) {
+      classId = student.classId;
+    }
+  }
+
   const ranked = await db.query.studentsTable.findMany({
+    where: classId !== undefined ? eq(studentsTable.classId, classId) : undefined,
     orderBy: [desc(studentsTable.points), studentsTable.id],
   });
 

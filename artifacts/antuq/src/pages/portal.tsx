@@ -25,10 +25,11 @@ import {
   Settings,
   Award,
   GraduationCap,
+  Gamepad2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar3D } from "@/components/Avatar3D";
-import { avatarBgStyle, avatarAccessoryEmojis, AVATAR_GENDERS } from "@/lib/avatarPresets";
+import { avatarBgStyle, avatarAccessoryEmojis, AVATAR_GENDERS, avatarFrameClass } from "@/lib/avatarPresets";
 import StudentChallenges from "./student-challenges";
 
 const POINTS_PER_LEVEL = 100;
@@ -37,20 +38,39 @@ function ComingSoonCard({
   icon: Icon,
   label,
   colorClass,
+  href,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   colorClass: string;
+  href?: string;
 }) {
+  const content = (
+    <>
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${colorClass}`}>
+        <Icon className="w-7 h-7" />
+      </div>
+      <span className="font-bold text-foreground">{label}</span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="bg-white p-5 rounded-3xl shadow-sm border border-border flex flex-col items-center gap-3 text-center transition-transform hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+      >
+        {content}
+      </Link>
+    );
+  }
+
   return (
     <div className="bg-white p-5 rounded-3xl shadow-sm border border-border flex flex-col items-center gap-3 text-center opacity-70 cursor-not-allowed relative">
       <span className="absolute top-3 left-3 text-[11px] font-bold text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border">
         قريباً
       </span>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${colorClass}`}>
-        <Icon className="w-7 h-7" />
-      </div>
-      <span className="font-bold text-foreground">{label}</span>
+      {content}
     </div>
   );
 }
@@ -149,13 +169,20 @@ export default function Portal() {
     query: { enabled: !!isSignedIn } as never,
   });
 
-  const { data: leaderboard, isLoading: isLeaderboardLoading } = useGetLeaderboard();
+  const { data: leaderboard, isLoading: isLeaderboardLoading } = useGetLeaderboard(
+    { classId: profile?.classId ?? undefined },
+    { query: { enabled: !!isSignedIn } as never },
+  );
 
   // Google sometimes populates fullName without splitting it into first/last name,
   // so fall back through fullName before the generic placeholder.
   const displayName = isGuest
     ? "الزائر الصغير"
-    : profile?.name || user?.firstName || user?.fullName || "صديقنا البطل";
+    : profile?.avatarConfig?.nickname?.trim() ||
+      profile?.name ||
+      user?.firstName ||
+      user?.fullName ||
+      "صديقنا البطل";
 
   // Guests have no account, so there's nowhere to persist points yet — they always start at 0.
   const points = isGuest ? 0 : profile?.points ?? 0;
@@ -167,6 +194,9 @@ export default function Portal() {
     accessories: [],
     gender: "male",
     pet: "none",
+    nickname: "",
+    frame: "none",
+    badges: [],
   };
 
   useEffect(() => {
@@ -254,7 +284,8 @@ export default function Portal() {
               gender={avatarConfig.gender}
               accessory={avatarConfig.accessories[0] ?? "none"}
               pet={avatarConfig.pet}
-              className="w-32 h-32 md:w-36 md:h-36 rounded-2xl border-4 border-white shadow-lg transition-transform group-hover:scale-105"
+              frontView
+              className={`w-32 h-32 md:w-36 md:h-36 rounded-2xl shadow-lg transition-transform group-hover:scale-105 ${avatarFrameClass(avatarConfig.frame)}`.trim()}
             />
             <span className="absolute -bottom-1 -left-1 bg-accent text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md border-2 border-white">
               المستوى {level}
@@ -314,6 +345,28 @@ export default function Portal() {
           </div>
         </section>
 
+        {/* Games quick link */}
+        <section className="bg-gradient-to-l from-primary/10 to-secondary/10 rounded-3xl border border-primary/20 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0">
+              <Gamepad2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-black text-foreground text-lg">الألعاب التعليمية</h3>
+              <p className="text-sm text-muted-foreground font-medium">
+                العب وتعلم الكلمات بشكل ممتع.
+              </p>
+            </div>
+          </div>
+          <Button
+            className="rounded-xl font-bold h-10"
+            onClick={() => setLocation("/games")}
+          >
+            <Play className="w-4 h-4 ml-1" />
+            ابدأ اللعب
+          </Button>
+        </section>
+
         {/* Daily challenge + Leaderboard side by side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Daily challenges */}
@@ -367,7 +420,7 @@ export default function Portal() {
         <section>
           <h3 className="font-black text-foreground text-lg mb-4">استكشف انطق</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <ComingSoonCard icon={Play} label="الألعاب التعليمية" colorClass="bg-accent/15 text-accent" />
+            <ComingSoonCard icon={Play} label="الألعاب التعليمية" colorClass="bg-accent/15 text-accent" href="/games" />
             <ComingSoonCard icon={BookOpen} label="المكتبة" colorClass="bg-primary/15 text-primary" />
             <ComingSoonCard icon={Award} label="جميع الإنجازات" colorClass="bg-secondary/20 text-secondary-foreground" />
             <ComingSoonCard icon={MessageCircle} label="الشات العام" colorClass="bg-[hsl(180,60%,90%)] text-[hsl(180,60%,35%)]" />

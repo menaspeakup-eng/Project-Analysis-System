@@ -95,3 +95,17 @@ export function isPetUnlocked(pet: string, level: number): boolean {
   const preset = AVATAR_PETS[pet];
   return !!preset && level >= preset.unlockLevel;
 }
+
+export function avatarFrameClass(frame: string): string {
+  switch (frame) {
+    case "gold":
+      return "border-4 border-yellow-400 shadow-[0_0_0_4px_rgba(250,204,21,0.25)]";
+    case "silver":
+      return "border-4 border-slate-300 shadow-[0_0_0_4px_rgba(203,213,225,0.25)]";
+    case "rainbow":
+      return "border-4 border-transparent bg-gradient-to-r from-pink-300 via-yellow-300 to-blue-300 p-1";
+    case "none":
+    default:
+      return "";
+  }
+}

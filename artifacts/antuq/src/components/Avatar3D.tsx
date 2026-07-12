@@ -235,6 +235,7 @@ export function Avatar3D({
   pet,
   interactive = false,
   autoRotate = true,
+  frontView = false,
   className = "",
 }: {
   bgColor: string;
@@ -246,6 +247,8 @@ export function Avatar3D({
   interactive?: boolean;
   /** When true (default), the model spins on its own; disabled while dragging. */
   autoRotate?: boolean;
+  /** When true, the camera is locked to a front-facing view and auto-rotation is disabled. */
+  frontView?: boolean;
   className?: string;
 }) {
   const preset = AVATAR_BG_COLORS[bgColor] ?? AVATAR_BG_COLORS.orange;
@@ -271,7 +274,12 @@ export function Avatar3D({
       >
         <Suspense fallback={<CanvasFallback />}>
           <Canvas
-            camera={{ position: [0, 0.15, pet !== "none" ? 3.6 : 3.1], fov: 32 }}
+            camera={{
+              position: frontView
+                ? [0, 0.15, pet !== "none" ? 3.2 : 2.8]
+                : [0, 0.15, pet !== "none" ? 3.6 : 3.1],
+              fov: 32,
+            }}
             gl={{ antialias: true, alpha: true }}
             dpr={[1, 1.5]}
             onCreated={({ gl }) => {
@@ -286,8 +294,8 @@ export function Avatar3D({
               gender={gender}
               accessory={accessory}
               pet={pet}
-              interactive={interactive}
-              autoRotate={autoRotate}
+              interactive={interactive && !frontView}
+              autoRotate={autoRotate && !frontView}
             />
           </Canvas>
         </Suspense>

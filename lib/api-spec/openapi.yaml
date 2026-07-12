@@ -308,6 +308,13 @@ paths:
       operationId: getLeaderboard
       tags: [leaderboard]
       summary: Get the top students by points, plus the current student's own rank
+      parameters:
+        - in: query
+          name: classId
+          required: false
+          schema:
+            type: integer
+          description: Filter leaderboard to a specific class. If omitted and the caller is a signed-in student, their class is used.
       responses:
         "200":
           description: Leaderboard
@@ -583,6 +590,238 @@ paths:
           description: Not signed in
         "403":
           description: Not a teacher or admin
+  /games:
+    get:
+      operationId: getGames
+      tags: [games]
+      summary: List games accessible to the signed-in user
+      responses:
+        "200":
+          description: Games list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameList"
+        "401":
+          description: Not signed in
+  /games/{id}:
+    get:
+      operationId: getGameById
+      tags: [games]
+      summary: Get a single game with its words
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Game details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameDetail"
+        "401":
+          description: Not signed in
+        "403":
+          description: Game not accessible
+        "404":
+          description: Game not found
+  /games/{id}/complete:
+    post:
+      operationId: completeGame
+      tags: [games]
+      summary: Submit a completed game session and award points
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteGameBody"
+      responses:
+        "201":
+          description: Completion recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameCompletionResult"
+        "400":
+          description: Invalid body or already completed
+        "401":
+          description: Not signed in
+        "403":
+          description: Game not accessible
+        "404":
+          description: Game not found
+  /teacher/games:
+    get:
+      operationId: getTeacherGames
+      tags: [teacher]
+      summary: List all games for teacher management
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Games list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherGameList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+    post:
+      operationId: createTeacherGame
+      tags: [teacher]
+      summary: Create a new game placeholder
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGameBody"
+      responses:
+        "201":
+          description: Created game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherGame"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+  /teacher/games/{id}:
+    put:
+      operationId: updateTeacherGame
+      tags: [teacher]
+      summary: Update game metadata
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGameBody"
+      responses:
+        "200":
+          description: Updated game
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherGame"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+        "404":
+          description: Game not found
+  /teacher/games/{id}/words:
+    get:
+      operationId: getTeacherGameWords
+      tags: [teacher]
+      summary: Get the items for a game
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard. Kept at /words for API compatibility.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Items list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameItemsList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+    put:
+      operationId: updateTeacherGameWords
+      tags: [teacher]
+      summary: Replace items and bump the game version
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGameItemsBody"
+      responses:
+        "200":
+          description: Updated items and version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameItemsList"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+        "404":
+          description: Game not found
+  /teacher/games/{id}/stats:
+    get:
+      operationId: getTeacherGameStats
+      tags: [teacher]
+      summary: Get statistics for a game
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Game statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherGameStats"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+        "404":
+          description: Game not found
 components:
   parameters:
     TeacherIdQuery:
@@ -666,11 +905,26 @@ components:
           enum: [male, female]
         pet:
           type: string
+        nickname:
+          type: string
+          maxLength: 30
+          default: ""
+        frame:
+          type: string
+          default: "none"
+        badges:
+          type: array
+          items:
+            type: string
+          default: []
       required:
         - bgColor
         - accessories
         - gender
         - pet
+        - nickname
+        - frame
+        - badges
     StudentProfile:
       type: object
       properties:
@@ -1283,3 +1537,312 @@ components:
       required:
         - id
         - classId
+    GameType:
+      type: string
+      enum:
+        - match-sentence-picture
+        - arrange-sentence
+        - choose-picture
+        - choose-sentence
+        - complete-sentence
+        - arrange-sentences
+    Game:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/GameType"
+        description:
+          oneOf:
+            - type: string
+            - type: "null"
+        imageUrl:
+          oneOf:
+            - type: string
+            - type: "null"
+        pointsReward:
+          type: integer
+        isActive:
+          type: boolean
+        version:
+          type: integer
+        isCompleted:
+          type: boolean
+        isLocked:
+          type: boolean
+      required:
+        - id
+        - slug
+        - name
+        - type
+        - pointsReward
+        - isActive
+        - version
+        - isCompleted
+        - isLocked
+    GameList:
+      type: object
+      properties:
+        games:
+          type: array
+          items:
+            $ref: "#/components/schemas/Game"
+      required:
+        - games
+    GameDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/GameType"
+        description:
+          oneOf:
+            - type: string
+            - type: "null"
+        imageUrl:
+          oneOf:
+            - type: string
+            - type: "null"
+        pointsReward:
+          type: integer
+        version:
+          type: integer
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        isCompleted:
+          type: boolean
+      required:
+        - id
+        - slug
+        - name
+        - type
+        - pointsReward
+        - version
+        - items
+        - isCompleted
+    CompleteGameBody:
+      type: object
+      properties:
+        score:
+          type: integer
+          minimum: 0
+        mistakes:
+          type: integer
+          minimum: 0
+        durationMs:
+          type: integer
+          minimum: 0
+      required: []
+    GameCompletionResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        gameId:
+          type: integer
+        version:
+          type: integer
+        pointsAwarded:
+          type: integer
+        completedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - gameId
+        - version
+        - pointsAwarded
+        - completedAt
+    GameStats:
+      type: object
+      properties:
+        plays:
+          type: integer
+        uniqueStudents:
+          type: integer
+        avgMistakes:
+          type: integer
+        avgDuration:
+          type: integer
+      required:
+        - plays
+        - uniqueStudents
+        - avgMistakes
+        - avgDuration
+    TeacherGame:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Game"
+      properties:
+        stats:
+          $ref: "#/components/schemas/GameStats"
+      required:
+        - stats
+    TeacherGameList:
+      type: object
+      properties:
+        games:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherGame"
+      required:
+        - games
+    CreateGameBody:
+      type: object
+      properties:
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        type:
+          $ref: "#/components/schemas/GameType"
+        description:
+          type: string
+          maxLength: 1000
+        imageUrl:
+          type: string
+          maxLength: 1000
+        pointsReward:
+          type: integer
+          minimum: 0
+          maximum: 1000
+      required:
+        - slug
+        - name
+        - type
+    UpdateGameBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 1000
+        imageUrl:
+          type: string
+          maxLength: 1000
+        pointsReward:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        isActive:
+          type: boolean
+      required: []
+    GameItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        order:
+          type: integer
+        payload:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - order
+        - payload
+    GameItemsList:
+      type: object
+      properties:
+        gameId:
+          type: integer
+        type:
+          $ref: "#/components/schemas/GameType"
+        version:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameItem"
+      required:
+        - gameId
+        - items
+    UpdateGameItemsBody:
+      type: object
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            additionalProperties: true
+      required:
+        - items
+    GameSession:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        version:
+          type: integer
+        score:
+          type: integer
+        mistakes:
+          type: integer
+        durationMs:
+          oneOf:
+            - type: integer
+            - type: "null"
+        completedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - studentId
+        - studentName
+        - version
+        - score
+        - mistakes
+        - completedAt
+    TeacherGameStats:
+      type: object
+      properties:
+        gameId:
+          type: integer
+        plays:
+          type: integer
+        uniqueStudents:
+          type: integer
+        avgMistakes:
+          type: integer
+        avgDuration:
+          type: integer
+        wordStats:
+          type: object
+          additionalProperties: true
+        sessions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GameSession"
+      required:
+        - gameId
+        - plays
+        - uniqueStudents
+        - avgMistakes
+        - avgDuration
+        - wordStats
+        - sessions

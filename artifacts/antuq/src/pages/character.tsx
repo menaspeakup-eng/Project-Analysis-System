@@ -7,6 +7,8 @@ import {
 } from "@workspace/api-client-react";
 import { ArrowRight, Check, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Avatar3D } from "@/components/Avatar3D";
 import {
   AVATAR_BG_COLORS,
@@ -18,6 +20,7 @@ import {
   isAccessoryUnlocked,
   isPetUnlocked,
   selectAccessory,
+  avatarFrameClass,
 } from "@/lib/avatarPresets";
 
 export default function CharacterEdit() {
@@ -33,6 +36,8 @@ export default function CharacterEdit() {
   const [gender, setGender] = useState("male");
   const [accessory, setAccessory] = useState("none");
   const [pet, setPet] = useState("none");
+  const [nickname, setNickname] = useState("");
+  const [frame, setFrame] = useState("none");
   const [saved, setSaved] = useState(false);
   // Transient "try it on" preview for locked items — tapping a locked
   // accessory/pet shows it on the 3D model without unlocking or saving it.
@@ -49,6 +54,8 @@ export default function CharacterEdit() {
       setGender(profile.avatarConfig.gender);
       setAccessory(profile.avatarConfig.accessories[0] ?? "none");
       setPet(profile.avatarConfig.pet);
+      setNickname(profile.avatarConfig.nickname ?? "");
+      setFrame(profile.avatarConfig.frame ?? "none");
     }
   }, [profile?.avatarConfig]);
 
@@ -80,6 +87,9 @@ export default function CharacterEdit() {
           gender: gender as "male" | "female",
           accessories: accessory === "none" ? [] : [accessory],
           pet,
+          nickname: nickname.trim(),
+          frame,
+          badges: profile?.avatarConfig?.badges ?? [],
         },
       },
       {
@@ -126,13 +136,30 @@ export default function CharacterEdit() {
             accessory={displayAccessory}
             pet={displayPet}
             interactive
-            className="w-56 h-56 md:w-64 md:h-64 rounded-3xl border-4 border-white shadow-lg"
+            className={`w-56 h-56 md:w-64 md:h-64 rounded-3xl shadow-lg ${avatarFrameClass(frame)}`.trim()}
           />
           <p className="text-muted-foreground font-medium text-sm">
             {previewAccessory || previewPet
               ? "👀 هذه معاينة فقط — افتح المستوى المطلوب لتتمكن من حفظها"
               : "اسحب لتدوير شخصيتك — هكذا ستظهر في الصفحة الرئيسية"}
           </p>
+        </section>
+
+        {/* Nickname */}
+        <section className="bg-white rounded-3xl shadow-sm border border-border p-6">
+          <h3 className="font-black text-foreground mb-4">اسمك المستعار</h3>
+          <div className="space-y-2">
+            <Label htmlFor="nickname" className="font-bold text-sm text-muted-foreground">
+              اسم يظهر في لوحة المتصدرين وفي صفحتك
+            </Label>
+            <Input
+              id="nickname"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value.slice(0, 30))}
+              placeholder={profile?.name ?? "اسمك"}
+              className="rounded-xl border-border h-12 font-bold"
+            />
+          </div>
         </section>
 
         {/* Gender picker */}
@@ -181,6 +208,54 @@ export default function CharacterEdit() {
                 </span>
               </button>
             ))}
+          </div>
+        </section>
+
+        {/* Frame picker */}
+        <section className="bg-white rounded-3xl shadow-sm border border-border p-6">
+          <h3 className="font-black text-foreground mb-4">إطار الشخصية</h3>
+          <div className="flex flex-wrap gap-3">
+            {[
+              { key: "none", label: "بدون", style: "" },
+              { key: "gold", label: "ذهبي", style: "border-yellow-400 bg-yellow-50" },
+              { key: "silver", label: "فضي", style: "border-slate-300 bg-slate-50" },
+              { key: "rainbow", label: "قوس قزح", style: "border-transparent bg-gradient-to-r from-pink-200 via-yellow-200 to-blue-200" },
+            ].map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                onClick={() => setFrame(preset.key)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl border-2 transition-all ${
+                  frame === preset.key ? "border-primary bg-primary/5" : "border-border"
+                }`}
+              >
+                <span className={`w-5 h-5 rounded-full border-2 ${preset.style}`} />
+                <span className={`text-sm font-bold ${frame === preset.key ? "text-primary" : "text-muted-foreground"}`}>
+                  {preset.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* Badges */}
+        <section className="bg-white rounded-3xl shadow-sm border border-border p-6">
+          <h3 className="font-black text-foreground mb-4">شاراتك</h3>
+          <div className="flex flex-wrap gap-2">
+            {[
+              level >= 1 && { key: "beginner", label: "مبتدئ", color: "bg-[hsl(15,85%,55%)]" },
+              level >= 3 && { key: "learner", label: "متعلم", color: "bg-[hsl(200,80%,55%)]" },
+              level >= 5 && { key: "practiced", label: "متمرس", color: "bg-[hsl(150,55%,45%)]" },
+              level >= 10 && { key: "expert", label: "خبير", color: "bg-[hsl(265,60%,55%)]" },
+            ].filter((b): b is { key: string; label: string; color: string } => !!b)
+              .map((badge) => (
+                <span
+                  key={badge.key}
+                  className={`${badge.color} text-white font-bold text-xs px-4 py-2 rounded-full`}
+                >
+                  {badge.label}
+                </span>
+              ))}
           </div>
         </section>
 
