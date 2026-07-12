@@ -128,6 +128,7 @@ export default function TeacherGames() {
   const { mutate: updateGame } = useUpdateTeacherGame();
   const { mutate: updateItems } = useUpdateTeacherGameWords();
   const { mutate: createGame } = useCreateTeacherGame();
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
 
   const openItems = (game: TeacherGame) => {
     setSelectedGame(game);
@@ -239,6 +240,22 @@ export default function TeacherGames() {
   };
 
   const games = data?.games ?? [];
+
+  const handleDeleteGame = async (game: TeacherGame) => {
+    const confirmed = window.confirm(`هل تريد حذف اللعبة "${game.name}"؟ لا يمكن التراجع عن هذا الإجراء.`);
+    if (!confirmed) return;
+    setIsDeleting(game.id);
+    try {
+      const res = await fetch(`/api/teacher/games/${game.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("فشل الحذف");
+      queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/games"] });
+    } catch (err) {
+      alert("تعذر حذف اللعبة، حاول مرة أخرى.");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   const selectedType = (selectedGame?.type ?? createForm.type) as GameType;
 
@@ -449,6 +466,16 @@ export default function TeacherGames() {
                   >
                     <RotateCcw className="w-4 h-4 ml-1" />
                     إعدادات
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="rounded-xl h-9 w-9 border-border text-destructive hover:text-destructive hover:bg-destructive/5"
+                    onClick={() => handleDeleteGame(g)}
+                    disabled={isDeleting === g.id}
+                    aria-label="حذف اللعبة"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>

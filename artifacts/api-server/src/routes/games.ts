@@ -462,6 +462,35 @@ router.put("/teacher/games/:id", async (req, res) => {
   });
 });
 
+// Teacher: delete a game.
+router.delete("/teacher/games/:id", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireTeacher(identity);
+
+  const gameId = parseIntParam(req.params.id);
+  if (gameId === null) {
+    res.status(400).json({ error: "معرف اللعبة غير صالح" });
+    return;
+  }
+
+  const game = await db.query.gamesTable.findFirst({
+    where: eq(gamesTable.id, gameId),
+  });
+  if (!game) {
+    res.status(404).json({ error: "اللعبة غير موجودة" });
+    return;
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(studentGameSessionsTable).where(eq(studentGameSessionsTable.gameId, gameId));
+    await tx.delete(gameItemsTable).where(eq(gameItemsTable.gameId, gameId));
+    await tx.delete(gamesTable).where(eq(gamesTable.id, gameId));
+  });
+
+  res.status(204).send();
+});
+
 // Teacher: get items for a game.
 router.get("/teacher/games/:id/words", async (req, res) => {
   const identity = await resolveIdentity(req);
