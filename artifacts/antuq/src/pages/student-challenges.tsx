@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetStudentChallenges,
@@ -9,14 +9,27 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Flame, Play, Check, X, Clock, Upload, Paperclip, Star } from "lucide-react";
+import {
+  Flame,
+  Play,
+  Check,
+  X,
+  Clock,
+  Upload,
+  Paperclip,
+  Star,
+  Mic,
+  Square,
+  Trash2,
+  Volume2,
+} from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   not_started: "لم يبدأ",
@@ -67,13 +80,27 @@ function formatRemainingTime(expiresAt: string): string {
   return `${minutes} دقيقة`;
 }
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = String(seconds % 60).padStart(2, "0");
+  return `${m}:${s}`;
+}
+
 export default function StudentChallenges() {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<StudentChallenge | null>(null);
   const [text, setText] = useState("");
   const [files, setFiles] = useState<SubmissionFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [recordError, setRecordError] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [recordedFile, setRecordedFile] = useState<SubmissionFile | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const { data, isLoading } = useGetStudentChallenges({
     query: { enabled: true } as never,
@@ -81,6 +108,75 @@ export default function StudentChallenges() {
   const { mutate: submit, isPending: isSubmitting } = useSubmitStudentChallenge();
 
   const challenges = data?.challenges ?? [];
+
+  const cleanupRecording = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    mediaRecorderRef.current = null;
+    chunksRef.current = [];
+    setIsRecording(false);
+    setRecordingSeconds(0);
+  };
+
+  useEffect(() => {
+    return () => {
+      cleanupRecording();
+    };
+  }, []);
+
+  const startRecording = async () => {
+    setRecordError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/webm")
+          ? "audio/webm"
+          : "audio/mp4";
+      const recorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = recorder;
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        const ext = mimeType.includes("webm") ? "webm" : "mp4";
+        const blob = new Blob(chunksRef.current, { type: mimeType });
+        const file = new File([blob], `recording-${Date.now()}.${ext}`, { type: mimeType });
+        const base64 = await readFileAsBase64(file);
+        setRecordedFile(base64);
+        setFiles((prev) => [...prev, base64].slice(0, 5));
+        cleanupRecording();
+      };
+
+      recorder.onerror = () => {
+        setRecordError("حدث خطأ أثناء التسجيل، حاول مرة أخرى.");
+        cleanupRecording();
+      };
+
+      recorder.start(250);
+      setIsRecording(true);
+      timerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => s + 1);
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      setRecordError("تأكد من السماح للموقع باستخدام الميكروفون.");
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.state !== "inactive" && mediaRecorderRef.current?.stop();
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -121,12 +217,20 @@ export default function StudentChallenges() {
           queryClient.invalidateQueries({ queryKey: ["/api/student/challenges"] });
           queryClient.invalidateQueries({ queryKey: ["/api/student/me"] });
           queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
-          setText("");
-          setFiles([]);
-          setSelected(null);
+          closeDialog();
         },
       },
     );
+  };
+
+  const closeDialog = () => {
+    stopRecording();
+    cleanupRecording();
+    setRecordedFile(null);
+    setRecordError(null);
+    setText("");
+    setFiles([]);
+    setSelected(null);
   };
 
   const openChallenge = (c: StudentChallenge) => {
@@ -134,6 +238,13 @@ export default function StudentChallenges() {
     setText(c.submissionText ?? "");
     setFiles(c.submissionFiles ?? []);
   };
+
+  const wantsAudio = (c: StudentChallenge) =>
+    c.submissionType === "audio" || c.submissionType === "mixed";
+  const wantsText = (c: StudentChallenge) =>
+    c.submissionType === "text" || c.submissionType === "mixed";
+  const wantsFile = (c: StudentChallenge) =>
+    c.submissionType === "image" || c.submissionType === "file" || c.submissionType === "mixed";
 
   return (
     <section className="bg-gradient-to-l from-accent/10 to-primary/10 rounded-3xl border border-accent/20 p-6 flex flex-col gap-4">
@@ -206,7 +317,7 @@ export default function StudentChallenges() {
       )}
 
       {selected && (
-        <Dialog open onOpenChange={(open) => { if (!open) setSelected(null); }}>
+        <Dialog open onOpenChange={(open) => { if (!open) closeDialog(); }}>
           <DialogContent className="sm:max-w-2xl rounded-3xl max-h-[90vh] overflow-y-auto" dir="rtl">
             <DialogHeader className="text-right">
               <DialogTitle className="text-xl font-black flex items-center gap-2">
@@ -270,18 +381,68 @@ export default function StudentChallenges() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="font-bold">إجابتك</Label>
-                    <Textarea
-                      value={text}
-                      onChange={(e) => setText(e.target.value)}
-                      placeholder="اكتب إجابتك هنا..."
-                      className="rounded-xl border-border min-h-[100px]"
-                      disabled={selected.status === "pending"}
-                    />
-                  </div>
+                  {wantsText(selected) && (
+                    <div className="space-y-2">
+                      <Label className="font-bold">إجابتك</Label>
+                      <Textarea
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="اكتب إجابتك هنا..."
+                        className="rounded-xl border-border min-h-[100px]"
+                        disabled={selected.status === "pending"}
+                      />
+                    </div>
+                  )}
 
-                  {selected.status !== "pending" && (
+                  {wantsAudio(selected) && selected.status !== "pending" && (
+                    <div className="space-y-2">
+                      <Label className="font-bold">تسجيل صوتي</Label>
+                      <div className="bg-muted/30 rounded-2xl p-4">
+                        {isRecording ? (
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-destructive/20 text-destructive flex items-center justify-center animate-pulse">
+                              <Mic className="w-6 h-6" />
+                            </div>
+                            <p className="font-black text-xl tabular-nums">
+                              {formatDuration(recordingSeconds)}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              className="rounded-xl font-bold h-10"
+                              onClick={stopRecording}
+                            >
+                              <Square className="w-4 h-4 ml-1 fill-current" />
+                              إيقاف التسجيل
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-3">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="rounded-xl h-10 font-bold border-border"
+                              onClick={startRecording}
+                              disabled={files.length >= 5}
+                            >
+                              <Mic className="w-4 h-4 ml-1" />
+                              ابدأ التسجيل
+                            </Button>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              يحتاج الموقف إلى إذن الميكروفون. الحد الأقصى 5 ملفات.
+                            </p>
+                          </div>
+                        )}
+                        {recordError && (
+                          <p className="text-sm text-destructive font-bold text-center mt-2">
+                            {recordError}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {wantsFile(selected) && selected.status !== "pending" && (
                     <div className="space-y-2">
                       <Label className="font-bold">ملفات أو تسجيلات</Label>
                       <div className="flex flex-wrap gap-2">
@@ -289,7 +450,13 @@ export default function StudentChallenges() {
                           ref={fileInputRef}
                           type="file"
                           multiple
-                          accept="image/*,audio/*,video/*,.pdf,.doc,.docx"
+                          accept={
+                            selected.submissionType === "audio"
+                              ? "audio/*"
+                              : selected.submissionType === "image"
+                                ? "image/*"
+                                : "image/*,audio/*,video/*,.pdf,.doc,.docx"
+                          }
                           className="hidden"
                           onChange={handleFileChange}
                         />
@@ -304,28 +471,44 @@ export default function StudentChallenges() {
                           {isUploading ? "جاري الرفع..." : "إرفاق ملف"}
                         </Button>
                       </div>
+                    </div>
+                  )}
 
-                      {files.length > 0 && (
-                        <div className="space-y-2">
-                          {files.map((file, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-3 bg-muted/30 rounded-xl p-2"
+                  {files.length > 0 && (
+                    <div className="space-y-2">
+                      {files.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex flex-col gap-2 bg-muted/30 rounded-xl p-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            {file.type.startsWith("image/") ? (
+                              <img
+                                src={file.data}
+                                alt={file.name}
+                                className="w-10 h-10 rounded-lg object-cover border border-border"
+                              />
+                            ) : file.type.startsWith("audio/") ? (
+                              <Volume2 className="w-5 h-5 text-muted-foreground" />
+                            ) : (
+                              <Paperclip className="w-5 h-5 text-muted-foreground" />
+                            )}
+                            <span className="text-sm font-medium flex-1 truncate">{file.name}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 text-destructive font-bold"
+                              onClick={() => handleRemoveFile(idx)}
+                              disabled={selected.status === "pending"}
                             >
-                              <Paperclip className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-sm font-medium flex-1 truncate">{file.name}</span>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 text-destructive font-bold"
-                                onClick={() => handleRemoveFile(idx)}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          ))}
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          {file.type.startsWith("audio/") && (
+                            <audio src={file.data} controls className="w-full h-8" />
+                          )}
                         </div>
-                      )}
+                      ))}
                     </div>
                   )}
 
@@ -337,7 +520,15 @@ export default function StudentChallenges() {
                     <Button
                       className="w-full rounded-xl font-bold h-11"
                       onClick={handleSubmit}
-                      disabled={isSubmitting || isUploading || (!text.trim() && files.length === 0)}
+                      disabled={
+                        isSubmitting ||
+                        isUploading ||
+                        isRecording ||
+                        (wantsText(selected) && !text.trim() && files.length === 0) ||
+                        (selected.submissionType === "audio" && files.length === 0) ||
+                        (selected.submissionType === "image" && files.length === 0) ||
+                        (selected.submissionType === "file" && files.length === 0)
+                      }
                     >
                       {isSubmitting ? (
                         <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2" />
