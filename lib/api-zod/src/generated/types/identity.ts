@@ -6,9 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AvatarConfig } from './avatarConfig';
+import type { IdentityRole } from './identityRole';
 
-export interface StudentProfile {
+export interface Identity {
+  userId: string;
+  email: string;
   name: string;
+  role: IdentityRole;
+  isAdmin: boolean;
+  isTeacher: boolean;
+  nameConfirmed: boolean;
   points: number;
   avatarConfig: AvatarConfig;
   classId: number | null;

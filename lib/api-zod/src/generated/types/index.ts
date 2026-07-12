@@ -6,11 +6,37 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminClass';
+export * from './adminClassList';
+export * from './adminStudentClass';
+export * from './adminToggleTeacherBody';
+export * from './adminUser';
+export * from './adminUserList';
+export * from './adminUserRole';
 export * from './avatarConfig';
 export * from './avatarConfigGender';
+export * from './claimStudentBody';
+export * from './claimTeacherStudentParams';
+export * from './createClassBody';
 export * from './dailyChallenge';
 export * from './dailyChallengeCompletion';
+export * from './getTeacherClassesParams';
+export * from './getTeacherUnclaimedParams';
 export * from './healthStatus';
+export * from './identity';
+export * from './identityRole';
 export * from './leaderboard';
 export * from './leaderboardEntry';
+export * from './moveStudentBody';
+export * from './nameCaptureBody';
+export * from './removeTeacherStudentClassParams';
+export * from './renameStudentBody';
+export * from './renameTeacherStudentParams';
 export * from './studentProfile';
+export * from './teacherClass';
+export * from './teacherClassList';
+export * from './teacherIdQueryParameter';
+export * from './teacherStudent';
+export * from './teacherStudentClass';
+export * from './unclaimedStudentList';
+export * from './updateClassBody';

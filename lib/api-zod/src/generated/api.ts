@@ -18,6 +18,32 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * Returns the current user's role (admin/teacher/student), onboarding status, and class/teacher info. Creates a platform row on first visit.
+ * @summary Resolve the signed-in user's platform identity and role
+ */
+export const GetIdentityMeResponse = zod.object({
+  "userId": zod.string(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['student', 'teacher']),
+  "isAdmin": zod.boolean(),
+  "isTeacher": zod.boolean(),
+  "nameConfirmed": zod.boolean(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+}),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()])
+})
+
+
+/**
  * Returns the current student's profile, creating one on first visit (JIT-provisioned from the Clerk account).
  * @summary Get the signed-in student's profile
  */
@@ -29,7 +55,39 @@ export const GetStudentProfileResponse = zod.object({
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
   "pet": zod.string()
+}),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()])
 })
+
+
+/**
+ * Sets the in-platform name and marks the onboarding name step as complete.
+ * @summary Capture the user's full name on first sign-in
+ */
+export const updateStudentNameBodyNameMax = 120;
+
+
+
+export const UpdateStudentNameBody = zod.object({
+  "name": zod.string().min(1).max(updateStudentNameBodyNameMax)
+})
+
+export const UpdateStudentNameResponse = zod.object({
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+}),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -51,7 +109,11 @@ export const UpdateStudentAvatarResponse = zod.object({
   "accessories": zod.array(zod.string()),
   "gender": zod.enum(['male', 'female']),
   "pet": zod.string()
-})
+}),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -105,6 +167,300 @@ export const GetLeaderboardResponse = zod.object({
 }),
   "isMe": zod.boolean()
 }),zod.null()])
+})
+
+
+/**
+ * @summary List every platform user for admin management
+ */
+export const GetAdminUsersResponse = zod.object({
+  "users": zod.array(zod.object({
+  "studentId": zod.number(),
+  "clerkUserId": zod.string(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "role": zod.enum(['student', 'teacher']),
+  "nameConfirmed": zod.boolean(),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()])
+}))
+})
+
+
+/**
+ * @summary Promote or demote a user as teacher by email
+ */
+export const toggleAdminTeacherBodyEmailMax = 320;
+
+
+
+export const ToggleAdminTeacherBody = zod.object({
+  "email": zod.string().min(1).max(toggleAdminTeacherBodyEmailMax),
+  "isTeacher": zod.boolean()
+})
+
+export const ToggleAdminTeacherResponse = zod.object({
+  "studentId": zod.number(),
+  "clerkUserId": zod.string(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "role": zod.enum(['student', 'teacher']),
+  "nameConfirmed": zod.boolean(),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()])
+})
+
+
+/**
+ * @summary List all classes with their teacher and students
+ */
+export const GetAdminClassesResponse = zod.object({
+  "classes": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "teacherId": zod.union([zod.number(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+})
+}))
+}))
+})
+
+
+/**
+ * @summary Create a new class
+ */
+export const createAdminClassBodyNameMax = 120;
+
+
+
+export const CreateAdminClassBody = zod.object({
+  "name": zod.string().min(1).max(createAdminClassBodyNameMax),
+  "teacherId": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const CreateAdminClassResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "teacherId": zod.union([zod.number(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+})
+}))
+})
+
+
+/**
+ * @summary Update a class name or teacher assignment
+ */
+export const UpdateAdminClassParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateAdminClassBodyNameMax = 120;
+
+
+
+export const UpdateAdminClassBody = zod.object({
+  "name": zod.string().min(1).max(updateAdminClassBodyNameMax).optional(),
+  "teacherId": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const UpdateAdminClassResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "teacherId": zod.union([zod.number(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+})
+}))
+})
+
+
+/**
+ * @summary Move or remove a student from a class
+ */
+export const MoveAdminStudentClassParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MoveAdminStudentClassBody = zod.object({
+  "classId": zod.union([zod.number(),zod.null()]).optional()
+})
+
+export const MoveAdminStudentClassResponse = zod.object({
+  "id": zod.number(),
+  "classId": zod.union([zod.number(),zod.null()])
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary List the teacher's classes with their students
+ */
+export const GetTeacherClassesQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const GetTeacherClassesResponse = zod.object({
+  "classes": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "teacherId": zod.union([zod.number(),zod.null()]),
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+})
+}))
+}))
+})
+
+
+/**
+ * @summary List students who are not assigned to any class yet
+ */
+export const GetTeacherUnclaimedQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const GetTeacherUnclaimedResponse = zod.object({
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+})
+}))
+})
+
+
+/**
+ * @summary Add an unclaimed student to one of the teacher's classes
+ */
+export const ClaimTeacherStudentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ClaimTeacherStudentQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const ClaimTeacherStudentBody = zod.object({
+  "classId": zod.number()
+})
+
+export const ClaimTeacherStudentResponse = zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+})
+})
+
+
+/**
+ * @summary Rename a student in the teacher's class
+ */
+export const RenameTeacherStudentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RenameTeacherStudentQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const renameTeacherStudentBodyNameMax = 120;
+
+
+
+export const RenameTeacherStudentBody = zod.object({
+  "name": zod.string().min(1).max(renameTeacherStudentBodyNameMax)
+})
+
+export const RenameTeacherStudentResponse = zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string()
+})
+})
+
+
+/**
+ * @summary Remove a student from the teacher's class
+ */
+export const RemoveTeacherStudentClassParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RemoveTeacherStudentClassQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const RemoveTeacherStudentClassResponse = zod.object({
+  "id": zod.number(),
+  "classId": zod.union([zod.number(),zod.null()])
 })
 
 

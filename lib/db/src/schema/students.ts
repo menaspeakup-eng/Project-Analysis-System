@@ -7,6 +7,7 @@ import {
   jsonb,
   date,
   unique,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -49,10 +50,28 @@ export type AvatarConfig = z.infer<typeof avatarConfigSchema>;
 
 // One row per authenticated Clerk user who has landed on the student home page.
 // Guests (no Clerk account) never get a row here — their state stays client-side.
+//
+// This table now represents every platform account, not just students who
+// stay students: the platform has no separate "teacher" account type, so
+// promoting someone to teacher just flips `role` on their existing row
+// rather than creating a parallel identity. The hardcoded admin
+// (see api-server's identity helper) is resolved purely from `email` at
+// runtime and is never stored as a `role` value here.
 export const studentsTable = pgTable("students", {
   id: serial("id").primaryKey(),
   clerkUserId: text("clerk_user_id").notNull().unique(),
   name: text("name").notNull(),
+  // Nullable because rows created before this field existed may not have
+  // backfilled it yet — see identity.ts's self-healing fetch-on-read.
+  email: text("email"),
+  // "student" | "teacher" — admin is resolved from email, not stored here.
+  role: text("role").notNull().default("student"),
+  // Every new sign-in auto-fills `name` from the Google/Clerk profile but
+  // must still ask the user to type their real full name once, so
+  // admin/teacher picklists show a name the user actually chose. This
+  // stays false until that one-time step completes.
+  nameConfirmed: boolean("name_confirmed").notNull().default(false),
+  classId: integer("class_id").references((): any => classesTable.id),
   points: integer("points").notNull().default(0),
   avatarConfig: jsonb("avatar_config").notNull().default({}),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -66,6 +85,21 @@ export const selectStudentSchema = createSelectSchema(studentsTable);
 
 export type InsertStudent = typeof studentsTable.$inferInsert;
 export type Student = typeof studentsTable.$inferSelect;
+
+// A "class" groups students under one teacher. Admin creates classes and
+// assigns a teacher; a class is also auto-created when admin promotes a
+// user to teacher so their dashboard has somewhere to claim students into
+// immediately. `teacherId` is nullable so admin can create a class before
+// picking a teacher, or leave one unowned after a teacher is demoted.
+export const classesTable = pgTable("classes", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  teacherId: integer("teacher_id").references((): any => studentsTable.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type Class = typeof classesTable.$inferSelect;
+export type InsertClass = typeof classesTable.$inferInsert;
 
 // A small rotating bank of reading/pronunciation prompts is used to derive
 // "today's challenge" deterministically (see student route) instead of

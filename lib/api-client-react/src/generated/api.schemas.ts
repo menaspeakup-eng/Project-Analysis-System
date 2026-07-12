@@ -9,6 +9,14 @@ export interface HealthStatus {
   status: string;
 }
 
+export type IdentityRole = typeof IdentityRole[keyof typeof IdentityRole];
+
+
+export const IdentityRole = {
+  student: 'student',
+  teacher: 'teacher',
+} as const;
+
 export type AvatarConfigGender = typeof AvatarConfigGender[keyof typeof AvatarConfigGender];
 
 
@@ -24,10 +32,38 @@ export interface AvatarConfig {
   pet: string;
 }
 
+export interface Identity {
+  userId: string;
+  email: string;
+  name: string;
+  role: IdentityRole;
+  isAdmin: boolean;
+  isTeacher: boolean;
+  nameConfirmed: boolean;
+  points: number;
+  avatarConfig: AvatarConfig;
+  classId: number | null;
+  className: string | null;
+  teacherName: string | null;
+  teacherEmail: string | null;
+}
+
 export interface StudentProfile {
   name: string;
   points: number;
   avatarConfig: AvatarConfig;
+  classId: number | null;
+  className: string | null;
+  teacherName: string | null;
+  teacherEmail: string | null;
+}
+
+export interface NameCaptureBody {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
 }
 
 export interface DailyChallenge {
@@ -55,4 +91,158 @@ export interface Leaderboard {
   top: LeaderboardEntry[];
   me: LeaderboardEntry | null;
 }
+
+export type AdminUserRole = typeof AdminUserRole[keyof typeof AdminUserRole];
+
+
+export const AdminUserRole = {
+  student: 'student',
+  teacher: 'teacher',
+} as const;
+
+export interface AdminUser {
+  studentId: number;
+  clerkUserId: string;
+  email: string;
+  name: string;
+  imageUrl?: string | null;
+  role: AdminUserRole;
+  nameConfirmed: boolean;
+  classId: number | null;
+  className: string | null;
+}
+
+export interface AdminUserList {
+  users: AdminUser[];
+}
+
+export interface AdminToggleTeacherBody {
+  /**
+     * @minLength 1
+     * @maxLength 320
+     */
+  email: string;
+  isTeacher: boolean;
+}
+
+export interface TeacherStudent {
+  id: number;
+  clerkUserId: string;
+  name: string;
+  email?: string | null;
+  points: number;
+  avatarConfig: AvatarConfig;
+}
+
+export interface AdminClass {
+  id: number;
+  name: string;
+  teacherId: number | null;
+  teacherName: string | null;
+  teacherEmail: string | null;
+  students: TeacherStudent[];
+}
+
+export interface AdminClassList {
+  classes: AdminClass[];
+}
+
+export interface CreateClassBody {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+  teacherId?: number | null;
+}
+
+export interface UpdateClassBody {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name?: string;
+  teacherId?: number | null;
+}
+
+export interface MoveStudentBody {
+  classId?: number | null;
+}
+
+export interface AdminStudentClass {
+  id: number;
+  classId: number | null;
+}
+
+export interface TeacherClass {
+  id: number;
+  name: string;
+  teacherId: number | null;
+  students: TeacherStudent[];
+}
+
+export interface TeacherClassList {
+  classes: TeacherClass[];
+}
+
+export interface UnclaimedStudentList {
+  students: TeacherStudent[];
+}
+
+export interface ClaimStudentBody {
+  classId: number;
+}
+
+export interface RenameStudentBody {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  name: string;
+}
+
+export interface TeacherStudentClass {
+  id: number;
+  classId: number | null;
+}
+
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+export type TeacherIdQueryParameter = number;
+
+export type GetTeacherClassesParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type GetTeacherUnclaimedParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type ClaimTeacherStudentParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type RenameTeacherStudentParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type RemoveTeacherStudentClassParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
 

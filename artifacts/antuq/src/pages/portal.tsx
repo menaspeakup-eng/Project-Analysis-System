@@ -26,6 +26,7 @@ import {
   Wand2,
   Settings,
   Award,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar3D } from "@/components/Avatar3D";
@@ -277,6 +278,15 @@ export default function Portal() {
               <p className="text-muted-foreground font-medium mt-1">
                 واصل جمع النقاط لترقية شخصيتك وفتح مكافآت جديدة.
               </p>
+              {profile?.teacherName && (
+                <p className="text-sm font-bold text-secondary-foreground mt-2 flex items-center gap-1.5">
+                  <GraduationCap className="w-4 h-4" />
+                  معلمك: {profile.teacherName}
+                  {profile.teacherEmail && (
+                    <span className="text-muted-foreground font-medium">({profile.teacherEmail})</span>
+                  )}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

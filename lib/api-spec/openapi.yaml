@@ -10,10 +10,16 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: identity
+    description: Signed-in identity and role resolution
   - name: student
     description: Student profile operations
   - name: leaderboard
     description: Leaderboard operations
+  - name: admin
+    description: Admin-only staff management
+  - name: teacher
+    description: Teacher dashboard operations
 paths:
   /healthz:
     get:
@@ -28,6 +34,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /identity/me:
+    get:
+      operationId: getIdentityMe
+      tags: [identity]
+      summary: Resolve the signed-in user's platform identity and role
+      description: Returns the current user's role (admin/teacher/student), onboarding status, and class/teacher info. Creates a platform row on first visit.
+      responses:
+        "200":
+          description: Identity resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Identity"
+        "401":
+          description: Not signed in
   /student/me:
     get:
       operationId: getStudentProfile
@@ -37,6 +58,26 @@ paths:
       responses:
         "200":
           description: Student profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentProfile"
+        "401":
+          description: Not signed in
+    patch:
+      operationId: updateStudentName
+      tags: [student]
+      summary: Capture the user's full name on first sign-in
+      description: Sets the in-platform name and marks the onboarding name step as complete.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NameCaptureBody"
+      responses:
+        "200":
+          description: Updated student profile
           content:
             application/json:
               schema:
@@ -104,7 +145,264 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Leaderboard"
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      tags: [admin]
+      summary: List every platform user for admin management
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+  /admin/teachers:
+    post:
+      operationId: toggleAdminTeacher
+      tags: [admin]
+      summary: Promote or demote a user as teacher by email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminToggleTeacherBody"
+      responses:
+        "200":
+          description: Updated user role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+  /admin/classes:
+    get:
+      operationId: getAdminClasses
+      tags: [admin]
+      summary: List all classes with their teacher and students
+      responses:
+        "200":
+          description: Classes list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminClassList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+    post:
+      operationId: createAdminClass
+      tags: [admin]
+      summary: Create a new class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClassBody"
+      responses:
+        "200":
+          description: Created class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminClass"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+  /admin/classes/{id}:
+    patch:
+      operationId: updateAdminClass
+      tags: [admin]
+      summary: Update a class name or teacher assignment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClassBody"
+      responses:
+        "200":
+          description: Updated class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminClass"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+  /admin/students/{id}/class:
+    patch:
+      operationId: moveAdminStudentClass
+      tags: [admin]
+      summary: Move or remove a student from a class
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MoveStudentBody"
+      responses:
+        "200":
+          description: Updated student class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStudentClass"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+  /teacher/classes:
+    get:
+      operationId: getTeacherClasses
+      tags: [teacher]
+      summary: List the teacher's classes with their students
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Classes list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherClassList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+  /teacher/unclaimed:
+    get:
+      operationId: getTeacherUnclaimed
+      tags: [teacher]
+      summary: List students who are not assigned to any class yet
+      parameters:
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Unclaimed students list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnclaimedStudentList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+  /teacher/students/{id}/claim:
+    post:
+      operationId: claimTeacherStudent
+      tags: [teacher]
+      summary: Add an unclaimed student to one of the teacher's classes
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimStudentBody"
+      responses:
+        "200":
+          description: Student claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherStudent"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+  /teacher/students/{id}:
+    patch:
+      operationId: renameTeacherStudent
+      tags: [teacher]
+      summary: Rename a student in the teacher's class
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenameStudentBody"
+      responses:
+        "200":
+          description: Student renamed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherStudent"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
+  /teacher/students/{id}/class:
+    delete:
+      operationId: removeTeacherStudentClass
+      tags: [teacher]
+      summary: Remove a student from the teacher's class
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Student removed from class
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherStudentClass"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
 components:
+  parameters:
+    TeacherIdQuery:
+      in: query
+      name: teacherId
+      required: false
+      schema:
+        type: integer
+      description: Optional teacher id (admin-only) to preview another teacher's dashboard.
   schemas:
     HealthStatus:
       type: object
@@ -113,6 +411,58 @@ components:
           type: string
       required:
         - status
+    Identity:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [student, teacher]
+        isAdmin:
+          type: boolean
+        isTeacher:
+          type: boolean
+        nameConfirmed:
+          type: boolean
+        points:
+          type: integer
+        avatarConfig:
+          $ref: "#/components/schemas/AvatarConfig"
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+        className:
+          oneOf:
+            - type: string
+            - type: "null"
+        teacherName:
+          oneOf:
+            - type: string
+            - type: "null"
+        teacherEmail:
+          oneOf:
+            - type: string
+            - type: "null"
+      required:
+        - userId
+        - email
+        - name
+        - role
+        - isAdmin
+        - isTeacher
+        - nameConfirmed
+        - points
+        - avatarConfig
+        - classId
+        - className
+        - teacherName
+        - teacherEmail
     AvatarConfig:
       type: object
       properties:
@@ -141,10 +491,39 @@ components:
           type: integer
         avatarConfig:
           $ref: "#/components/schemas/AvatarConfig"
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+        className:
+          oneOf:
+            - type: string
+            - type: "null"
+        teacherName:
+          oneOf:
+            - type: string
+            - type: "null"
+        teacherEmail:
+          oneOf:
+            - type: string
+            - type: "null"
       required:
         - name
         - points
         - avatarConfig
+        - classId
+        - className
+        - teacherName
+        - teacherEmail
+    NameCaptureBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+        - name
     DailyChallenge:
       type: object
       properties:
@@ -207,4 +586,232 @@ components:
       required:
         - top
         - me
-
+    AdminUser:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        clerkUserId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        imageUrl:
+          oneOf:
+            - type: string
+            - type: "null"
+        role:
+          type: string
+          enum: [student, teacher]
+        nameConfirmed:
+          type: boolean
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+        className:
+          oneOf:
+            - type: string
+            - type: "null"
+      required:
+        - studentId
+        - clerkUserId
+        - email
+        - name
+        - role
+        - nameConfirmed
+        - classId
+        - className
+    AdminUserList:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+      required:
+        - users
+    AdminToggleTeacherBody:
+      type: object
+      properties:
+        email:
+          type: string
+          minLength: 1
+          maxLength: 320
+        isTeacher:
+          type: boolean
+      required:
+        - email
+        - isTeacher
+    AdminClass:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        teacherId:
+          oneOf:
+            - type: integer
+            - type: "null"
+        teacherName:
+          oneOf:
+            - type: string
+            - type: "null"
+        teacherEmail:
+          oneOf:
+            - type: string
+            - type: "null"
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherStudent"
+      required:
+        - id
+        - name
+        - teacherId
+        - teacherName
+        - teacherEmail
+        - students
+    AdminClassList:
+      type: object
+      properties:
+        classes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminClass"
+      required:
+        - classes
+    CreateClassBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        teacherId:
+          oneOf:
+            - type: integer
+            - type: "null"
+      required:
+        - name
+    UpdateClassBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        teacherId:
+          oneOf:
+            - type: integer
+            - type: "null"
+    MoveStudentBody:
+      type: object
+      properties:
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+    AdminStudentClass:
+      type: object
+      properties:
+        id:
+          type: integer
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+      required:
+        - id
+        - classId
+    TeacherClass:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        teacherId:
+          oneOf:
+            - type: integer
+            - type: "null"
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherStudent"
+      required:
+        - id
+        - name
+        - teacherId
+        - students
+    TeacherClassList:
+      type: object
+      properties:
+        classes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherClass"
+      required:
+        - classes
+    TeacherStudent:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: string
+        name:
+          type: string
+        email:
+          oneOf:
+            - type: string
+            - type: "null"
+        points:
+          type: integer
+        avatarConfig:
+          $ref: "#/components/schemas/AvatarConfig"
+      required:
+        - id
+        - clerkUserId
+        - name
+        - points
+        - avatarConfig
+    UnclaimedStudentList:
+      type: object
+      properties:
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherStudent"
+      required:
+        - students
+    ClaimStudentBody:
+      type: object
+      properties:
+        classId:
+          type: integer
+      required:
+        - classId
+    RenameStudentBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+        - name
+    TeacherStudentClass:
+      type: object
+      properties:
+        id:
+          type: integer
+        classId:
+          oneOf:
+            - type: integer
+            - type: "null"
+      required:
+        - id
+        - classId

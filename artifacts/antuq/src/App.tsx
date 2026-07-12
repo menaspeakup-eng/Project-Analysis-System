@@ -14,7 +14,11 @@ import CharacterEdit from "@/pages/character";
 import Terms from "@/pages/terms";
 import Privacy from "@/pages/privacy";
 import Schools from "@/pages/schools";
+import Admin from "@/pages/admin";
+import Teacher from "@/pages/teacher";
+import OnboardingName from "@/pages/onboarding-name";
 import NotFound from "@/pages/not-found";
+import { useGetIdentityMe } from "@workspace/api-client-react";
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -23,7 +27,7 @@ const clerkPubKey = publishableKeyFromHost(
 
 const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const basePath = import.meta.env.BASE_URL.replace(/\/+$/, "");
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
@@ -85,19 +89,27 @@ const clerkAppearance = {
   },
 };
 
-function HomeRedirect() {
+function RoleRedirect() {
   const { isSignedIn, isLoaded } = useAuth();
   const isGuest = localStorage.getItem("antuq-guest") === "true";
-  
-  if (!isLoaded) return null;
-  
-  // If user is already signed in via Clerk or is a guest, send them straight to portal
-  if (isSignedIn || isGuest) {
-    return <Redirect to="/portal" />;
-  }
+  const { data: identity, isLoading } = useGetIdentityMe({
+    query: { enabled: !!isSignedIn } as never,
+  });
 
-  // If user is not signed in, show the landing page
-  return <Home />;
+  if (!isLoaded || (isSignedIn && isLoading)) return null;
+
+  // Guests continue straight to the kid portal without signing in.
+  if (isGuest) return <Redirect to="/portal" />;
+
+  // Anonymous visitors see the landing page.
+  if (!isSignedIn) return <Home />;
+
+  // First-time sign-in must confirm their name before seeing any dashboard.
+  if (!identity?.nameConfirmed) return <Redirect to="/onboarding-name" />;
+
+  if (identity.isAdmin) return <Redirect to="/admin" />;
+  if (identity.isTeacher) return <Redirect to="/teacher" />;
+  return <Redirect to="/portal" />;
 }
 
 function SignInPage() {
@@ -170,10 +182,13 @@ function ClerkProviderWithRoutes() {
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
           <Switch>
-            <Route path="/" component={HomeRedirect} />
+            <Route path="/" component={RoleRedirect} />
             <Route path="/sign-in/*?" component={SignInPage} />
+            <Route path="/onboarding-name" component={OnboardingName} />
             <Route path="/portal" component={Portal} />
             <Route path="/character" component={CharacterEdit} />
+            <Route path="/admin" component={Admin} />
+            <Route path="/teacher" component={Teacher} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />
             <Route path="/schools" component={Schools} />

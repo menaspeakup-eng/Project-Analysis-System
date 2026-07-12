@@ -5,14 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AvatarConfig } from './avatarConfig';
+import type { TeacherStudent } from './teacherStudent';
 
-export interface StudentProfile {
+export interface AdminClass {
+  id: number;
   name: string;
-  points: number;
-  avatarConfig: AvatarConfig;
-  classId: number | null;
-  className: string | null;
+  teacherId: number | null;
   teacherName: string | null;
   teacherEmail: string | null;
+  students: TeacherStudent[];
 }

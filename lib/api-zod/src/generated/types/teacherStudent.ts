@@ -7,12 +7,11 @@
  */
 import type { AvatarConfig } from './avatarConfig';
 
-export interface StudentProfile {
+export interface TeacherStudent {
+  id: number;
+  clerkUserId: string;
   name: string;
+  email?: string | null;
   points: number;
   avatarConfig: AvatarConfig;
-  classId: number | null;
-  className: string | null;
-  teacherName: string | null;
-  teacherEmail: string | null;
 }
