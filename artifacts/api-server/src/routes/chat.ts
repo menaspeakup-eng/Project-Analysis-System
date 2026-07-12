@@ -26,6 +26,10 @@ const MuteStudentBody = z.object({
   reason: z.string().max(500).optional(),
 });
 
+const ToggleChatBody = z.object({
+  enabled: z.boolean(),
+});
+
 function parseIntParam(value: string): number | null {
   const n = Number(value);
   return Number.isFinite(n) && Number.isInteger(n) ? n : null;
@@ -91,6 +95,7 @@ async function getSenderProfile(studentId: number) {
 function formatMessage(
   message: typeof chatMessagesTable.$inferSelect,
   sender: NonNullable<Awaited<ReturnType<typeof getSenderProfile>>>,
+  isModerator: boolean,
 ) {
   return {
     id: message.id,
@@ -100,7 +105,8 @@ function formatMessage(
     senderPoints: sender.points,
     senderLevel: sender.level,
     senderAvatarConfig: sender.avatarConfig,
-    content: message.isDeleted ? "تم حذف هذه الرسالة" : message.content,
+    // Moderators see the original content of deleted messages.
+    content: message.isDeleted && !isModerator ? "تم حذف هذه الرسالة" : message.content,
     isDeleted: message.isDeleted,
     createdAt: message.createdAt,
   };
@@ -111,12 +117,12 @@ router.get("/chat/rooms", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
 
-  const rooms: { id: string; name: string; classId: number }[] = [];
+  const rooms: { id: string; name: string; classId: number; isChatEnabled: boolean }[] = [];
 
   if (identity.isAdmin) {
     const classes = await db.query.classesTable.findMany({ orderBy: [classesTable.id] });
     for (const cls of classes) {
-      rooms.push({ id: String(cls.id), name: cls.name, classId: cls.id });
+      rooms.push({ id: String(cls.id), name: cls.name, classId: cls.id, isChatEnabled: cls.isChatEnabled });
     }
   } else if (identity.isTeacher) {
     if (identity.teacherClassIds.length > 0) {
@@ -125,7 +131,7 @@ router.get("/chat/rooms", async (req, res) => {
         orderBy: [classesTable.id],
       });
       for (const cls of classes) {
-        rooms.push({ id: String(cls.id), name: cls.name, classId: cls.id });
+        rooms.push({ id: String(cls.id), name: cls.name, classId: cls.id, isChatEnabled: cls.isChatEnabled });
       }
     }
   } else if (identity.student.classId != null) {
@@ -133,7 +139,7 @@ router.get("/chat/rooms", async (req, res) => {
       where: eq(classesTable.id, identity.student.classId),
     });
     if (cls) {
-      rooms.push({ id: String(cls.id), name: cls.name, classId: cls.id });
+      rooms.push({ id: String(cls.id), name: cls.name, classId: cls.id, isChatEnabled: cls.isChatEnabled });
     }
   }
 
@@ -162,11 +168,12 @@ router.get("/chat/rooms/:classId/messages", async (req, res) => {
     limit: 200,
   });
 
+  const isModerator = await canModerateRoom(identity, classId);
   const result = [];
   for (const message of messages) {
     const sender = await getSenderProfile(message.senderId);
     if (!sender) continue;
-    result.push(formatMessage(message, sender));
+    result.push(formatMessage(message, sender, isModerator));
   }
 
   res.json({ messages: result.reverse() });
@@ -185,6 +192,18 @@ router.post("/chat/rooms/:classId/messages", async (req, res) => {
 
   if (!await canAccessRoom(identity, classId)) {
     res.status(403).json({ error: "لا يمكنك الوصول إلى هذه الغرفة" });
+    return;
+  }
+
+  const cls = await db.query.classesTable.findFirst({
+    where: eq(classesTable.id, classId),
+  });
+  if (!cls) {
+    res.status(404).json({ error: "الصف غير موجود" });
+    return;
+  }
+  if (!cls.isChatEnabled) {
+    res.status(403).json({ error: "الشات معطل في هذا الصف" });
     return;
   }
 
@@ -210,7 +229,7 @@ router.post("/chat/rooms/:classId/messages", async (req, res) => {
     return;
   }
 
-  res.status(201).json(formatMessage(message, sender));
+  res.status(201).json(formatMessage(message, sender, await canModerateRoom(identity, classId)));
 });
 
 // Delete a message (soft delete).
@@ -248,6 +267,66 @@ router.delete("/chat/messages/:id", async (req, res) => {
     .where(eq(chatMessagesTable.id, messageId));
 
   res.status(204).send();
+});
+
+// Permanently delete a message (admin only).
+router.delete("/chat/messages/:id/permanent", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+
+  if (!identity.isAdmin) {
+    res.status(403).json({ error: "لا يمكنك حذف هذه الرسالة بشكل نهائي" });
+    return;
+  }
+
+  const messageId = parseIntParam(req.params.id);
+  if (messageId === null) {
+    res.status(400).json({ error: "معرف الرسالة غير صالح" });
+    return;
+  }
+
+  const message = await db.query.chatMessagesTable.findFirst({
+    where: eq(chatMessagesTable.id, messageId),
+  });
+  if (!message) {
+    res.status(404).json({ error: "الرسالة غير موجودة" });
+    return;
+  }
+
+  await db.delete(chatMessagesTable).where(eq(chatMessagesTable.id, messageId));
+
+  res.status(204).send();
+});
+
+// Toggle class chat on/off.
+router.post("/chat/rooms/:classId/toggle", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+
+  const classId = parseClassIdParam(req.params.classId);
+  if (classId === null) {
+    res.status(400).json({ error: "معرف الصف غير صالح" });
+    return;
+  }
+
+  if (!await canModerateRoom(identity, classId)) {
+    res.status(403).json({ error: "لا يمكنك إدارة هذه الغرفة" });
+    return;
+  }
+
+  const body = ToggleChatBody.parse(req.body);
+
+  const [updated] = await db
+    .update(classesTable)
+    .set({ isChatEnabled: body.enabled })
+    .where(eq(classesTable.id, classId))
+    .returning();
+
+  res.json({
+    id: updated.id,
+    name: updated.name,
+    isChatEnabled: updated.isChatEnabled,
+  });
 });
 
 // Mute/ban a student in a class chat.

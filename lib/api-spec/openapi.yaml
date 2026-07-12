@@ -893,7 +893,7 @@ paths:
     delete:
       operationId: deleteChatMessage
       tags: [chat]
-      summary: Delete a chat message
+      summary: Delete a chat message (soft delete)
       parameters:
         - in: path
           name: id
@@ -909,6 +909,57 @@ paths:
           description: Cannot delete this message
         "404":
           description: Message not found
+  /chat/messages/{id}/permanent:
+    delete:
+      operationId: deleteChatMessagePermanent
+      tags: [chat]
+      summary: Permanently delete a chat message (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Message permanently deleted
+        "401":
+          description: Not signed in
+        "403":
+          description: Admin only
+        "404":
+          description: Message not found
+  /chat/rooms/{classId}/toggle:
+    post:
+      operationId: toggleChatClass
+      tags: [chat]
+      summary: Enable or disable a class chat
+      parameters:
+        - in: path
+          name: classId
+          required: true
+          schema:
+            type: integer
+          description: class id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatToggleBody"
+      responses:
+        "200":
+          description: Chat toggled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatRoom"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot moderate this room
   /chat/rooms/{classId}/mute:
     post:
       operationId: muteChatStudent
@@ -1554,6 +1605,8 @@ components:
           oneOf:
             - type: string
             - type: "null"
+        isChatEnabled:
+          type: boolean
         students:
           type: array
           items:
@@ -1564,6 +1617,7 @@ components:
         - teacherId
         - teacherName
         - teacherEmail
+        - isChatEnabled
         - students
     AdminClassList:
       type: object
@@ -1598,6 +1652,8 @@ components:
           oneOf:
             - type: integer
             - type: "null"
+        isChatEnabled:
+          type: boolean
     MoveStudentBody:
       type: object
       properties:
@@ -1628,6 +1684,8 @@ components:
           oneOf:
             - type: integer
             - type: "null"
+        isChatEnabled:
+          type: boolean
         students:
           type: array
           items:
@@ -1636,6 +1694,7 @@ components:
         - id
         - name
         - teacherId
+        - isChatEnabled
         - students
     TeacherClassList:
       type: object
@@ -2037,10 +2096,13 @@ components:
           type: string
         classId:
           type: integer
+        isChatEnabled:
+          type: boolean
       required:
         - id
         - name
         - classId
+        - isChatEnabled
     ChatRoomList:
       type: object
       properties:
@@ -2104,6 +2166,13 @@ components:
           maxLength: 1000
       required:
         - content
+    ChatToggleBody:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required:
+        - enabled
     ChatMute:
       type: object
       properties:

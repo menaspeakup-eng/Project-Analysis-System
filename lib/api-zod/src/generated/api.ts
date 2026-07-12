@@ -527,6 +527,7 @@ export const GetAdminClassesResponse = zod.object({
   "teacherId": zod.union([zod.number(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
   "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
   "clerkUserId": zod.string(),
@@ -571,6 +572,7 @@ export const CreateAdminClassResponse = zod.object({
   "teacherId": zod.union([zod.number(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
   "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
   "clerkUserId": zod.string(),
@@ -603,7 +605,8 @@ export const updateAdminClassBodyNameMax = 120;
 
 export const UpdateAdminClassBody = zod.object({
   "name": zod.string().min(1).max(updateAdminClassBodyNameMax).optional(),
-  "teacherId": zod.union([zod.number(),zod.null()]).optional()
+  "teacherId": zod.union([zod.number(),zod.null()]).optional(),
+  "isChatEnabled": zod.boolean().optional()
 })
 
 export const updateAdminClassResponseStudentsItemAvatarConfigNicknameDefault = ``;
@@ -618,6 +621,7 @@ export const UpdateAdminClassResponse = zod.object({
   "teacherId": zod.union([zod.number(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
   "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
   "clerkUserId": zod.string(),
@@ -683,6 +687,7 @@ export const GetTeacherClassesResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "teacherId": zod.union([zod.number(),zod.null()]),
+  "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
   "clerkUserId": zod.string(),
@@ -1144,7 +1149,8 @@ export const GetChatRoomsResponse = zod.object({
   "rooms": zod.array(zod.object({
   "id": zod.string(),
   "name": zod.string(),
-  "classId": zod.number()
+  "classId": zod.number(),
+  "isChatEnabled": zod.boolean()
 }))
 })
 
@@ -1202,13 +1208,42 @@ export const SendChatMessageResponse = zod.object({
 
 
 /**
- * @summary Delete a chat message
+ * @summary Delete a chat message (soft delete)
  */
 export const DeleteChatMessageParams = zod.object({
   "id": zod.coerce.number()
 })
 
 export const DeleteChatMessageResponse = zod.void()
+
+
+/**
+ * @summary Permanently delete a chat message (admin only)
+ */
+export const DeleteChatMessagePermanentParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteChatMessagePermanentResponse = zod.void()
+
+
+/**
+ * @summary Enable or disable a class chat
+ */
+export const ToggleChatClassParams = zod.object({
+  "classId": zod.coerce.number().describe('class id')
+})
+
+export const ToggleChatClassBody = zod.object({
+  "enabled": zod.boolean()
+})
+
+export const ToggleChatClassResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "classId": zod.number(),
+  "isChatEnabled": zod.boolean()
+})
 
 
 /**

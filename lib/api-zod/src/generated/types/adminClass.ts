@@ -13,5 +13,6 @@ export interface AdminClass {
   teacherId: number | null;
   teacherName: string | null;
   teacherEmail: string | null;
+  isChatEnabled: boolean;
   students: TeacherStudent[];
 }

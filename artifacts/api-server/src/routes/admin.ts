@@ -43,6 +43,7 @@ function formatAdminClass(
     teacherId: cls.teacherId,
     teacherName: teacher?.name ?? null,
     teacherEmail: teacher?.email ?? null,
+    isChatEnabled: cls.isChatEnabled,
     students: allStudents
       .filter((s) => s.classId === cls.id)
       .map((s) => ({

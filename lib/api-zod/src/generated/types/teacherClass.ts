@@ -11,5 +11,6 @@ export interface TeacherClass {
   id: number;
   name: string;
   teacherId: number | null;
+  isChatEnabled: boolean;
   students: TeacherStudent[];
 }

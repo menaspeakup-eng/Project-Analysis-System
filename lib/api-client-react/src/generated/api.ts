@@ -33,8 +33,10 @@ import type {
   ChatMute,
   ChatMuteBody,
   ChatMuteList,
+  ChatRoom,
   ChatRoomList,
   ChatSendMessageBody,
+  ChatToggleBody,
   ClaimStudentBody,
   ClaimTeacherStudentParams,
   CompleteGameBody,
@@ -3112,7 +3114,7 @@ export const getDeleteChatMessageUrl = (id: number,) => {
 }
 
 /**
- * @summary Delete a chat message
+ * @summary Delete a chat message (soft delete)
  */
 export const deleteChatMessage = async (id: number, options?: RequestInit): Promise<void> => {
 
@@ -3161,7 +3163,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type DeleteChatMessageMutationError = ErrorType<void>
 
     /**
- * @summary Delete a chat message
+ * @summary Delete a chat message (soft delete)
  */
 export const useDeleteChatMessage = <TError = ErrorType<void>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatMessage>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -3172,6 +3174,149 @@ export const useDeleteChatMessage = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteChatMessageMutationOptions(options));
+    }
+
+export const getDeleteChatMessagePermanentUrl = (id: number,) => {
+
+
+
+
+  return `/api/chat/messages/${id}/permanent`
+}
+
+/**
+ * @summary Permanently delete a chat message (admin only)
+ */
+export const deleteChatMessagePermanent = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteChatMessagePermanentUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteChatMessagePermanentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatMessagePermanent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteChatMessagePermanent>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteChatMessagePermanent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteChatMessagePermanent>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteChatMessagePermanent(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteChatMessagePermanentMutationResult = NonNullable<Awaited<ReturnType<typeof deleteChatMessagePermanent>>>
+
+    export type DeleteChatMessagePermanentMutationError = ErrorType<void>
+
+    /**
+ * @summary Permanently delete a chat message (admin only)
+ */
+export const useDeleteChatMessagePermanent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteChatMessagePermanent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteChatMessagePermanent>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteChatMessagePermanentMutationOptions(options));
+    }
+
+export const getToggleChatClassUrl = (classId: number,) => {
+
+
+
+
+  return `/api/chat/rooms/${classId}/toggle`
+}
+
+/**
+ * @summary Enable or disable a class chat
+ */
+export const toggleChatClass = async (classId: number,
+    chatToggleBody: ChatToggleBody, options?: RequestInit): Promise<ChatRoom> => {
+
+  return customFetch<ChatRoom>(getToggleChatClassUrl(classId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(chatToggleBody)
+  }
+);}
+
+
+
+
+
+export const getToggleChatClassMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleChatClass>>, TError,{classId: number;data: BodyType<ChatToggleBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof toggleChatClass>>, TError,{classId: number;data: BodyType<ChatToggleBody>}, TContext> => {
+
+const mutationKey = ['toggleChatClass'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof toggleChatClass>>, {classId: number;data: BodyType<ChatToggleBody>}> = (props) => {
+          const {classId,data} = props ?? {};
+
+          return  toggleChatClass(classId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ToggleChatClassMutationResult = NonNullable<Awaited<ReturnType<typeof toggleChatClass>>>
+    export type ToggleChatClassMutationBody = BodyType<ChatToggleBody>
+    export type ToggleChatClassMutationError = ErrorType<void>
+
+    /**
+ * @summary Enable or disable a class chat
+ */
+export const useToggleChatClass = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof toggleChatClass>>, TError,{classId: number;data: BodyType<ChatToggleBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof toggleChatClass>>,
+        TError,
+        {classId: number;data: BodyType<ChatToggleBody>},
+        TContext
+      > => {
+      return useMutation(getToggleChatClassMutationOptions(options));
     }
 
 export const getMuteChatStudentUrl = (classId: number,) => {

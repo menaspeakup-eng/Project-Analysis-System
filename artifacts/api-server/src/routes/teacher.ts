@@ -75,6 +75,7 @@ router.get("/teacher/classes", async (req, res) => {
     id: cls.id,
     name: cls.name,
     teacherId: cls.teacherId,
+    isChatEnabled: cls.isChatEnabled,
     students: (studentsByClass.get(cls.id) || []).map((s) => ({
       id: s.id,
       clerkUserId: s.clerkUserId,

@@ -339,6 +339,7 @@ export interface AdminClass {
   teacherId: number | null;
   teacherName: string | null;
   teacherEmail: string | null;
+  isChatEnabled: boolean;
   students: TeacherStudent[];
 }
 
@@ -362,6 +363,7 @@ export interface UpdateClassBody {
      */
   name?: string;
   teacherId?: number | null;
+  isChatEnabled?: boolean;
 }
 
 export interface MoveStudentBody {
@@ -377,6 +379,7 @@ export interface TeacherClass {
   id: number;
   name: string;
   teacherId: number | null;
+  isChatEnabled: boolean;
   students: TeacherStudent[];
 }
 
@@ -576,6 +579,7 @@ export interface ChatRoom {
   id: string;
   name: string;
   classId: number;
+  isChatEnabled: boolean;
 }
 
 export interface ChatRoomList {
@@ -607,6 +611,10 @@ export interface ChatSendMessageBody {
      * @maxLength 1000
      */
   content: string;
+}
+
+export interface ChatToggleBody {
+  enabled: boolean;
 }
 
 export interface ChatMute {

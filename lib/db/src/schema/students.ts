@@ -99,6 +99,7 @@ export const classesTable = pgTable("classes", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   teacherId: integer("teacher_id").references((): any => studentsTable.id),
+  isChatEnabled: boolean("is_chat_enabled").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

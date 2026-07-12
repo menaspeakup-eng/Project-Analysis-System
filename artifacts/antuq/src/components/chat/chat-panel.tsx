@@ -6,6 +6,8 @@ import {
   useGetChatMessages,
   useSendChatMessage,
   useDeleteChatMessage,
+  useDeleteChatMessagePermanent,
+  useToggleChatClass,
   useMuteChatStudent,
   useUnmuteChatStudent,
   useGetChatMutes,
@@ -16,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -47,8 +50,9 @@ import {
   MessageCircle,
   GraduationCap,
   Crown,
-  Star,
   Shield,
+  Power,
+  AlertTriangle,
 } from "lucide-react";
 
 const MUTE_DURATIONS = [
@@ -172,18 +176,26 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
   );
   const { mutate: sendMessage, isPending: isSending } = useSendChatMessage();
   const { mutate: deleteMessage } = useDeleteChatMessage();
+  const { mutate: deletePermanent } = useDeleteChatMessagePermanent();
+  const { mutate: toggleChat } = useToggleChatClass();
   const { mutate: mute } = useMuteChatStudent();
   const { mutate: unmute } = useUnmuteChatStudent();
 
   const rooms = roomsData?.rooms ?? [];
   const messages = messagesData?.messages ?? [];
   const mutes = mutesData?.mutes ?? [];
-  const isModerator = identity?.isTeacher || identity?.isAdmin;
+  const isAdmin = identity?.isAdmin ?? false;
+  const isTeacher = identity?.isTeacher ?? false;
+  const isModerator = isTeacher || isAdmin;
+
+  // Teachers can only see their first class; admins can switch between all classes.
+  const canSwitchClass = isAdmin && rooms.length > 1;
+  const visibleRooms = isTeacher ? rooms.slice(0, 1) : rooms;
 
   useEffect(() => {
-    if (selectedClassId != null || rooms.length === 0) return;
-    setSelectedClassId(rooms[0].classId);
-  }, [rooms, selectedClassId]);
+    if (selectedClassId != null || visibleRooms.length === 0) return;
+    setSelectedClassId(visibleRooms[0].classId);
+  }, [visibleRooms, selectedClassId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -191,9 +203,11 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
 
   const selectedRoom = rooms.find((r) => r.classId === selectedClassId);
   const selectedRoomName = selectedRoom?.name ?? "الشات";
+  const isChatEnabled = selectedRoom?.isChatEnabled ?? true;
 
   const messagesQueryKey = ["/api/chat/rooms", selectedClassId, "messages"];
   const mutesQueryKey = ["/api/chat/rooms", selectedClassId, "mutes"];
+  const roomsQueryKey = ["/api/chat/rooms"];
 
   const handleSend = () => {
     if (!input.trim() || selectedClassId == null) return;
@@ -225,6 +239,31 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
     );
   };
 
+  const handleDeletePermanent = (id: number) => {
+    if (!window.confirm("هل تريد حذف هذه الرسالة بشكل نهائي؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+    deletePermanent(
+      { id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: messagesQueryKey });
+        },
+      },
+    );
+  };
+
+  const handleToggleChat = () => {
+    if (selectedClassId == null) return;
+    toggleChat(
+      { classId: selectedClassId, data: { enabled: !isChatEnabled } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: roomsQueryKey });
+          queryClient.invalidateQueries({ queryKey: messagesQueryKey });
+        },
+      },
+    );
+  };
+
   const handleMute = () => {
     if (!muteStudent || selectedClassId == null) return;
     mute(
@@ -236,7 +275,7 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
         onSuccess: () => {
           setMuteStudent(null);
           setMuteReason("");
-          setMuteDuration(null);
+          setMuteDuration(60);
           queryClient.invalidateQueries({ queryKey: mutesQueryKey });
         },
       },
@@ -259,7 +298,7 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
     if (backUrl) {
       setLocation(backUrl);
     } else {
-      setLocation(identity?.isTeacher || identity?.isAdmin ? "/teacher" : "/portal");
+      setLocation(isModerator ? "/teacher" : "/portal");
     }
   };
 
@@ -305,7 +344,7 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
           </div>
           {isModerator && (
             <Badge variant="outline" className="rounded-full font-bold text-primary border-primary hidden sm:flex">
-              {identity?.isAdmin ? (
+              {isAdmin ? (
                 <>
                   <Shield className="w-3 h-3 ml-1" /> أدمن
                 </>
@@ -316,9 +355,26 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
               )}
             </Badge>
           )}
+          {!isChatEnabled && (
+            <Badge variant="secondary" className="rounded-full font-bold text-destructive bg-destructive/10 hidden sm:flex">
+              <Power className="w-3 h-3 ml-1" /> معطل
+            </Badge>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          {rooms.length > 1 ? (
+          {isModerator && (
+            <div className="flex items-center gap-2 bg-muted rounded-xl px-3 py-1.5">
+              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">
+                {isChatEnabled ? "الشات مفعّل" : "الشات معطل"}
+              </span>
+              <Switch
+                checked={isChatEnabled}
+                onCheckedChange={handleToggleChat}
+                aria-label="تفعيل/تعطيل الشات"
+              />
+            </div>
+          )}
+          {canSwitchClass ? (
             <Select
               value={selectedClassId?.toString() ?? ""}
               onValueChange={(v) => setSelectedClassId(Number(v))}
@@ -343,11 +399,11 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
       </div>
 
       <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0">
-        <aside className="hidden md:flex w-64 bg-white border-l border-border flex-col">
+        <aside className={`${canSwitchClass ? "hidden md:flex w-64" : "hidden"} bg-white border-l border-border flex-col`}>
           <div className="p-4 border-b border-border">
             <h2 className="font-bold text-sm text-muted-foreground flex items-center gap-2">
               <Users className="w-4 h-4" />
-              صفوفي
+              الصفوف
             </h2>
           </div>
           <div className="p-2 space-y-1 overflow-y-auto">
@@ -440,6 +496,11 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
                       <div className="flex items-center gap-2 mb-1 justify-end">
                         <span className="font-bold text-sm">{msg.senderName}</span>
                         <span className="text-xs text-muted-foreground">{formatTime(msg.createdAt)}</span>
+                        {msg.isDeleted && (
+                          <Badge variant="outline" className="rounded-full text-[10px] font-bold border-destructive text-destructive">
+                            <AlertTriangle className="w-3 h-3 ml-1" /> محذوف
+                          </Badge>
+                        )}
                         {canDelete && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -464,6 +525,15 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
                                 <Trash2 className="w-4 h-4 ml-2" />
                                 حذف الرسالة
                               </DropdownMenuItem>
+                              {isAdmin && (
+                                <DropdownMenuItem
+                                  className="font-bold text-destructive rounded-lg cursor-pointer"
+                                  onClick={() => handleDeletePermanent(msg.id)}
+                                >
+                                  <Trash2 className="w-4 h-4 ml-2" />
+                                  حذف نهائي
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
@@ -471,13 +541,13 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
                       <Card
                         className={`inline-block px-4 py-2 rounded-2xl border-0 shadow-sm ${
                           msg.isDeleted
-                            ? "bg-muted text-muted-foreground italic"
+                            ? "bg-muted text-foreground border border-destructive/30"
                             : isMe
                               ? "bg-primary text-white rounded-tr-none"
                               : "bg-white text-foreground rounded-tl-none"
                         }`}
                       >
-                        <p className="text-sm font-medium whitespace-pre-wrap">{msg.content}</p>
+                        <p className={`text-sm font-medium whitespace-pre-wrap ${msg.isDeleted ? "italic" : ""}`}>{msg.content}</p>
                       </Card>
                     </div>
                   </div>
@@ -488,26 +558,33 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
           </div>
 
           <div className="p-3 bg-white border-t border-border">
-            <div className="flex items-center gap-2">
-              <Input
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
-                placeholder="اكتب رسالتك..."
-                className="flex-1 rounded-full border-border h-11 px-4"
-                disabled={isSending}
-                maxLength={1000}
-              />
-              <Button
-                size="icon"
-                className="rounded-full h-11 w-11"
-                onClick={handleSend}
-                disabled={!input.trim() || isSending}
-              >
-                <Send className="w-5 h-5" />
-              </Button>
-            </div>
+            {!isChatEnabled ? (
+              <div className="flex items-center justify-center gap-2 text-destructive font-bold text-sm py-2">
+                <Power className="w-4 h-4" />
+                الشات معطل في هذا الصف
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleSend(); }}
+                  placeholder="اكتب رسالتك..."
+                  className="flex-1 rounded-full border-border h-11 px-4"
+                  disabled={isSending}
+                  maxLength={1000}
+                />
+                <Button
+                  size="icon"
+                  className="rounded-full h-11 w-11"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isSending}
+                >
+                  <Send className="w-5 h-5" />
+                </Button>
+              </div>
+            )}
           </div>
         </section>
       </div>

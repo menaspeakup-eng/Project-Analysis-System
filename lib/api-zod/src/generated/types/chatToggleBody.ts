@@ -6,9 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ChatRoom {
-  id: string;
-  name: string;
-  classId: number;
-  isChatEnabled: boolean;
+export interface ChatToggleBody {
+  enabled: boolean;
 }

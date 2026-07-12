@@ -26,6 +26,7 @@ export * from './chatMuteList';
 export * from './chatRoom';
 export * from './chatRoomList';
 export * from './chatSendMessageBody';
+export * from './chatToggleBody';
 export * from './claimStudentBody';
 export * from './claimTeacherStudentParams';
 export * from './completeGameBody';

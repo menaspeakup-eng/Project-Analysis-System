@@ -13,4 +13,5 @@ export interface UpdateClassBody {
      */
   name?: string;
   teacherId?: number | null;
+  isChatEnabled?: boolean;
 }
