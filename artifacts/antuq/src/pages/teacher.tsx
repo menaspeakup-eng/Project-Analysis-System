@@ -39,6 +39,8 @@ import {
   Check,
   X,
   Eye,
+  Gamepad2,
+  Flame,
 } from "lucide-react";
 import type { TeacherClass, TeacherStudent } from "@workspace/api-client-react";
 import TeacherChallenges from "./teacher-challenges";
@@ -150,6 +152,7 @@ export default function Teacher() {
 
   const classes = classesData?.classes ?? [];
   const unclaimed = unclaimedData?.students ?? [];
+  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges">("students");
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -199,37 +202,66 @@ export default function Teacher() {
       </header>
 
       <main className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-8 space-y-6">
-        <section className="space-y-4">
-          <h2 className="font-black text-foreground text-lg flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-primary" />
-            صفوفي
-          </h2>
-          {isClassesLoading ? (
-            <div className="h-24 flex items-center justify-center">
-              <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-            </div>
-          ) : classes.length === 0 ? (
-            <Card className="rounded-3xl border-border shadow-sm">
-              <CardContent className="p-6 text-center text-muted-foreground font-medium">
-                لا يوجد صفوف مرتبطة بك بعد — تواصل مع الأدمن لإنشاء صف.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {classes.map((cls) => (
-                <ClassCard
-                  key={cls.id}
-                  cls={cls}
-                  onOpen={() => setSelectedClass(cls)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+        <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-border shadow-sm">
+          <Button
+            variant={activeTab === "students" ? "default" : "ghost"}
+            className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "students" ? "bg-primary text-white" : "text-muted-foreground"}`}
+            onClick={() => setActiveTab("students")}
+          >
+            <GraduationCap className="w-4 h-4 ml-2" />
+            الطلاب
+          </Button>
+          <Button
+            variant={activeTab === "games" ? "default" : "ghost"}
+            className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "games" ? "bg-accent text-white" : "text-muted-foreground"}`}
+            onClick={() => setActiveTab("games")}
+          >
+            <Gamepad2 className="w-4 h-4 ml-2" />
+            الألعاب التعليمية
+          </Button>
+          <Button
+            variant={activeTab === "challenges" ? "default" : "ghost"}
+            className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "challenges" ? "bg-secondary text-secondary-foreground" : "text-muted-foreground"}`}
+            onClick={() => setActiveTab("challenges")}
+          >
+            <Flame className="w-4 h-4 ml-2" />
+            التحديات
+          </Button>
+        </div>
 
-        <TeacherGames />
+        {activeTab === "students" && (
+          <section className="space-y-4">
+            <h2 className="font-black text-foreground text-lg flex items-center gap-2">
+              <GraduationCap className="w-5 h-5 text-primary" />
+              صفوفي
+            </h2>
+            {isClassesLoading ? (
+              <div className="h-24 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+              </div>
+            ) : classes.length === 0 ? (
+              <Card className="rounded-3xl border-border shadow-sm">
+                <CardContent className="p-6 text-center text-muted-foreground font-medium">
+                  لا يوجد صفوف مرتبطة بك بعد — تواصل مع الأدمن لإنشاء صف.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {classes.map((cls) => (
+                  <ClassCard
+                    key={cls.id}
+                    cls={cls}
+                    onOpen={() => setSelectedClass(cls)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
-        <TeacherChallenges teacherIdParam={teacherIdParam} classes={classes} />
+        {activeTab === "games" && <TeacherGames />}
+
+        {activeTab === "challenges" && <TeacherChallenges teacherIdParam={teacherIdParam} classes={classes} />}
       </main>
 
       {selectedClass && (
