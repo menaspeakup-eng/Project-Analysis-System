@@ -1917,12 +1917,11 @@ components:
         - $ref: "#/components/schemas/Game"
       properties:
         classId:
-          oneOf:
-            - type: integer
-            - type: "null"
+          type: integer
         stats:
           $ref: "#/components/schemas/GameStats"
       required:
+        - classId
         - stats
     TeacherGameList:
       type: object
@@ -1957,13 +1956,12 @@ components:
           minimum: 0
           maximum: 1000
         classId:
-          oneOf:
-            - type: integer
-            - type: "null"
+          type: integer
       required:
         - slug
         - name
         - type
+        - classId
     UpdateGameBody:
       type: object
       properties:
@@ -1984,9 +1982,7 @@ components:
         isActive:
           type: boolean
         classId:
-          oneOf:
-            - type: integer
-            - type: "null"
+          type: integer
       required: []
     GameItem:
       type: object

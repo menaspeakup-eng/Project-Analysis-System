@@ -29,7 +29,7 @@ const UpdateGameBody = z.object({
   imageUrl: z.string().max(5_000_000).optional().or(z.literal("")),
   pointsReward: z.number().int().min(0).max(1000).optional(),
   isActive: z.boolean().optional(),
-  classId: z.number().int().nullable().optional(),
+  classId: z.number().int().optional(),
 });
 
 const CompleteGameBody = z.object({
@@ -45,7 +45,7 @@ const CreateGameBody = z.object({
   description: z.string().max(1000).optional().or(z.literal("")),
   imageUrl: z.string().max(5_000_000).optional().or(z.literal("")),
   pointsReward: z.number().int().min(0).max(1000).optional(),
-  classId: z.number().int().optional(),
+  classId: z.number().int(),
 });
 
 function parseIntParam(value: string): number | null {
@@ -96,11 +96,11 @@ function validateItems(type: GameType, items: unknown[]) {
 
 function requireGameOwnership(
   identity: NonNullable<Awaited<ReturnType<typeof resolveIdentity>>>,
-  game: { classId: number | null },
+  game: { classId: number },
 ) {
   if (identity.isAdmin) return;
   const allowed = identity.teacherClassIds;
-  if (game.classId == null || allowed.includes(game.classId)) return;
+  if (allowed.includes(game.classId)) return;
   const err = new Error("Forbidden") as Error & { status?: number };
   err.status = 403;
   throw err;
@@ -110,11 +110,10 @@ async function getAccessibleGames(
   identity: NonNullable<Awaited<ReturnType<typeof resolveIdentity>>>,
 ) {
   const classId = identity.student?.classId ?? null;
+  if (classId == null) return [];
+
   const activeGames = await db.query.gamesTable.findMany({
-    where: and(
-      eq(gamesTable.isActive, true),
-      classId === null ? undefined : sql`${gamesTable.classId} IS NULL OR ${gamesTable.classId} = ${classId}`,
-    ),
+    where: and(eq(gamesTable.isActive, true), eq(gamesTable.classId, classId)),
     orderBy: [gamesTable.id],
   });
 
@@ -133,7 +132,6 @@ async function isGameAccessible(
   if (identity.isTeacher || identity.isAdmin) return true;
 
   const classId = identity.student?.classId ?? null;
-  if (game.classId == null) return true;
   return game.classId === classId;
 }
 
@@ -343,7 +341,7 @@ router.get("/teacher/games", async (req, res) => {
   const games = await db.query.gamesTable.findMany({
     where: allowedClassIds == null
       ? undefined
-      : sql`${gamesTable.classId} IS NULL OR ${gamesTable.classId} IN (${allowedClassIds})`,
+      : sql`${gamesTable.classId} IN (${allowedClassIds})`,
     orderBy: [gamesTable.id],
   });
 
@@ -378,6 +376,7 @@ router.get("/teacher/games", async (req, res) => {
     pointsReward: g.pointsReward,
     isActive: g.isActive,
     version: g.version,
+    classId: g.classId,
     stats: statsByGame.get(g.id) || {
       plays: 0,
       uniqueStudents: 0,
@@ -397,8 +396,16 @@ router.post("/teacher/games", async (req, res) => {
 
   const body = CreateGameBody.parse(req.body);
 
-  if (body.classId != null && !identity.isAdmin && !identity.teacherClassIds.includes(body.classId)) {
+  if (!identity.isAdmin && !identity.teacherClassIds.includes(body.classId)) {
     res.status(403).json({ error: "لا يمكنك إنشاء لعبة لصف لا تملكه" });
+    return;
+  }
+
+  const cls = await db.query.classesTable.findFirst({
+    where: eq(classesTable.id, body.classId),
+  });
+  if (!cls) {
+    res.status(404).json({ error: "الصف غير موجود" });
     return;
   }
 
@@ -406,7 +413,7 @@ router.post("/teacher/games", async (req, res) => {
     .insert(gamesTable)
     .values({
       slug: body.slug,
-      classId: body.classId ?? null,
+      classId: body.classId,
       name: body.name,
       type: body.type,
       description: body.description || undefined,
@@ -427,6 +434,7 @@ router.post("/teacher/games", async (req, res) => {
     pointsReward: game.pointsReward,
     isActive: game.isActive,
     version: game.version,
+    classId: game.classId,
     stats: {
       plays: 0,
       uniqueStudents: 0,
@@ -460,7 +468,7 @@ router.put("/teacher/games/:id", async (req, res) => {
 
   requireGameOwnership(identity, game);
 
-  if (body.classId !== undefined && body.classId != null && !identity.isAdmin && !identity.teacherClassIds.includes(body.classId)) {
+  if (body.classId !== undefined && !identity.isAdmin && !identity.teacherClassIds.includes(body.classId)) {
     res.status(403).json({ error: "لا يمكنك نقل اللعبة إلى صف لا تملكه" });
     return;
   }
@@ -473,7 +481,7 @@ router.put("/teacher/games/:id", async (req, res) => {
       imageUrl: body.imageUrl ?? game.imageUrl,
       pointsReward: body.pointsReward ?? game.pointsReward,
       isActive: body.isActive ?? game.isActive,
-      classId: body.classId === undefined ? game.classId : (body.classId ?? null),
+      classId: body.classId === undefined ? game.classId : body.classId,
       updatedAt: now(),
     })
     .where(eq(gamesTable.id, gameId))
@@ -489,6 +497,7 @@ router.put("/teacher/games/:id", async (req, res) => {
     pointsReward: updated.pointsReward,
     isActive: updated.isActive,
     version: updated.version,
+    classId: updated.classId,
   });
 });
 
@@ -684,120 +693,3 @@ router.get("/teacher/games/:id/stats", async (req, res) => {
 });
 
 export default router;
-
-export async function ensureDefaultGames() {
-  const existing = await db.query.gamesTable.findFirst();
-  if (existing) return;
-
-  const defaults = [
-    {
-      slug: "match-sentence-picture",
-      name: "طابق الجملة بالصورة",
-      type: "match-sentence-picture" as const,
-      description: "اسحب كل جملة إلى الصورة المناسبة لها.",
-      imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-      pointsReward: 15,
-    },
-    {
-      slug: "arrange-sentence",
-      name: "رتب الجملة",
-      type: "arrange-sentence" as const,
-      description: "أعد ترتيب الكلمات المبعثرة لتكوين جملة صحيحة.",
-      imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-      pointsReward: 15,
-    },
-    {
-      slug: "choose-picture",
-      name: "اختر الصورة الصحيحة",
-      type: "choose-picture" as const,
-      description: "اختر الصورة التي تطابق الجملة المعروضة.",
-      imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-      pointsReward: 15,
-    },
-    {
-      slug: "choose-sentence",
-      name: "اختر الجملة الصحيحة",
-      type: "choose-sentence" as const,
-      description: "اختر الجملة التي تصف الصورة المعروضة.",
-      imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-      pointsReward: 15,
-    },
-    {
-      slug: "complete-sentence",
-      name: "أكمل الجملة",
-      type: "complete-sentence" as const,
-      description: "اختر الكلمة الناقصة لإكمال الجملة.",
-      imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-      pointsReward: 15,
-    },
-    {
-      slug: "arrange-sentences",
-      name: "ترتيب الجمل",
-      type: "arrange-sentences" as const,
-      description: "أعد ترتيب جمل القصة القصيرة بالترتيب الصحيح.",
-      imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-      pointsReward: 15,
-    },
-  ];
-
-  for (const def of defaults) {
-    const [game] = await db
-      .insert(gamesTable)
-      .values({
-        ...def,
-        classId: null,
-        isActive: true,
-        version: 1,
-      })
-      .returning();
-
-    // Seed a single demo item so the teacher sees the expected shape.
-    const demoItems = {
-      "match-sentence-picture": [
-        { imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png", sentence: "الولد يقرأ كتابًا." },
-      ],
-      "arrange-sentence": [{ sentence: "ذهب أحمد إلى المدرسة." }],
-      "choose-picture": {
-        sentence: "البنت تسقي النباتات.",
-        correctImageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-        wrongImageUrls: [
-          "https://cdn-icons-png.flaticon.com/512/2922/2922506.png",
-          "https://cdn-icons-png.flaticon.com/512/2922/2922506.png",
-          "https://cdn-icons-png.flaticon.com/512/2922/2922506.png",
-        ],
-      },
-      "choose-sentence": {
-        imageUrl: "https://cdn-icons-png.flaticon.com/512/3062/3062320.png",
-        correctSentence: "الولد يقرأ كتابًا.",
-        wrongSentences: [
-          "الولد يلعب بالكرة.",
-          "الولد ينام في الحديقة.",
-          "الولد يأكل تفاحة.",
-        ],
-      },
-      "complete-sentence": {
-        sentence: "ذهب أحمد إلى المدرسة.",
-        hiddenWord: "المدرسة",
-        wrongWords: ["البيت", "الحديقة", "المتجر"],
-      },
-      "arrange-sentences": [
-        { sentence: "استيقظ أحمد مبكرًا." },
-        { sentence: "تناول الإفطار." },
-        { sentence: "ذهب إلى المدرسة." },
-        { sentence: "عاد إلى المنزل." },
-      ],
-    } as const;
-
-    const payload = demoItems[def.type];
-    const items = (Array.isArray(payload) ? payload : [payload]) as unknown[];
-    if (items.length > 0) {
-      await db.insert(gameItemsTable).values(
-        items.map((item, idx) => ({
-          gameId: game.id,
-          itemOrder: idx,
-          payload: item,
-        })),
-      );
-    }
-  }
-}

@@ -208,7 +208,7 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
           description: metaForm.description.trim() || undefined,
           imageUrl: metaForm.imageUrl.trim() || undefined,
           pointsReward: Number(metaForm.pointsReward) || undefined,
-          classId: metaForm.classId,
+          classId: metaForm.classId ?? undefined,
         },
       },
       {
@@ -625,14 +625,13 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
               <div className="space-y-2">
                 <Label className="font-bold">الصف</Label>
                 <Select
-                  value={metaForm.classId?.toString() ?? "none"}
-                  onValueChange={(value) => setMetaForm((f) => ({ ...f, classId: value === "none" ? null : Number(value) }))}
+                  value={metaForm.classId?.toString() ?? ""}
+                  onValueChange={(value) => setMetaForm((f) => ({ ...f, classId: Number(value) }))}
                 >
                   <SelectTrigger className="rounded-xl border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">عامة</SelectItem>
                     {classes.map((c) => (
                       <SelectItem key={c.id} value={c.id.toString()}>
                         {c.name}
@@ -687,14 +686,13 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
               <div className="space-y-2">
                 <Label className="font-bold">الصف</Label>
                 <Select
-                  value={createForm.classId?.toString() ?? "none"}
-                  onValueChange={(value) => setCreateForm((f) => ({ ...f, classId: value === "none" ? null : Number(value) }))}
+                  value={createForm.classId?.toString() ?? ""}
+                  onValueChange={(value) => setCreateForm((f) => ({ ...f, classId: Number(value) }))}
                 >
                   <SelectTrigger className="rounded-xl border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">عامة</SelectItem>
                     {classes.map((c) => (
                       <SelectItem key={c.id} value={c.id.toString()}>
                         {c.name}
@@ -706,7 +704,7 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
               <Button
                 className="w-full rounded-xl font-bold h-11"
                 onClick={handleCreate}
-                disabled={!createForm.name.trim()}
+                disabled={!createForm.name.trim() || createForm.classId == null}
               >
                 <Plus className="w-4 h-4 ml-1" />
                 إنشاء

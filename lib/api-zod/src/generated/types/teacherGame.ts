@@ -8,7 +8,7 @@
 import type { Game } from './game';
 import type { GameStats } from './gameStats';
 
-export type TeacherGame = Game & ({
-  classId?: number | null;
+export type TeacherGame = Game & {
+  classId: number;
   stats: GameStats;
-});
+};

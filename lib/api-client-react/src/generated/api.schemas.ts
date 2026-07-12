@@ -478,10 +478,10 @@ export interface GameStats {
   avgDuration: number;
 }
 
-export type TeacherGame = Game & ({
-  classId?: number | null;
+export type TeacherGame = Game & {
+  classId: number;
   stats: GameStats;
-});
+};
 
 export interface TeacherGameList {
   games: TeacherGame[];
@@ -508,7 +508,7 @@ export interface CreateGameBody {
      * @maximum 1000
      */
   pointsReward?: number;
-  classId?: number | null;
+  classId: number;
 }
 
 export interface UpdateGameBody {
@@ -527,7 +527,7 @@ export interface UpdateGameBody {
      */
   pointsReward?: number;
   isActive?: boolean;
-  classId?: number | null;
+  classId?: number;
 }
 
 export type GameItemPayload = { [key: string]: unknown };

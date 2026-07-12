@@ -28,5 +28,5 @@ export interface CreateGameBody {
      * @maximum 1000
      */
   pointsReward?: number;
-  classId?: number | null;
+  classId: number;
 }

@@ -22,5 +22,5 @@ export interface UpdateGameBody {
      */
   pointsReward?: number;
   isActive?: boolean;
-  classId?: number | null;
+  classId?: number;
 }

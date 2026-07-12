@@ -26,7 +26,7 @@ export type GameType = (typeof GAME_TYPES)[number];
 export const gamesTable = pgTable("games", {
   id: serial("id").primaryKey(),
   slug: text("slug").notNull().unique(),
-  classId: integer("class_id").references(() => classesTable.id),
+  classId: integer("class_id").notNull().references(() => classesTable.id),
   name: text("name").notNull(),
   type: text("type", { enum: GAME_TYPES }).notNull().default("match-sentence-picture"),
   description: text("description"),
