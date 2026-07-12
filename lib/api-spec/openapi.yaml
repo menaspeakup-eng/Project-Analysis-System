@@ -104,35 +104,205 @@ paths:
                 $ref: "#/components/schemas/StudentProfile"
         "401":
           description: Not signed in
-  /student/daily-challenge:
+  /student/challenges:
     get:
-      operationId: getDailyChallenge
+      operationId: getStudentChallenges
       tags: [student]
-      summary: Get today's daily challenge and the student's completion status
+      summary: List active daily challenges for the signed-in student
       responses:
         "200":
-          description: Today's challenge
+          description: Active challenges
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DailyChallenge"
+                $ref: "#/components/schemas/StudentChallengeList"
         "401":
           description: Not signed in
-  /student/daily-challenge/complete:
+  /student/challenges/{id}:
+    get:
+      operationId: getStudentChallengeById
+      tags: [student]
+      summary: Get a single active challenge for the signed-in student
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Challenge details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentChallenge"
+        "401":
+          description: Not signed in
+        "404":
+          description: Challenge not found or expired
+  /student/challenges/{id}/submit:
     post:
-      operationId: completeDailyChallenge
+      operationId: submitStudentChallenge
       tags: [student]
-      summary: Mark today's daily challenge as completed and award points
-      description: Idempotent — completing an already-completed challenge awards no additional points.
+      summary: Submit or resubmit an answer for a challenge
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitChallengeBody"
       responses:
         "200":
-          description: Completion result
+          description: Submission updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DailyChallengeCompletion"
+                $ref: "#/components/schemas/ChallengeSubmission"
+        "201":
+          description: Submission created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChallengeSubmission"
+        "400":
+          description: Invalid submission
         "401":
           description: Not signed in
+        "404":
+          description: Challenge not found or expired
+  /teacher/challenges:
+    get:
+      operationId: getTeacherChallenges
+      tags: [teacher]
+      summary: List all daily challenges for the teacher's classes
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Challenges list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherChallengeList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher
+    post:
+      operationId: createTeacherChallenge
+      tags: [teacher]
+      summary: Create a new daily challenge for a class
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChallengeBody"
+      responses:
+        "201":
+          description: Created challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherChallenge"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher
+  /teacher/challenges/{id}:
+    delete:
+      operationId: deleteTeacherChallenge
+      tags: [teacher]
+      summary: Soft-delete a daily challenge
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "204":
+          description: Challenge deleted
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher
+        "404":
+          description: Challenge not found
+  /teacher/challenges/{id}/submissions:
+    get:
+      operationId: getTeacherChallengeSubmissions
+      tags: [teacher]
+      summary: List all submissions for a challenge
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      responses:
+        "200":
+          description: Submissions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherSubmissionList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher
+        "404":
+          description: Challenge not found
+  /teacher/submissions/{id}/review:
+    post:
+      operationId: reviewTeacherSubmission
+      tags: [teacher]
+      summary: Accept or reject a student submission
+      description: Admins can pass ?teacherId= to preview another teacher's dashboard.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - $ref: "#/components/parameters/TeacherIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewSubmissionBody"
+      responses:
+        "200":
+          description: Review result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewedSubmission"
+        "400":
+          description: Invalid body or already accepted
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher
+        "404":
+          description: Submission or challenge not found
   /leaderboard:
     get:
       operationId: getLeaderboard
@@ -543,35 +713,310 @@ components:
           maxLength: 120
       required:
         - name
-    DailyChallenge:
+    StudentChallenge:
       type: object
       properties:
+        id:
+          type: integer
         title:
           type: string
         description:
           type: string
+        instructions:
+          oneOf:
+            - type: string
+            - type: "null"
+        linkUrl:
+          oneOf:
+            - type: string
+            - type: "null"
         pointsReward:
           type: integer
-        completed:
-          type: boolean
+        submissionType:
+          type: string
+          enum: [text, audio, image, file, mixed]
+        publishedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [not_started, pending, accepted, rejected]
+        submissionText:
+          oneOf:
+            - type: string
+            - type: "null"
+        submissionFiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        teacherFeedback:
+          oneOf:
+            - type: string
+            - type: "null"
+        reviewedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
       required:
+        - id
         - title
         - description
         - pointsReward
-        - completed
-    DailyChallengeCompletion:
+        - submissionType
+        - publishedAt
+        - expiresAt
+        - status
+        - submissionFiles
+    StudentChallengeList:
       type: object
       properties:
-        alreadyCompleted:
-          type: boolean
-        pointsAwarded:
-          type: integer
-        totalPoints:
-          type: integer
+        challenges:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentChallenge"
       required:
-        - alreadyCompleted
-        - pointsAwarded
-        - totalPoints
+        - challenges
+    SubmissionFile:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        data:
+          type: string
+      required:
+        - name
+        - type
+        - data
+    ChallengeSubmission:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        submissionText:
+          oneOf:
+            - type: string
+            - type: "null"
+        submissionFiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        completedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - status
+        - submissionFiles
+        - completedAt
+    TeacherChallenge:
+      type: object
+      properties:
+        id:
+          type: integer
+        classId:
+          type: integer
+        className:
+          oneOf:
+            - type: string
+            - type: "null"
+        title:
+          type: string
+        description:
+          type: string
+        instructions:
+          oneOf:
+            - type: string
+            - type: "null"
+        linkUrl:
+          oneOf:
+            - type: string
+            - type: "null"
+        pointsReward:
+          type: integer
+        submissionType:
+          type: string
+          enum: [text, audio, image, file, mixed]
+        publishedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        isExpired:
+          type: boolean
+        counts:
+          type: object
+          properties:
+            pending:
+              type: integer
+            accepted:
+              type: integer
+            rejected:
+              type: integer
+          required:
+            - pending
+            - accepted
+            - rejected
+      required:
+        - id
+        - classId
+        - title
+        - description
+        - pointsReward
+        - submissionType
+        - publishedAt
+        - expiresAt
+        - isExpired
+        - counts
+    TeacherChallengeList:
+      type: object
+      properties:
+        challenges:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherChallenge"
+      required:
+        - challenges
+    CreateChallengeBody:
+      type: object
+      properties:
+        classId:
+          type: integer
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        instructions:
+          type: string
+          maxLength: 2000
+        linkUrl:
+          type: string
+          maxLength: 1000
+        pointsReward:
+          type: integer
+          minimum: 0
+          maximum: 1000
+        submissionType:
+          type: string
+          enum: [text, audio, image, file, mixed]
+      required:
+        - classId
+        - title
+        - description
+        - pointsReward
+        - submissionType
+    SubmitChallengeBody:
+      type: object
+      properties:
+        submissionText:
+          type: string
+          maxLength: 5000
+        submissionFiles:
+          type: array
+          maxItems: 5
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+      required: []
+    TeacherSubmission:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        submissionText:
+          oneOf:
+            - type: string
+            - type: "null"
+        submissionFiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubmissionFile"
+        teacherFeedback:
+          oneOf:
+            - type: string
+            - type: "null"
+        reviewedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        completedAt:
+          type: string
+          format: date-time
+        pointsAwarded:
+          oneOf:
+            - type: integer
+            - type: "null"
+      required:
+        - id
+        - studentId
+        - studentName
+        - status
+        - submissionFiles
+        - completedAt
+    TeacherSubmissionList:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherSubmission"
+      required:
+        - submissions
+    ReviewSubmissionBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected]
+        feedback:
+          type: string
+          maxLength: 1000
+      required:
+        - status
+    ReviewedSubmission:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        teacherFeedback:
+          oneOf:
+            - type: string
+            - type: "null"
+        reviewedAt:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: "null"
+        pointsAwarded:
+          oneOf:
+            - type: integer
+            - type: "null"
+      required:
+        - id
+        - status
     LeaderboardEntry:
       type: object
       properties:

@@ -9,6 +9,7 @@ import {
   unique,
   boolean,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -101,9 +102,9 @@ export const classesTable = pgTable("classes", {
 export type Class = typeof classesTable.$inferSelect;
 export type InsertClass = typeof classesTable.$inferInsert;
 
-// A small rotating bank of reading/pronunciation prompts is used to derive
-// "today's challenge" deterministically (see student route) instead of
-// requiring a teacher to author content — there is no authoring tool yet.
+// Teacher-authored daily challenges for a class. Each challenge has a 24-hour
+// visibility window for students (publishedAt → expiresAt) and remains visible
+// to the teacher even after it expires so they can review submissions later.
 export const dailyChallengesTable = pgTable(
   "daily_challenges",
   {
@@ -111,16 +112,24 @@ export const dailyChallengesTable = pgTable(
     classId: integer("class_id")
       .notNull()
       .references(() => classesTable.id),
-    forDate: date("for_date").notNull(),
+    teacherId: integer("teacher_id").references(() => studentsTable.id),
+    // Kept nullable for legacy rows; new challenges use publishedAt/expiresAt.
+    forDate: date("for_date"),
     title: text("title").notNull(),
     description: text("description").notNull(),
+    instructions: text("instructions"),
+    linkUrl: text("link_url"),
     pointsReward: integer("points_reward").notNull().default(20),
+    submissionType: text("submission_type").notNull().default("text"),
+    publishedAt: timestamp("published_at").notNull().defaultNow(),
+    expiresAt: timestamp("expires_at").notNull().default(sql`now() + interval '24 hours'`),
+    isDeleted: boolean("is_deleted").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (table) => [unique().on(table.classId, table.forDate)],
 );
 
 export type DailyChallenge = typeof dailyChallengesTable.$inferSelect;
+export type InsertDailyChallenge = typeof dailyChallengesTable.$inferInsert;
 
 export const studentChallengeCompletionsTable = pgTable(
   "student_challenge_completions",
@@ -132,6 +141,12 @@ export const studentChallengeCompletionsTable = pgTable(
     challengeId: integer("challenge_id")
       .notNull()
       .references(() => dailyChallengesTable.id),
+    status: text("status").notNull().default("pending"),
+    submissionText: text("submission_text"),
+    submissionFiles: jsonb("submission_files").notNull().default([]),
+    teacherFeedback: text("teacher_feedback"),
+    reviewedAt: timestamp("reviewed_at"),
+    pointsAwarded: integer("points_awarded"),
     completedAt: timestamp("completed_at").notNull().defaultNow(),
   },
   (table) => [unique().on(table.studentId, table.challengeId)],
@@ -139,3 +154,5 @@ export const studentChallengeCompletionsTable = pgTable(
 
 export type StudentChallengeCompletion =
   typeof studentChallengeCompletionsTable.$inferSelect;
+export type InsertStudentChallengeCompletion =
+  typeof studentChallengeCompletionsTable.$inferInsert;

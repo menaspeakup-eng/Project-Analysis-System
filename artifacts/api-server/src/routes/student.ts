@@ -5,8 +5,6 @@ import {
   db,
   studentsTable,
   classesTable,
-  dailyChallengesTable,
-  studentChallengeCompletionsTable,
   avatarConfigSchema,
 } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
@@ -14,10 +12,7 @@ import {
   GetStudentProfileResponse,
   UpdateStudentAvatarBody,
   UpdateStudentAvatarResponse,
-  GetDailyChallengeResponse,
-  CompleteDailyChallengeResponse,
 } from "@workspace/api-zod";
-import { dailyChallengeBank, bankIndexForDate } from "../lib/dailyChallengeBank";
 import { isAccessoriesUnlocked, isPetUnlocked } from "../lib/avatarUnlocks";
 
 const router: IRouter = Router();
@@ -89,39 +84,6 @@ async function enrichStudentProfile(student: typeof studentsTable.$inferSelect) 
   };
 }
 
-function todayDateString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-async function getOrCreateTodayChallenge(classId: number) {
-  const forDate = todayDateString();
-  const existing = await db.query.dailyChallengesTable.findFirst({
-    where: and(
-      eq(dailyChallengesTable.classId, classId),
-      eq(dailyChallengesTable.forDate, forDate),
-    ),
-  });
-  if (existing) return existing;
-
-  const bankEntry = dailyChallengeBank[bankIndexForDate(new Date(), classId)];
-  const [created] = await db
-    .insert(dailyChallengesTable)
-    .values({ forDate, classId, ...bankEntry })
-    .onConflictDoNothing()
-    .returning();
-
-  if (created) return created;
-
-  // Lost a race with a concurrent request — read back the row it created.
-  const raceWinner = await db.query.dailyChallengesTable.findFirst({
-    where: and(
-      eq(dailyChallengesTable.classId, classId),
-      eq(dailyChallengesTable.forDate, forDate),
-    ),
-  });
-  return raceWinner!;
-}
-
 router.get("/student/me", async (req, res) => {
   const { userId } = getAuth(req);
   if (!userId) {
@@ -183,100 +145,6 @@ router.patch("/student/avatar", async (req, res) => {
 
   const profile = await enrichStudentProfile(updated);
   const data = UpdateStudentAvatarResponse.parse(profile);
-  res.json(data);
-});
-
-router.get("/student/daily-challenge", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  const student = await getOrCreateStudent(userId);
-  if (!student.classId) {
-    res.status(404).json({ error: "لم يُخصص لك صف بعد — تواصل مع معلمك." });
-    return;
-  }
-
-  const challenge = await getOrCreateTodayChallenge(student.classId);
-
-  const completion = await db.query.studentChallengeCompletionsTable.findFirst({
-    where: and(
-      eq(studentChallengeCompletionsTable.studentId, student.id),
-      eq(studentChallengeCompletionsTable.challengeId, challenge.id),
-    ),
-  });
-
-  const data = GetDailyChallengeResponse.parse({
-    title: challenge.title,
-    description: challenge.description,
-    pointsReward: challenge.pointsReward,
-    completed: !!completion,
-  });
-  res.json(data);
-});
-
-router.post("/student/daily-challenge/complete", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  const student = await getOrCreateStudent(userId);
-  if (!student.classId) {
-    res.status(404).json({ error: "لم يُخصص لك صف بعد — تواصل مع معلمك." });
-    return;
-  }
-
-  const challenge = await getOrCreateTodayChallenge(student.classId);
-
-  const existingCompletion = await db.query.studentChallengeCompletionsTable.findFirst({
-    where: and(
-      eq(studentChallengeCompletionsTable.studentId, student.id),
-      eq(studentChallengeCompletionsTable.challengeId, challenge.id),
-    ),
-  });
-
-  if (existingCompletion) {
-    const data = CompleteDailyChallengeResponse.parse({
-      alreadyCompleted: true,
-      pointsAwarded: 0,
-      totalPoints: student.points,
-    });
-    res.json(data);
-    return;
-  }
-
-  const [insertedCompletion] = await db
-    .insert(studentChallengeCompletionsTable)
-    .values({ studentId: student.id, challengeId: challenge.id })
-    .onConflictDoNothing()
-    .returning();
-
-  if (!insertedCompletion) {
-    // Lost a race with a concurrent completion request for the same challenge.
-    const data = CompleteDailyChallengeResponse.parse({
-      alreadyCompleted: true,
-      pointsAwarded: 0,
-      totalPoints: student.points,
-    });
-    res.json(data);
-    return;
-  }
-
-  const [updatedStudent] = await db
-    .update(studentsTable)
-    .set({ points: student.points + challenge.pointsReward })
-    .where(eq(studentsTable.id, student.id))
-    .returning();
-
-  const data = CompleteDailyChallengeResponse.parse({
-    alreadyCompleted: false,
-    pointsAwarded: challenge.pointsReward,
-    totalPoints: updatedStudent.points,
-  });
   res.json(data);
 });
 

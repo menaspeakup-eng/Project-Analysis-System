@@ -41,6 +41,7 @@ import {
   Eye,
 } from "lucide-react";
 import type { TeacherClass, TeacherStudent } from "@workspace/api-client-react";
+import TeacherChallenges from "./teacher-challenges";
 
 function getTeacherIdFromUrl(): number | null {
   const raw = new URLSearchParams(window.location.search).get("teacherId");
@@ -224,6 +225,8 @@ export default function Teacher() {
             </div>
           )}
         </section>
+
+        <TeacherChallenges teacherIdParam={teacherIdParam} classes={classes} />
       </main>
 
       {selectedClass && (

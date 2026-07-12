@@ -66,17 +66,205 @@ export interface NameCaptureBody {
   name: string;
 }
 
-export interface DailyChallenge {
-  title: string;
-  description: string;
-  pointsReward: number;
-  completed: boolean;
+export type StudentChallengeSubmissionType = typeof StudentChallengeSubmissionType[keyof typeof StudentChallengeSubmissionType];
+
+
+export const StudentChallengeSubmissionType = {
+  text: 'text',
+  audio: 'audio',
+  image: 'image',
+  file: 'file',
+  mixed: 'mixed',
+} as const;
+
+export type StudentChallengeStatus = typeof StudentChallengeStatus[keyof typeof StudentChallengeStatus];
+
+
+export const StudentChallengeStatus = {
+  not_started: 'not_started',
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface SubmissionFile {
+  name: string;
+  type: string;
+  data: string;
 }
 
-export interface DailyChallengeCompletion {
-  alreadyCompleted: boolean;
-  pointsAwarded: number;
-  totalPoints: number;
+export interface StudentChallenge {
+  id: number;
+  title: string;
+  description: string;
+  instructions?: string | null;
+  linkUrl?: string | null;
+  pointsReward: number;
+  submissionType: StudentChallengeSubmissionType;
+  publishedAt: string;
+  expiresAt: string;
+  status: StudentChallengeStatus;
+  submissionText?: string | null;
+  submissionFiles: SubmissionFile[];
+  teacherFeedback?: string | null;
+  reviewedAt?: string | null;
+}
+
+export interface StudentChallengeList {
+  challenges: StudentChallenge[];
+}
+
+export type ChallengeSubmissionStatus = typeof ChallengeSubmissionStatus[keyof typeof ChallengeSubmissionStatus];
+
+
+export const ChallengeSubmissionStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ChallengeSubmission {
+  id: number;
+  status: ChallengeSubmissionStatus;
+  submissionText?: string | null;
+  submissionFiles: SubmissionFile[];
+  completedAt: string;
+}
+
+export type TeacherChallengeSubmissionType = typeof TeacherChallengeSubmissionType[keyof typeof TeacherChallengeSubmissionType];
+
+
+export const TeacherChallengeSubmissionType = {
+  text: 'text',
+  audio: 'audio',
+  image: 'image',
+  file: 'file',
+  mixed: 'mixed',
+} as const;
+
+export type TeacherChallengeCounts = {
+  pending: number;
+  accepted: number;
+  rejected: number;
+};
+
+export interface TeacherChallenge {
+  id: number;
+  classId: number;
+  className?: string | null;
+  title: string;
+  description: string;
+  instructions?: string | null;
+  linkUrl?: string | null;
+  pointsReward: number;
+  submissionType: TeacherChallengeSubmissionType;
+  publishedAt: string;
+  expiresAt: string;
+  isExpired: boolean;
+  counts: TeacherChallengeCounts;
+}
+
+export interface TeacherChallengeList {
+  challenges: TeacherChallenge[];
+}
+
+export type CreateChallengeBodySubmissionType = typeof CreateChallengeBodySubmissionType[keyof typeof CreateChallengeBodySubmissionType];
+
+
+export const CreateChallengeBodySubmissionType = {
+  text: 'text',
+  audio: 'audio',
+  image: 'image',
+  file: 'file',
+  mixed: 'mixed',
+} as const;
+
+export interface CreateChallengeBody {
+  classId: number;
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  title: string;
+  /**
+     * @minLength 1
+     * @maxLength 1000
+     */
+  description: string;
+  /** @maxLength 2000 */
+  instructions?: string;
+  /** @maxLength 1000 */
+  linkUrl?: string;
+  /**
+     * @minimum 0
+     * @maximum 1000
+     */
+  pointsReward: number;
+  submissionType: CreateChallengeBodySubmissionType;
+}
+
+export interface SubmitChallengeBody {
+  /** @maxLength 5000 */
+  submissionText?: string;
+  /** @maxItems 5 */
+  submissionFiles?: SubmissionFile[];
+}
+
+export type TeacherSubmissionStatus = typeof TeacherSubmissionStatus[keyof typeof TeacherSubmissionStatus];
+
+
+export const TeacherSubmissionStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface TeacherSubmission {
+  id: number;
+  studentId: number;
+  studentName: string;
+  status: TeacherSubmissionStatus;
+  submissionText?: string | null;
+  submissionFiles: SubmissionFile[];
+  teacherFeedback?: string | null;
+  reviewedAt?: string | null;
+  completedAt: string;
+  pointsAwarded?: number | null;
+}
+
+export interface TeacherSubmissionList {
+  submissions: TeacherSubmission[];
+}
+
+export type ReviewSubmissionBodyStatus = typeof ReviewSubmissionBodyStatus[keyof typeof ReviewSubmissionBodyStatus];
+
+
+export const ReviewSubmissionBodyStatus = {
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ReviewSubmissionBody {
+  status: ReviewSubmissionBodyStatus;
+  /** @maxLength 1000 */
+  feedback?: string;
+}
+
+export type ReviewedSubmissionStatus = typeof ReviewedSubmissionStatus[keyof typeof ReviewedSubmissionStatus];
+
+
+export const ReviewedSubmissionStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ReviewedSubmission {
+  id: number;
+  status: ReviewedSubmissionStatus;
+  teacherFeedback?: string | null;
+  reviewedAt?: string | null;
+  pointsAwarded?: number | null;
 }
 
 export interface LeaderboardEntry {
@@ -211,6 +399,41 @@ export interface TeacherStudentClass {
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */
 export type TeacherIdQueryParameter = number;
+
+export type GetTeacherChallengesParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type CreateTeacherChallengeParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type DeleteTeacherChallengeParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type GetTeacherChallengeSubmissionsParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
+
+export type ReviewTeacherSubmissionParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+};
 
 export type GetTeacherClassesParams = {
 /**

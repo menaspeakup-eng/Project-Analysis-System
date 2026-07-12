@@ -6,9 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface DailyChallenge {
-  title: string;
-  description: string;
-  pointsReward: number;
-  completed: boolean;
-}
+export type TeacherChallengeCounts = {
+  pending: number;
+  accepted: number;
+  rejected: number;
+};

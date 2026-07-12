@@ -4,8 +4,6 @@ import { useLocation, Link } from "wouter";
 import { useEffect } from "react";
 import {
   useGetStudentProfile,
-  useGetDailyChallenge,
-  useCompleteDailyChallenge,
   useGetLeaderboard,
   useGetIdentityMe,
 } from "@workspace/api-client-react";
@@ -16,7 +14,6 @@ import {
   Star,
   Play,
   Trophy,
-  Flame,
   BookOpen,
   Users,
   MessageCircle,
@@ -32,6 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar3D } from "@/components/Avatar3D";
 import { avatarBgStyle, avatarAccessoryEmojis, AVATAR_GENDERS } from "@/lib/avatarPresets";
+import StudentChallenges from "./student-challenges";
 
 const POINTS_PER_LEVEL = 100;
 
@@ -151,14 +149,6 @@ export default function Portal() {
     query: { enabled: !!isSignedIn } as never,
   });
 
-  const { data: challenge, isLoading: isChallengeLoading, isError: isChallengeError } =
-    useGetDailyChallenge({
-      query: { enabled: !!isSignedIn } as never,
-    });
-
-  const { mutate: completeChallenge, isPending: isCompletingChallenge } =
-    useCompleteDailyChallenge();
-
   const { data: leaderboard, isLoading: isLeaderboardLoading } = useGetLeaderboard();
 
   // Google sometimes populates fullName without splitting it into first/last name,
@@ -210,17 +200,6 @@ export default function Portal() {
     } else {
       await signOut({ redirectUrl: "/" });
     }
-  };
-
-  const handleCompleteChallenge = () => {
-    if (isGuest || !challenge || challenge.completed) return;
-    completeChallenge(undefined, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["/api/student/daily-challenge"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/student/me"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
-      },
-    });
   };
 
   return (
@@ -337,63 +316,8 @@ export default function Portal() {
 
         {/* Daily challenge + Leaderboard side by side */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Daily challenge */}
-          <section className="bg-gradient-to-l from-accent/10 to-primary/10 rounded-3xl border border-accent/20 p-6 flex flex-col gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-accent text-white flex items-center justify-center shrink-0">
-                <Flame className="w-6 h-6" />
-              </div>
-              <h3 className="font-black text-foreground text-lg">التحدي اليومي</h3>
-              {challenge?.completed && (
-                <span className="mr-auto flex items-center gap-1 text-xs font-bold text-white bg-[hsl(150,55%,45%)] px-3 py-1 rounded-full">
-                  <Check className="w-3.5 h-3.5" /> مكتمل
-                </span>
-              )}
-            </div>
-
-            {isGuest ? (
-              <p className="text-muted-foreground font-medium text-sm">
-                سجّل الدخول لخوض التحدي اليومي وكسب النقاط.
-              </p>
-            ) : isChallengeLoading ? (
-              <div className="h-16 flex items-center justify-center">
-                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : isChallengeError || !challenge ? (
-              <p className="text-muted-foreground font-medium text-sm">
-                أنت غير مرتبط بصف حالياً. تواصل مع معلمك لإضافتك إلى صف.
-              </p>
-            ) : (
-              <>
-                <div>
-                  <h4 className="font-bold text-foreground">{challenge.title}</h4>
-                  <p className="text-muted-foreground font-medium text-sm mt-1">
-                    {challenge.description}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between gap-3 mt-auto">
-                  <span className="text-xs font-bold text-accent bg-white px-3 py-1.5 rounded-full border border-accent/20 shrink-0 flex items-center gap-1">
-                    <Star className="w-3.5 h-3.5 fill-secondary text-secondary" />
-                    {challenge.pointsReward} نقطة
-                  </span>
-                  <Button
-                    size="sm"
-                    disabled={challenge.completed || isCompletingChallenge}
-                    onClick={handleCompleteChallenge}
-                    data-testid="button-complete-challenge"
-                    className="rounded-xl bg-accent hover:bg-accent/90 text-white font-bold disabled:opacity-60"
-                  >
-                    {isCompletingChallenge ? (
-                      <Loader2 className="w-4 h-4 ml-1.5 animate-spin" />
-                    ) : challenge.completed ? (
-                      <Check className="w-4 h-4 ml-1.5" />
-                    ) : null}
-                    {challenge.completed ? "أنجزت التحدي" : "أكملت التحدي"}
-                  </Button>
-                </div>
-              </>
-            )}
-          </section>
+          {/* Daily challenges */}
+          <StudentChallenges />
 
           {/* Leaderboard */}
           <section className="bg-white rounded-3xl shadow-sm border border-border p-6 flex flex-col">

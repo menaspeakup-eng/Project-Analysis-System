@@ -27,11 +27,15 @@ import type {
   AdminUser,
   AdminUserList,
   AvatarConfig,
+  ChallengeSubmission,
   ClaimStudentBody,
   ClaimTeacherStudentParams,
+  CreateChallengeBody,
   CreateClassBody,
-  DailyChallenge,
-  DailyChallengeCompletion,
+  CreateTeacherChallengeParams,
+  DeleteTeacherChallengeParams,
+  GetTeacherChallengeSubmissionsParams,
+  GetTeacherChallengesParams,
   GetTeacherClassesParams,
   GetTeacherUnclaimedParams,
   HealthStatus,
@@ -40,10 +44,19 @@ import type {
   MoveStudentBody,
   NameCaptureBody,
   RemoveTeacherStudentClassParams,
+  ReviewSubmissionBody,
+  ReviewTeacherSubmissionParams,
+  ReviewedSubmission,
+  StudentChallenge,
+  StudentChallengeList,
   StudentProfile,
+  SubmitChallengeBody,
+  TeacherChallenge,
+  TeacherChallengeList,
   TeacherClassList,
   TeacherStudent,
   TeacherStudentClass,
+  TeacherSubmissionList,
   UnclaimedStudentList,
   UpdateClassBody,
   UpdateTeacherStudentBody,
@@ -454,20 +467,20 @@ export const useUpdateStudentAvatar = <TError = ErrorType<void>,
       return useMutation(getUpdateStudentAvatarMutationOptions(options));
     }
 
-export const getGetDailyChallengeUrl = () => {
+export const getGetStudentChallengesUrl = () => {
 
 
 
 
-  return `/api/student/daily-challenge`
+  return `/api/student/challenges`
 }
 
 /**
- * @summary Get today's daily challenge and the student's completion status
+ * @summary List active daily challenges for the signed-in student
  */
-export const getDailyChallenge = async ( options?: RequestInit): Promise<DailyChallenge> => {
+export const getStudentChallenges = async ( options?: RequestInit): Promise<StudentChallengeList> => {
 
-  return customFetch<DailyChallenge>(getGetDailyChallengeUrl(),
+  return customFetch<StudentChallengeList>(getGetStudentChallengesUrl(),
   {
     ...options,
     method: 'GET'
@@ -480,45 +493,45 @@ export const getDailyChallenge = async ( options?: RequestInit): Promise<DailyCh
 
 
 
-export const getGetDailyChallengeQueryKey = () => {
+export const getGetStudentChallengesQueryKey = () => {
     return [
-    `/api/student/daily-challenge`
+    `/api/student/challenges`
     ] as const;
     }
 
 
-export const getGetDailyChallengeQueryOptions = <TData = Awaited<ReturnType<typeof getDailyChallenge>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyChallenge>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetStudentChallengesQueryOptions = <TData = Awaited<ReturnType<typeof getStudentChallenges>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentChallenges>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetDailyChallengeQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetStudentChallengesQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDailyChallenge>>> = ({ signal }) => getDailyChallenge({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudentChallenges>>> = ({ signal }) => getStudentChallenges({ signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDailyChallenge>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudentChallenges>>, TError, TData> & { queryKey: QueryKey }
 }
 
-export type GetDailyChallengeQueryResult = NonNullable<Awaited<ReturnType<typeof getDailyChallenge>>>
-export type GetDailyChallengeQueryError = ErrorType<void>
+export type GetStudentChallengesQueryResult = NonNullable<Awaited<ReturnType<typeof getStudentChallenges>>>
+export type GetStudentChallengesQueryError = ErrorType<void>
 
 
 /**
- * @summary Get today's daily challenge and the student's completion status
+ * @summary List active daily challenges for the signed-in student
  */
 
-export function useGetDailyChallenge<TData = Awaited<ReturnType<typeof getDailyChallenge>>, TError = ErrorType<void>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDailyChallenge>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export function useGetStudentChallenges<TData = Awaited<ReturnType<typeof getStudentChallenges>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentChallenges>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetDailyChallengeQueryOptions(options)
+  const queryOptions = getGetStudentChallengesQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -531,24 +544,23 @@ export function useGetDailyChallenge<TData = Awaited<ReturnType<typeof getDailyC
 
 
 
-export const getCompleteDailyChallengeUrl = () => {
+export const getGetStudentChallengeByIdUrl = (id: number,) => {
 
 
 
 
-  return `/api/student/daily-challenge/complete`
+  return `/api/student/challenges/${id}`
 }
 
 /**
- * Idempotent — completing an already-completed challenge awards no additional points.
- * @summary Mark today's daily challenge as completed and award points
+ * @summary Get a single active challenge for the signed-in student
  */
-export const completeDailyChallenge = async ( options?: RequestInit): Promise<DailyChallengeCompletion> => {
+export const getStudentChallengeById = async (id: number, options?: RequestInit): Promise<StudentChallenge> => {
 
-  return customFetch<DailyChallengeCompletion>(getCompleteDailyChallengeUrl(),
+  return customFetch<StudentChallenge>(getGetStudentChallengeByIdUrl(id),
   {
     ...options,
-    method: 'POST'
+    method: 'GET'
 
 
   }
@@ -558,11 +570,89 @@ export const completeDailyChallenge = async ( options?: RequestInit): Promise<Da
 
 
 
-export const getCompleteDailyChallengeMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeDailyChallenge>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof completeDailyChallenge>>, TError,void, TContext> => {
+export const getGetStudentChallengeByIdQueryKey = (id: number,) => {
+    return [
+    `/api/student/challenges/${id}`
+    ] as const;
+    }
 
-const mutationKey = ['completeDailyChallenge'];
+
+export const getGetStudentChallengeByIdQueryOptions = <TData = Awaited<ReturnType<typeof getStudentChallengeById>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentChallengeById>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudentChallengeByIdQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudentChallengeById>>> = ({ signal }) => getStudentChallengeById(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudentChallengeById>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStudentChallengeByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getStudentChallengeById>>>
+export type GetStudentChallengeByIdQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a single active challenge for the signed-in student
+ */
+
+export function useGetStudentChallengeById<TData = Awaited<ReturnType<typeof getStudentChallengeById>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentChallengeById>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStudentChallengeByIdQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSubmitStudentChallengeUrl = (id: number,) => {
+
+
+
+
+  return `/api/student/challenges/${id}/submit`
+}
+
+/**
+ * @summary Submit or resubmit an answer for a challenge
+ */
+export const submitStudentChallenge = async (id: number,
+    submitChallengeBody: SubmitChallengeBody, options?: RequestInit): Promise<ChallengeSubmission> => {
+
+  return customFetch<ChallengeSubmission>(getSubmitStudentChallengeUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(submitChallengeBody)
+  }
+);}
+
+
+
+
+
+export const getSubmitStudentChallengeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitStudentChallenge>>, TError,{id: number;data: BodyType<SubmitChallengeBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitStudentChallenge>>, TError,{id: number;data: BodyType<SubmitChallengeBody>}, TContext> => {
+
+const mutationKey = ['submitStudentChallenge'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -572,10 +662,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof completeDailyChallenge>>, void> = () => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitStudentChallenge>>, {id: number;data: BodyType<SubmitChallengeBody>}> = (props) => {
+          const {id,data} = props ?? {};
 
-
-          return  completeDailyChallenge(requestOptions)
+          return  submitStudentChallenge(id,data,requestOptions)
         }
 
 
@@ -585,22 +675,440 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type CompleteDailyChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof completeDailyChallenge>>>
-
-    export type CompleteDailyChallengeMutationError = ErrorType<void>
+    export type SubmitStudentChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof submitStudentChallenge>>>
+    export type SubmitStudentChallengeMutationBody = BodyType<SubmitChallengeBody>
+    export type SubmitStudentChallengeMutationError = ErrorType<void>
 
     /**
- * @summary Mark today's daily challenge as completed and award points
+ * @summary Submit or resubmit an answer for a challenge
  */
-export const useCompleteDailyChallenge = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof completeDailyChallenge>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useSubmitStudentChallenge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitStudentChallenge>>, TError,{id: number;data: BodyType<SubmitChallengeBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof completeDailyChallenge>>,
+        Awaited<ReturnType<typeof submitStudentChallenge>>,
         TError,
-        void,
+        {id: number;data: BodyType<SubmitChallengeBody>},
         TContext
       > => {
-      return useMutation(getCompleteDailyChallengeMutationOptions(options));
+      return useMutation(getSubmitStudentChallengeMutationOptions(options));
+    }
+
+export const getGetTeacherChallengesUrl = (params?: GetTeacherChallengesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/teacher/challenges?${stringifiedParams}` : `/api/teacher/challenges`
+}
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary List all daily challenges for the teacher's classes
+ */
+export const getTeacherChallenges = async (params?: GetTeacherChallengesParams, options?: RequestInit): Promise<TeacherChallengeList> => {
+
+  return customFetch<TeacherChallengeList>(getGetTeacherChallengesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTeacherChallengesQueryKey = (params?: GetTeacherChallengesParams,) => {
+    return [
+    `/api/teacher/challenges`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTeacherChallengesQueryOptions = <TData = Awaited<ReturnType<typeof getTeacherChallenges>>, TError = ErrorType<void>>(params?: GetTeacherChallengesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherChallenges>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTeacherChallengesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeacherChallenges>>> = ({ signal }) => getTeacherChallenges(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeacherChallenges>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTeacherChallengesQueryResult = NonNullable<Awaited<ReturnType<typeof getTeacherChallenges>>>
+export type GetTeacherChallengesQueryError = ErrorType<void>
+
+
+/**
+ * @summary List all daily challenges for the teacher's classes
+ */
+
+export function useGetTeacherChallenges<TData = Awaited<ReturnType<typeof getTeacherChallenges>>, TError = ErrorType<void>>(
+ params?: GetTeacherChallengesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherChallenges>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTeacherChallengesQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateTeacherChallengeUrl = (params?: CreateTeacherChallengeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/teacher/challenges?${stringifiedParams}` : `/api/teacher/challenges`
+}
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Create a new daily challenge for a class
+ */
+export const createTeacherChallenge = async (createChallengeBody: CreateChallengeBody,
+    params?: CreateTeacherChallengeParams, options?: RequestInit): Promise<TeacherChallenge> => {
+
+  return customFetch<TeacherChallenge>(getCreateTeacherChallengeUrl(params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createChallengeBody)
+  }
+);}
+
+
+
+
+
+export const getCreateTeacherChallengeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTeacherChallenge>>, TError,{data: BodyType<CreateChallengeBody>;params?: CreateTeacherChallengeParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTeacherChallenge>>, TError,{data: BodyType<CreateChallengeBody>;params?: CreateTeacherChallengeParams}, TContext> => {
+
+const mutationKey = ['createTeacherChallenge'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTeacherChallenge>>, {data: BodyType<CreateChallengeBody>;params?: CreateTeacherChallengeParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  createTeacherChallenge(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTeacherChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof createTeacherChallenge>>>
+    export type CreateTeacherChallengeMutationBody = BodyType<CreateChallengeBody>
+    export type CreateTeacherChallengeMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a new daily challenge for a class
+ */
+export const useCreateTeacherChallenge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTeacherChallenge>>, TError,{data: BodyType<CreateChallengeBody>;params?: CreateTeacherChallengeParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTeacherChallenge>>,
+        TError,
+        {data: BodyType<CreateChallengeBody>;params?: CreateTeacherChallengeParams},
+        TContext
+      > => {
+      return useMutation(getCreateTeacherChallengeMutationOptions(options));
+    }
+
+export const getDeleteTeacherChallengeUrl = (id: number,
+    params?: DeleteTeacherChallengeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/teacher/challenges/${id}?${stringifiedParams}` : `/api/teacher/challenges/${id}`
+}
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Soft-delete a daily challenge
+ */
+export const deleteTeacherChallenge = async (id: number,
+    params?: DeleteTeacherChallengeParams, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteTeacherChallengeUrl(id,params),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteTeacherChallengeMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTeacherChallenge>>, TError,{id: number;params?: DeleteTeacherChallengeParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteTeacherChallenge>>, TError,{id: number;params?: DeleteTeacherChallengeParams}, TContext> => {
+
+const mutationKey = ['deleteTeacherChallenge'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteTeacherChallenge>>, {id: number;params?: DeleteTeacherChallengeParams}> = (props) => {
+          const {id,params} = props ?? {};
+
+          return  deleteTeacherChallenge(id,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteTeacherChallengeMutationResult = NonNullable<Awaited<ReturnType<typeof deleteTeacherChallenge>>>
+
+    export type DeleteTeacherChallengeMutationError = ErrorType<void>
+
+    /**
+ * @summary Soft-delete a daily challenge
+ */
+export const useDeleteTeacherChallenge = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteTeacherChallenge>>, TError,{id: number;params?: DeleteTeacherChallengeParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteTeacherChallenge>>,
+        TError,
+        {id: number;params?: DeleteTeacherChallengeParams},
+        TContext
+      > => {
+      return useMutation(getDeleteTeacherChallengeMutationOptions(options));
+    }
+
+export const getGetTeacherChallengeSubmissionsUrl = (id: number,
+    params?: GetTeacherChallengeSubmissionsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/teacher/challenges/${id}/submissions?${stringifiedParams}` : `/api/teacher/challenges/${id}/submissions`
+}
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary List all submissions for a challenge
+ */
+export const getTeacherChallengeSubmissions = async (id: number,
+    params?: GetTeacherChallengeSubmissionsParams, options?: RequestInit): Promise<TeacherSubmissionList> => {
+
+  return customFetch<TeacherSubmissionList>(getGetTeacherChallengeSubmissionsUrl(id,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTeacherChallengeSubmissionsQueryKey = (id: number,
+    params?: GetTeacherChallengeSubmissionsParams,) => {
+    return [
+    `/api/teacher/challenges/${id}/submissions`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTeacherChallengeSubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof getTeacherChallengeSubmissions>>, TError = ErrorType<void>>(id: number,
+    params?: GetTeacherChallengeSubmissionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherChallengeSubmissions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTeacherChallengeSubmissionsQueryKey(id,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeacherChallengeSubmissions>>> = ({ signal }) => getTeacherChallengeSubmissions(id,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeacherChallengeSubmissions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTeacherChallengeSubmissionsQueryResult = NonNullable<Awaited<ReturnType<typeof getTeacherChallengeSubmissions>>>
+export type GetTeacherChallengeSubmissionsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List all submissions for a challenge
+ */
+
+export function useGetTeacherChallengeSubmissions<TData = Awaited<ReturnType<typeof getTeacherChallengeSubmissions>>, TError = ErrorType<void>>(
+ id: number,
+    params?: GetTeacherChallengeSubmissionsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherChallengeSubmissions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTeacherChallengeSubmissionsQueryOptions(id,params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getReviewTeacherSubmissionUrl = (id: number,
+    params?: ReviewTeacherSubmissionParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/teacher/submissions/${id}/review?${stringifiedParams}` : `/api/teacher/submissions/${id}/review`
+}
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Accept or reject a student submission
+ */
+export const reviewTeacherSubmission = async (id: number,
+    reviewSubmissionBody: ReviewSubmissionBody,
+    params?: ReviewTeacherSubmissionParams, options?: RequestInit): Promise<ReviewedSubmission> => {
+
+  return customFetch<ReviewedSubmission>(getReviewTeacherSubmissionUrl(id,params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(reviewSubmissionBody)
+  }
+);}
+
+
+
+
+
+export const getReviewTeacherSubmissionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewTeacherSubmission>>, TError,{id: number;data: BodyType<ReviewSubmissionBody>;params?: ReviewTeacherSubmissionParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewTeacherSubmission>>, TError,{id: number;data: BodyType<ReviewSubmissionBody>;params?: ReviewTeacherSubmissionParams}, TContext> => {
+
+const mutationKey = ['reviewTeacherSubmission'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewTeacherSubmission>>, {id: number;data: BodyType<ReviewSubmissionBody>;params?: ReviewTeacherSubmissionParams}> = (props) => {
+          const {id,data,params} = props ?? {};
+
+          return  reviewTeacherSubmission(id,data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewTeacherSubmissionMutationResult = NonNullable<Awaited<ReturnType<typeof reviewTeacherSubmission>>>
+    export type ReviewTeacherSubmissionMutationBody = BodyType<ReviewSubmissionBody>
+    export type ReviewTeacherSubmissionMutationError = ErrorType<void>
+
+    /**
+ * @summary Accept or reject a student submission
+ */
+export const useReviewTeacherSubmission = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewTeacherSubmission>>, TError,{id: number;data: BodyType<ReviewSubmissionBody>;params?: ReviewTeacherSubmissionParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewTeacherSubmission>>,
+        TError,
+        {id: number;data: BodyType<ReviewSubmissionBody>;params?: ReviewTeacherSubmissionParams},
+        TContext
+      > => {
+      return useMutation(getReviewTeacherSubmissionMutationOptions(options));
     }
 
 export const getGetLeaderboardUrl = () => {

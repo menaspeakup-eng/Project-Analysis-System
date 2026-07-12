@@ -6,8 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface DailyChallengeCompletion {
-  alreadyCompleted: boolean;
-  pointsAwarded: number;
-  totalPoints: number;
+export interface SubmissionFile {
+  name: string;
+  type: string;
+  data: string;
 }

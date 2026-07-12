@@ -118,24 +118,253 @@ export const UpdateStudentAvatarResponse = zod.object({
 
 
 /**
- * @summary Get today's daily challenge and the student's completion status
+ * @summary List active daily challenges for the signed-in student
  */
-export const GetDailyChallengeResponse = zod.object({
+export const GetStudentChallengesResponse = zod.object({
+  "challenges": zod.array(zod.object({
+  "id": zod.number(),
   "title": zod.string(),
   "description": zod.string(),
+  "instructions": zod.union([zod.string(),zod.null()]).optional(),
+  "linkUrl": zod.union([zod.string(),zod.null()]).optional(),
   "pointsReward": zod.number(),
-  "completed": zod.boolean()
+  "submissionType": zod.enum(['text', 'audio', 'image', 'file', 'mixed']),
+  "publishedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "status": zod.enum(['not_started', 'pending', 'accepted', 'rejected']),
+  "submissionText": zod.union([zod.string(),zod.null()]).optional(),
+  "submissionFiles": zod.array(zod.object({
+  "name": zod.string(),
+  "type": zod.string(),
+  "data": zod.string()
+})),
+  "teacherFeedback": zod.union([zod.string(),zod.null()]).optional(),
+  "reviewedAt": zod.union([zod.coerce.date(),zod.null()]).optional()
+}))
 })
 
 
 /**
- * Idempotent — completing an already-completed challenge awards no additional points.
- * @summary Mark today's daily challenge as completed and award points
+ * @summary Get a single active challenge for the signed-in student
  */
-export const CompleteDailyChallengeResponse = zod.object({
-  "alreadyCompleted": zod.boolean(),
-  "pointsAwarded": zod.number(),
-  "totalPoints": zod.number()
+export const GetStudentChallengeByIdParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetStudentChallengeByIdResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "instructions": zod.union([zod.string(),zod.null()]).optional(),
+  "linkUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "submissionType": zod.enum(['text', 'audio', 'image', 'file', 'mixed']),
+  "publishedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "status": zod.enum(['not_started', 'pending', 'accepted', 'rejected']),
+  "submissionText": zod.union([zod.string(),zod.null()]).optional(),
+  "submissionFiles": zod.array(zod.object({
+  "name": zod.string(),
+  "type": zod.string(),
+  "data": zod.string()
+})),
+  "teacherFeedback": zod.union([zod.string(),zod.null()]).optional(),
+  "reviewedAt": zod.union([zod.coerce.date(),zod.null()]).optional()
+})
+
+
+/**
+ * @summary Submit or resubmit an answer for a challenge
+ */
+export const SubmitStudentChallengeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const submitStudentChallengeBodySubmissionTextMax = 5000;
+
+export const submitStudentChallengeBodySubmissionFilesMax = 5;
+
+
+
+export const SubmitStudentChallengeBody = zod.object({
+  "submissionText": zod.string().max(submitStudentChallengeBodySubmissionTextMax).optional(),
+  "submissionFiles": zod.array(zod.object({
+  "name": zod.string(),
+  "type": zod.string(),
+  "data": zod.string()
+})).max(submitStudentChallengeBodySubmissionFilesMax).optional()
+})
+
+export const SubmitStudentChallengeResponse = zod.object({
+  "id": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "submissionText": zod.union([zod.string(),zod.null()]).optional(),
+  "submissionFiles": zod.array(zod.object({
+  "name": zod.string(),
+  "type": zod.string(),
+  "data": zod.string()
+})),
+  "completedAt": zod.coerce.date()
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary List all daily challenges for the teacher's classes
+ */
+export const GetTeacherChallengesQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const GetTeacherChallengesResponse = zod.object({
+  "challenges": zod.array(zod.object({
+  "id": zod.number(),
+  "classId": zod.number(),
+  "className": zod.union([zod.string(),zod.null()]).optional(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "instructions": zod.union([zod.string(),zod.null()]).optional(),
+  "linkUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "submissionType": zod.enum(['text', 'audio', 'image', 'file', 'mixed']),
+  "publishedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "isExpired": zod.boolean(),
+  "counts": zod.object({
+  "pending": zod.number(),
+  "accepted": zod.number(),
+  "rejected": zod.number()
+})
+}))
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Create a new daily challenge for a class
+ */
+export const CreateTeacherChallengeQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const createTeacherChallengeBodyTitleMax = 200;
+
+export const createTeacherChallengeBodyDescriptionMax = 1000;
+
+export const createTeacherChallengeBodyInstructionsMax = 2000;
+
+export const createTeacherChallengeBodyLinkUrlMax = 1000;
+
+export const createTeacherChallengeBodyPointsRewardMin = 0;
+export const createTeacherChallengeBodyPointsRewardMax = 1000;
+
+
+
+export const CreateTeacherChallengeBody = zod.object({
+  "classId": zod.number(),
+  "title": zod.string().min(1).max(createTeacherChallengeBodyTitleMax),
+  "description": zod.string().min(1).max(createTeacherChallengeBodyDescriptionMax),
+  "instructions": zod.string().max(createTeacherChallengeBodyInstructionsMax).optional(),
+  "linkUrl": zod.string().max(createTeacherChallengeBodyLinkUrlMax).optional(),
+  "pointsReward": zod.number().min(createTeacherChallengeBodyPointsRewardMin).max(createTeacherChallengeBodyPointsRewardMax),
+  "submissionType": zod.enum(['text', 'audio', 'image', 'file', 'mixed'])
+})
+
+export const CreateTeacherChallengeResponse = zod.object({
+  "id": zod.number(),
+  "classId": zod.number(),
+  "className": zod.union([zod.string(),zod.null()]).optional(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "instructions": zod.union([zod.string(),zod.null()]).optional(),
+  "linkUrl": zod.union([zod.string(),zod.null()]).optional(),
+  "pointsReward": zod.number(),
+  "submissionType": zod.enum(['text', 'audio', 'image', 'file', 'mixed']),
+  "publishedAt": zod.coerce.date(),
+  "expiresAt": zod.coerce.date(),
+  "isExpired": zod.boolean(),
+  "counts": zod.object({
+  "pending": zod.number(),
+  "accepted": zod.number(),
+  "rejected": zod.number()
+})
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Soft-delete a daily challenge
+ */
+export const DeleteTeacherChallengeParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteTeacherChallengeQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const DeleteTeacherChallengeResponse = zod.void()
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary List all submissions for a challenge
+ */
+export const GetTeacherChallengeSubmissionsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTeacherChallengeSubmissionsQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const GetTeacherChallengeSubmissionsResponse = zod.object({
+  "submissions": zod.array(zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "studentName": zod.string(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "submissionText": zod.union([zod.string(),zod.null()]).optional(),
+  "submissionFiles": zod.array(zod.object({
+  "name": zod.string(),
+  "type": zod.string(),
+  "data": zod.string()
+})),
+  "teacherFeedback": zod.union([zod.string(),zod.null()]).optional(),
+  "reviewedAt": zod.union([zod.coerce.date(),zod.null()]).optional(),
+  "completedAt": zod.coerce.date(),
+  "pointsAwarded": zod.union([zod.number(),zod.null()]).optional()
+}))
+})
+
+
+/**
+ * Admins can pass ?teacherId= to preview another teacher's dashboard.
+ * @summary Accept or reject a student submission
+ */
+export const ReviewTeacherSubmissionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ReviewTeacherSubmissionQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
+})
+
+export const reviewTeacherSubmissionBodyFeedbackMax = 1000;
+
+
+
+export const ReviewTeacherSubmissionBody = zod.object({
+  "status": zod.enum(['accepted', 'rejected']),
+  "feedback": zod.string().max(reviewTeacherSubmissionBodyFeedbackMax).optional()
+})
+
+export const ReviewTeacherSubmissionResponse = zod.object({
+  "id": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "teacherFeedback": zod.union([zod.string(),zod.null()]).optional(),
+  "reviewedAt": zod.union([zod.coerce.date(),zod.null()]).optional(),
+  "pointsAwarded": zod.union([zod.number(),zod.null()]).optional()
 })
 
 
