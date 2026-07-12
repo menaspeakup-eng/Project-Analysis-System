@@ -10,9 +10,13 @@ import {
 
 const router: IRouter = Router();
 
-const RenameStudentBody = z.object({
-  name: z.string().min(1).max(120),
-});
+const UpdateTeacherStudentBody = z.object({
+  name: z.string().min(1).max(120).optional(),
+  points: z.number().int().optional(),
+}).refine(
+  (data) => data.name !== undefined || data.points !== undefined,
+  { message: "يجب توفير اسم أو نقاط" },
+);
 
 const ClaimStudentBody = z.object({
   classId: z.number().int(),
@@ -168,7 +172,7 @@ router.patch("/teacher/students/:id", async (req, res) => {
     return;
   }
 
-  const body = RenameStudentBody.parse(req.body);
+  const body = UpdateTeacherStudentBody.parse(req.body);
 
   const student = await db.query.studentsTable.findFirst({
     where: eq(studentsTable.id, studentId),
@@ -186,9 +190,13 @@ router.patch("/teacher/students/:id", async (req, res) => {
     return;
   }
 
+  const update: Partial<{ name: string; points: number }> = {};
+  if (body.name !== undefined) update.name = body.name;
+  if (body.points !== undefined) update.points = body.points;
+
   const [updated] = await db
     .update(studentsTable)
-    .set({ name: body.name })
+    .set(update)
     .where(eq(studentsTable.id, studentId))
     .returning();
 

@@ -6,10 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface RenameStudentBody {
+export interface UpdateTeacherStudentBody {
   /**
      * @minLength 1
      * @maxLength 120
      */
-  name: string;
+  name?: string;
+  points?: number;
 }

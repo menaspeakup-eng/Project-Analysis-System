@@ -7,7 +7,7 @@
  */
 import type { TeacherIdQueryParameter } from './teacherIdQueryParameter';
 
-export type RenameTeacherStudentParams = {
+export type UpdateTeacherStudentParams = {
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */

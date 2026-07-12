@@ -6,7 +6,7 @@ import {
   useGetTeacherClasses,
   useGetTeacherUnclaimed,
   useClaimTeacherStudent,
-  useRenameTeacherStudent,
+  useUpdateTeacherStudent,
   useRemoveTeacherStudentClass,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -78,10 +78,11 @@ export default function Teacher() {
   );
 
   const { mutate: claimStudent } = useClaimTeacherStudent();
-  const { mutate: renameStudent } = useRenameTeacherStudent();
+  const { mutate: updateStudent } = useUpdateTeacherStudent();
   const { mutate: removeStudent } = useRemoveTeacherStudentClass();
 
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
+  const [editingPoints, setEditingPoints] = useState<{ id: number; points: number } | null>(null);
   const [claiming, setClaiming] = useState<number | null>(null);
 
   useEffect(() => {
@@ -122,10 +123,20 @@ export default function Teacher() {
   };
 
   const handleRename = (studentId: number, name: string) => {
-    renameStudent(
+    updateStudent(
       { id: studentId, data: { name }, params: teacherIdParam ? { teacherId: teacherIdParam } : undefined },
       { onSuccess: () => {
         setRenaming(null);
+        invalidate();
+      }},
+    );
+  };
+
+  const handleUpdatePoints = (studentId: number, points: number) => {
+    updateStudent(
+      { id: studentId, data: { points }, params: teacherIdParam ? { teacherId: teacherIdParam } : undefined },
+      { onSuccess: () => {
+        setEditingPoints(null);
         invalidate();
       }},
     );
@@ -148,7 +159,7 @@ export default function Teacher() {
           <Button
             variant="ghost"
             className="rounded-xl text-muted-foreground hover:text-foreground"
-            onClick={() => setLocation("/portal")}
+            onClick={() => setLocation(identity.isTeacher || identity.isAdmin ? "/" : "/portal")}
           >
             <ArrowRight className="w-5 h-5 ml-1" />
             رجوع
@@ -159,6 +170,15 @@ export default function Teacher() {
           </h1>
         </div>
         <div className="flex items-center gap-3">
+          {identity.isAdmin && (
+            <Button
+              variant="outline"
+              className="rounded-xl font-bold h-9 border-primary text-primary hover:bg-primary hover:text-white"
+              onClick={() => setLocation("/admin")}
+            >
+              لوحة الأدمن
+            </Button>
+          )}
           {canPreview && (
             <Badge variant="outline" className="rounded-full font-bold text-primary border-primary">
               <Eye className="w-4 h-4 ml-1" />
@@ -206,6 +226,11 @@ export default function Teacher() {
                   onRename={handleRename}
                   onRenameChange={(name) => setRenaming((prev) => (prev ? { ...prev, name } : null))}
                   onCancelRename={() => setRenaming(null)}
+                  editingPoints={editingPoints}
+                  onStartEditPoints={(s) => setEditingPoints({ id: s.id, points: s.points })}
+                  onPointsChange={(points) => setEditingPoints((prev) => (prev ? { ...prev, points } : null))}
+                  onUpdatePoints={handleUpdatePoints}
+                  onCancelEditPoints={() => setEditingPoints(null)}
                   onRemove={handleRemove}
                 />
               ))
@@ -295,6 +320,11 @@ function ClassCard({
   onRename,
   onRenameChange,
   onCancelRename,
+  editingPoints,
+  onStartEditPoints,
+  onPointsChange,
+  onUpdatePoints,
+  onCancelEditPoints,
   onRemove,
 }: {
   cls: TeacherClass;
@@ -303,6 +333,11 @@ function ClassCard({
   onRename: (id: number, name: string) => void;
   onRenameChange: (name: string) => void;
   onCancelRename: () => void;
+  editingPoints: { id: number; points: number } | null;
+  onStartEditPoints: (s: TeacherStudent) => void;
+  onPointsChange: (points: number) => void;
+  onUpdatePoints: (id: number, points: number) => void;
+  onCancelEditPoints: () => void;
   onRemove: (id: number) => void;
 }) {
   return (
@@ -361,7 +396,47 @@ function ClassCard({
                         s.name
                       )}
                     </TableCell>
-                    <TableCell>{s.points}</TableCell>
+                    <TableCell>
+                      {editingPoints?.id === s.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={editingPoints.points}
+                            onChange={(e) => onPointsChange(Number(e.target.value))}
+                            className="h-8 w-20 rounded-xl border-border"
+                            autoFocus
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 rounded-full text-primary"
+                            onClick={() => onUpdatePoints(s.id, editingPoints.points)}
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 rounded-full text-muted-foreground"
+                            onClick={onCancelEditPoints}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-secondary-foreground">{s.points}</span>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 rounded-full text-muted-foreground"
+                            onClick={() => onStartEditPoints(s)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button

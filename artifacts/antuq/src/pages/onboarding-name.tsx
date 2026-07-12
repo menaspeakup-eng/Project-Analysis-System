@@ -30,8 +30,8 @@ export default function OnboardingName() {
   }, [isLoaded, isSignedIn, identity, setLocation]);
 
   function routeToDashboard(identity: { isAdmin: boolean; isTeacher: boolean }) {
-    if (identity.isAdmin) setLocation("/admin");
-    else if (identity.isTeacher) setLocation("/teacher");
+    // Admins and teachers both land on the teacher dashboard by default.
+    if (identity.isAdmin || identity.isTeacher) setLocation("/teacher");
     else setLocation("/portal");
   }
 

@@ -193,12 +193,13 @@ export interface ClaimStudentBody {
   classId: number;
 }
 
-export interface RenameStudentBody {
+export interface UpdateTeacherStudentBody {
   /**
      * @minLength 1
      * @maxLength 120
      */
-  name: string;
+  name?: string;
+  points?: number;
 }
 
 export interface TeacherStudentClass {
@@ -232,7 +233,7 @@ export type ClaimTeacherStudentParams = {
 teacherId?: TeacherIdQueryParameter;
 };
 
-export type RenameTeacherStudentParams = {
+export type UpdateTeacherStudentParams = {
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */

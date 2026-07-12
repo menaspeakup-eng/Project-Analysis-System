@@ -344,9 +344,9 @@ paths:
           description: Not a teacher or admin
   /teacher/students/{id}:
     patch:
-      operationId: renameTeacherStudent
+      operationId: updateTeacherStudent
       tags: [teacher]
-      summary: Rename a student in the teacher's class
+      summary: Update a student's name or points in the teacher's class
       parameters:
         - in: path
           name: id
@@ -359,10 +359,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RenameStudentBody"
+              $ref: "#/components/schemas/UpdateTeacherStudentBody"
       responses:
         "200":
-          description: Student renamed
+          description: Student updated
           content:
             application/json:
               schema:
@@ -794,15 +794,16 @@ components:
           type: integer
       required:
         - classId
-    RenameStudentBody:
+    UpdateTeacherStudentBody:
       type: object
       properties:
         name:
           type: string
           minLength: 1
           maxLength: 120
-      required:
-        - name
+        points:
+          type: integer
+      required: []
     TeacherStudentClass:
       type: object
       properties:

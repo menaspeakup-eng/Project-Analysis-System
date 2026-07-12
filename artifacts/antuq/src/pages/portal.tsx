@@ -7,6 +7,7 @@ import {
   useGetDailyChallenge,
   useCompleteDailyChallenge,
   useGetLeaderboard,
+  useGetIdentityMe,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -146,6 +147,9 @@ export default function Portal() {
   const { data: profile, isLoading: isProfileLoading } = useGetStudentProfile({
     query: { enabled: !!isSignedIn } as never,
   });
+  const { data: identity } = useGetIdentityMe({
+    query: { enabled: !!isSignedIn } as never,
+  });
 
   const { data: challenge, isLoading: isChallengeLoading } = useGetDailyChallenge({
     query: { enabled: !!isSignedIn } as never,
@@ -175,12 +179,22 @@ export default function Portal() {
   };
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn && !isGuest) {
+    if (!isLoaded) return;
+    if (!isSignedIn && !isGuest) {
       setLocation("/");
+      return;
     }
-  }, [isLoaded, isSignedIn, isGuest, setLocation]);
+    // Teachers and admins use the teacher dashboard, not the kid portal.
+    if (isSignedIn && identity && (identity.isTeacher || identity.isAdmin)) {
+      setLocation("/teacher");
+    }
+  }, [isLoaded, isSignedIn, isGuest, identity, setLocation]);
 
-  if (!isLoaded || (!isSignedIn && !isGuest) || (isSignedIn && isProfileLoading)) {
+  if (
+    !isLoaded ||
+    (!isSignedIn && !isGuest) ||
+    (isSignedIn && (isProfileLoading || !identity))
+  ) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>

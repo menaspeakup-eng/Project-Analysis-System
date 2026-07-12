@@ -40,14 +40,14 @@ import type {
   MoveStudentBody,
   NameCaptureBody,
   RemoveTeacherStudentClassParams,
-  RenameStudentBody,
-  RenameTeacherStudentParams,
   StudentProfile,
   TeacherClassList,
   TeacherStudent,
   TeacherStudentClass,
   UnclaimedStudentList,
-  UpdateClassBody
+  UpdateClassBody,
+  UpdateTeacherStudentBody,
+  UpdateTeacherStudentParams
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1370,8 +1370,8 @@ export const useClaimTeacherStudent = <TError = ErrorType<void>,
       return useMutation(getClaimTeacherStudentMutationOptions(options));
     }
 
-export const getRenameTeacherStudentUrl = (id: number,
-    params?: RenameTeacherStudentParams,) => {
+export const getUpdateTeacherStudentUrl = (id: number,
+    params?: UpdateTeacherStudentParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1387,18 +1387,18 @@ export const getRenameTeacherStudentUrl = (id: number,
 }
 
 /**
- * @summary Rename a student in the teacher's class
+ * @summary Update a student's name or points in the teacher's class
  */
-export const renameTeacherStudent = async (id: number,
-    renameStudentBody: RenameStudentBody,
-    params?: RenameTeacherStudentParams, options?: RequestInit): Promise<TeacherStudent> => {
+export const updateTeacherStudent = async (id: number,
+    updateTeacherStudentBody: UpdateTeacherStudentBody,
+    params?: UpdateTeacherStudentParams, options?: RequestInit): Promise<TeacherStudent> => {
 
-  return customFetch<TeacherStudent>(getRenameTeacherStudentUrl(id,params),
+  return customFetch<TeacherStudent>(getUpdateTeacherStudentUrl(id,params),
   {
     ...options,
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(renameStudentBody)
+    body: JSON.stringify(updateTeacherStudentBody)
   }
 );}
 
@@ -1406,11 +1406,11 @@ export const renameTeacherStudent = async (id: number,
 
 
 
-export const getRenameTeacherStudentMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renameTeacherStudent>>, TError,{id: number;data: BodyType<RenameStudentBody>;params?: RenameTeacherStudentParams}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof renameTeacherStudent>>, TError,{id: number;data: BodyType<RenameStudentBody>;params?: RenameTeacherStudentParams}, TContext> => {
+export const getUpdateTeacherStudentMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTeacherStudent>>, TError,{id: number;data: BodyType<UpdateTeacherStudentBody>;params?: UpdateTeacherStudentParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTeacherStudent>>, TError,{id: number;data: BodyType<UpdateTeacherStudentBody>;params?: UpdateTeacherStudentParams}, TContext> => {
 
-const mutationKey = ['renameTeacherStudent'];
+const mutationKey = ['updateTeacherStudent'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1420,10 +1420,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renameTeacherStudent>>, {id: number;data: BodyType<RenameStudentBody>;params?: RenameTeacherStudentParams}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTeacherStudent>>, {id: number;data: BodyType<UpdateTeacherStudentBody>;params?: UpdateTeacherStudentParams}> = (props) => {
           const {id,data,params} = props ?? {};
 
-          return  renameTeacherStudent(id,data,params,requestOptions)
+          return  updateTeacherStudent(id,data,params,requestOptions)
         }
 
 
@@ -1433,22 +1433,22 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type RenameTeacherStudentMutationResult = NonNullable<Awaited<ReturnType<typeof renameTeacherStudent>>>
-    export type RenameTeacherStudentMutationBody = BodyType<RenameStudentBody>
-    export type RenameTeacherStudentMutationError = ErrorType<void>
+    export type UpdateTeacherStudentMutationResult = NonNullable<Awaited<ReturnType<typeof updateTeacherStudent>>>
+    export type UpdateTeacherStudentMutationBody = BodyType<UpdateTeacherStudentBody>
+    export type UpdateTeacherStudentMutationError = ErrorType<void>
 
     /**
- * @summary Rename a student in the teacher's class
+ * @summary Update a student's name or points in the teacher's class
  */
-export const useRenameTeacherStudent = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renameTeacherStudent>>, TError,{id: number;data: BodyType<RenameStudentBody>;params?: RenameTeacherStudentParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useUpdateTeacherStudent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTeacherStudent>>, TError,{id: number;data: BodyType<UpdateTeacherStudentBody>;params?: UpdateTeacherStudentParams}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof renameTeacherStudent>>,
+        Awaited<ReturnType<typeof updateTeacherStudent>>,
         TError,
-        {id: number;data: BodyType<RenameStudentBody>;params?: RenameTeacherStudentParams},
+        {id: number;data: BodyType<UpdateTeacherStudentBody>;params?: UpdateTeacherStudentParams},
         TContext
       > => {
-      return useMutation(getRenameTeacherStudentMutationOptions(options));
+      return useMutation(getUpdateTeacherStudentMutationOptions(options));
     }
 
 export const getRemoveTeacherStudentClassUrl = (id: number,

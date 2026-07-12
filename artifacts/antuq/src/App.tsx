@@ -107,8 +107,9 @@ function RoleRedirect() {
   // First-time sign-in must confirm their name before seeing any dashboard.
   if (!identity?.nameConfirmed) return <Redirect to="/onboarding-name" />;
 
-  if (identity.isAdmin) return <Redirect to="/admin" />;
-  if (identity.isTeacher) return <Redirect to="/teacher" />;
+  // Admins and teachers share the teacher dashboard by default; admins get an
+  // in-app button to switch to the admin dashboard. Students go to the kid portal.
+  if (identity.isAdmin || identity.isTeacher) return <Redirect to="/teacher" />;
   return <Redirect to="/portal" />;
 }
 

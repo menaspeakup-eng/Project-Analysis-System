@@ -414,25 +414,26 @@ export const ClaimTeacherStudentResponse = zod.object({
 
 
 /**
- * @summary Rename a student in the teacher's class
+ * @summary Update a student's name or points in the teacher's class
  */
-export const RenameTeacherStudentParams = zod.object({
+export const UpdateTeacherStudentParams = zod.object({
   "id": zod.coerce.number()
 })
 
-export const RenameTeacherStudentQueryParams = zod.object({
+export const UpdateTeacherStudentQueryParams = zod.object({
   "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.')
 })
 
-export const renameTeacherStudentBodyNameMax = 120;
+export const updateTeacherStudentBodyNameMax = 120;
 
 
 
-export const RenameTeacherStudentBody = zod.object({
-  "name": zod.string().min(1).max(renameTeacherStudentBodyNameMax)
+export const UpdateTeacherStudentBody = zod.object({
+  "name": zod.string().min(1).max(updateTeacherStudentBodyNameMax).optional(),
+  "points": zod.number().optional()
 })
 
-export const RenameTeacherStudentResponse = zod.object({
+export const UpdateTeacherStudentResponse = zod.object({
   "id": zod.number(),
   "clerkUserId": zod.string(),
   "name": zod.string(),
