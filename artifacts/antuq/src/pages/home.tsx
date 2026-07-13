@@ -41,7 +41,7 @@ export default function Home() {
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
-            رحلة ممتعة للأطفال لاكتشاف عالم اللغة العربية، مع مدرب نطق ذكي، ألعاب تفاعلية، ومكافآت تصنع أبطالاً.
+            رحلة ممتعة للطلاب لاكتشاف عالم اللغة العربية، مع مدرب نطق ذكي، ألعاب تفاعلية، ومكافآت تصنع أبطالاً.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
@@ -59,7 +59,7 @@ export default function Home() {
           <div className="pt-8 flex items-center justify-center lg:justify-start gap-6 opacity-70">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-accent" />
-              <span className="text-sm font-bold">آمن للأطفال</span>
+              <span className="text-sm font-bold">آمن للطلاب</span>
             </div>
             <div className="flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-accent" />
@@ -72,7 +72,7 @@ export default function Home() {
           <div className="relative w-full aspect-square md:aspect-[4/3] lg:aspect-square">
             <div className="absolute inset-0 bg-gradient-to-tr from-secondary/30 via-primary/10 to-accent/20 rounded-[3rem] rotate-3 scale-105 -z-10"></div>
             <div className="absolute inset-0 bg-white rounded-[3rem] shadow-2xl border-4 border-white overflow-hidden flex items-center justify-center">
-              <img src={heroKids} alt="أطفال يتعلمون بسعادة" className="w-full h-full object-cover object-center" />
+              <img src={heroKids} alt="طلاب يتعلمون بسعادة" className="w-full h-full object-cover object-center" />
             </div>
             {/* Floating badges */}
             <div className="absolute -left-6 top-1/4 bg-white p-4 rounded-2xl shadow-xl border border-border animate-bounce text-secondary" style={{animationDuration: '3s'}}>
@@ -90,7 +90,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-4xl md:text-5xl font-black text-foreground">
-              كيف يتعلم طفلك مع <span className="text-primary">انطق</span>؟
+              كيف يتعلم طلابك مع <span className="text-primary">انطق</span>؟
             </h2>
             <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
               نجمع بين أحدث تقنيات الذكاء الاصطناعي وأساليب التعلم باللعب لنقدم تجربة لا تُنسى.
@@ -105,7 +105,7 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold mb-4 text-foreground">مدرب نطق ذكي</h3>
               <p className="text-muted-foreground leading-relaxed text-lg font-medium">
-                يستمع النظام لقراءة الطفل ويحلل نطقه بدقة، ليقدم تصحيحاً فورياً ومشجعاً، تماماً كمعلم خاص يجلس بجواره.
+                يستمع النظام لقراءة الطالب ويحلل نطقه بدقة، ليقدم تصحيحاً فورياً ومشجعاً، تماماً كمعلم خاص يجلس بجواره.
               </p>
               <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl"></div>
             </div>
@@ -129,7 +129,7 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold mb-4 text-foreground">مكافآت ونقاط</h3>
               <p className="text-muted-foreground leading-relaxed text-lg font-medium">
-                يحصل طفلك على نقاط ونجوم مع كل إنجاز، ليقوم بتخصيص شخصيته الافتراضية (الأفاتار) وفتح عوالم جديدة.
+                يحصل طلابك على نقاط ونجوم مع كل إنجاز، ليقوم بتخصيص شخصيته الافتراضية (الأفاتار) وفتح عوالم جديدة.
               </p>
               <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/10 rounded-full blur-2xl"></div>
             </div>
@@ -178,7 +178,7 @@ export default function Home() {
                   </div>
                   <div>
                     <h4 className="text-xl font-bold mb-2 text-foreground">للمدارس والمراكز (قريباً)</h4>
-                    <p className="text-muted-foreground text-lg font-medium">لوحة تحكم للمعلم لمتابعة تقدم كل طفل بشكل فردي أو على مستوى الفصل.</p>
+                    <p className="text-muted-foreground text-lg font-medium">لوحة تحكم للمعلم لمتابعة تقدم كل طالب بشكل فردي أو على مستوى الفصل.</p>
                   </div>
                 </li>
               </ul>
@@ -199,7 +199,7 @@ export default function Home() {
             مستعدون للبدء؟
           </h2>
           <p className="text-xl md:text-2xl font-medium text-white/90 mb-10 max-w-2xl mx-auto">
-            انضموا إلى آلاف الأطفال الذين يستمتعون بتعلم القراءة العربية يومياً مع منصة انطق.
+            انضموا إلى آلاف الطلاب الذين يستمتعون بتعلم القراءة العربية يومياً مع منصة انطق.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/10 p-4 rounded-3xl backdrop-blur-sm border border-white/20 max-w-fit mx-auto">
