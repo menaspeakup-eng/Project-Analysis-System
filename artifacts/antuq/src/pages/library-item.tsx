@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
 import { useLocation, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useGetLibraryItem, useCreateLibrarySubmission } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function LibraryItem() {
@@ -16,7 +17,9 @@ export default function LibraryItem() {
   const id = Number(params.id);
   const { data, isLoading } = useGetLibraryItem(id, { query: { enabled: isLoaded && isSignedIn && Number.isFinite(id) } as never });
   const submitMutation = useCreateLibrarySubmission();
-  const [answers, setAnswers] = useState<Record<number, { selected?: string; text?: string }>>({});
+  const queryClient = useQueryClient();
+  const [mcqAnswers, setMcqAnswers] = useState<Record<number, string>>({});
+  const textRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
@@ -45,16 +48,29 @@ export default function LibraryItem() {
 
   const handleSubmit = async () => {
     if (questions.length === 0) return;
+
+    const missing = questions.filter((q) => {
+      if (q.type === "mcq") return !mcqAnswers[q.id];
+      return !(textRefs.current[q.id]?.value || "").trim();
+    });
+    if (missing.length > 0) {
+      toast.error("يرجى الإجابة على جميع الأسئلة قبل الإرسال");
+      return;
+    }
+
     const payload = {
       libraryItemId: item.id,
       answers: questions.map((q) => ({
         questionId: q.id,
-        selectedAnswer: q.type === "mcq" ? answers[q.id]?.selected || "" : undefined,
-        textAnswer: q.type === "text" ? answers[q.id]?.text || "" : undefined,
+        selectedAnswer: q.type === "mcq" ? mcqAnswers[q.id] || "" : undefined,
+        textAnswer: q.type === "text" ? (textRefs.current[q.id]?.value || "").trim() : undefined,
       })),
     };
+    console.log("[library-item] submitting payload:", JSON.stringify(payload));
     try {
       await submitMutation.mutateAsync({ data: payload });
+      queryClient.invalidateQueries({ queryKey: ["/api/library/class"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/library/reviews"] });
       setSubmitted(true);
       toast.success("تم إرسال إجاباتك بنجاح");
     } catch (e) {
@@ -118,8 +134,8 @@ export default function LibraryItem() {
                   </p>
                   {q.type === "mcq" ? (
                     <RadioGroup
-                      value={answers[q.id]?.selected || ""}
-                      onValueChange={(value) => setAnswers((prev) => ({ ...prev, [q.id]: { selected: value } }))}
+                      value={mcqAnswers[q.id] || ""}
+                      onValueChange={(value) => setMcqAnswers((prev) => ({ ...prev, [q.id]: value }))}
                     >
                       <div className="space-y-2">
                         {(q.options || []).map((opt, i) => (
@@ -133,8 +149,9 @@ export default function LibraryItem() {
                   ) : (
                     <Textarea
                       placeholder="اكتب إجابتك هنا..."
-                      value={answers[q.id]?.text || ""}
-                      onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: { text: e.target.value } }))}
+                      ref={(el) => { textRefs.current[q.id] = el; }}
+                      defaultValue=""
+                      className="min-h-[120px]"
                     />
                   )}
                 </CardContent>

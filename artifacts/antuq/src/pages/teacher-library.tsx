@@ -28,6 +28,7 @@ import {
   useDeleteLibraryItem,
   useGetTeacherClasses,
 } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useUpload } from "@workspace/object-storage-web";
 import { BookOpen, Headphones, Paperclip, Plus, Trash2, X, Edit, ArrowRight, Star, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -58,13 +59,14 @@ const emptyItem = {
   contentObjectPath: "",
   bodyText: "",
   externalUrl: "",
-  isPublished: false,
+  isPublished: true,
   questions: [] as QuestionDraft[],
 };
 
 export default function TeacherLibrary() {
   const { isSignedIn, isLoaded } = useAuth();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const { data: classesData } = useGetTeacherClasses(undefined, { query: { enabled: isLoaded && isSignedIn } as never });
   const [activeType, setActiveType] = useState("read");
   const { data, isLoading, refetch } = useListLibraryItems({ type: activeType }, { query: { enabled: isLoaded && isSignedIn } as never });
@@ -153,6 +155,8 @@ export default function TeacherLibrary() {
       });
       toast.success("تم حفظ المحتوى");
       setDialogOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["/api/library/items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/library/class"] });
       refetch();
     } catch (e) {
       toast.error("حدث خطأ أثناء الحفظ");
@@ -164,6 +168,8 @@ export default function TeacherLibrary() {
     try {
       await remove.mutateAsync({ id });
       toast.success("تم الحذف");
+      queryClient.invalidateQueries({ queryKey: ["/api/library/items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/library/class"] });
       refetch();
     } catch (e) {
       toast.error("حدث خطأ أثناء الحذف");

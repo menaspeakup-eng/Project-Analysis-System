@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useListLibraryReviews, useReviewLibraryAnswer } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -13,6 +14,7 @@ export default function TeacherLibraryReviews() {
   const [, setLocation] = useLocation();
   const { data, isLoading, refetch } = useListLibraryReviews({ query: { enabled: isLoaded && isSignedIn } as never });
   const review = useReviewLibraryAnswer();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -22,6 +24,8 @@ export default function TeacherLibraryReviews() {
   const handleReview = async (answerId: number, status: "accepted" | "rejected") => {
     try {
       await review.mutateAsync({ id: answerId, data: { status } });
+      queryClient.invalidateQueries({ queryKey: ["/api/library/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/library/class"] });
       toast.success(status === "accepted" ? "تم قبول الإجابة" : "تم رفض الإجابة");
       refetch();
     } catch (e) {

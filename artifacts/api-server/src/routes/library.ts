@@ -17,6 +17,14 @@ import {
 
 const router: IRouter = Router();
 
+router.use((req, res, next) => {
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+  );
+  next();
+});
+
 const QuestionSchema = z.object({
   id: z.number().int().optional(),
   type: z.enum(LIBRARY_QUESTION_TYPES),
