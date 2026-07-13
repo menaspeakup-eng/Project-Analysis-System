@@ -1303,3 +1303,47 @@ export const GetChatMutesResponse = zod.object({
 })
 
 
+/**
+ * @summary Generate an AI story for a student
+ */
+export const generateStoryBodyStudentNameMax = 120;
+
+
+
+export const GenerateStoryBody = zod.object({
+  "studentName": zod.string().min(1).max(generateStoryBodyStudentNameMax),
+  "storyType": zod.enum(['adventure', 'space', 'mystery', 'robots-ai', 'fantasy', 'ocean', 'world-exploration', 'challenge-success', 'school', 'nature'])
+})
+
+export const generateStoryResponseResultQuestionsItemOptionsMax = 4;
+
+export const generateStoryResponseResultReadingInfoDifficultyMax = 5;
+
+export const generateStoryResponseResultReadingInfoWordCountMin = 0;
+
+
+
+export const GenerateStoryResponse = zod.object({
+  "result": zod.object({
+  "title": zod.string(),
+  "story": zod.string(),
+  "newWords": zod.array(zod.object({
+  "word": zod.string(),
+  "meaning": zod.string()
+})),
+  "questions": zod.array(zod.object({
+  "question": zod.string(),
+  "options": zod.array(zod.string()).max(generateStoryResponseResultQuestionsItemOptionsMax),
+  "correctAnswer": zod.string()
+})),
+  "reflectionQuestion": zod.string(),
+  "lesson": zod.string(),
+  "readingInfo": zod.object({
+  "difficulty": zod.number().min(1).max(generateStoryResponseResultReadingInfoDifficultyMax),
+  "wordCount": zod.number().min(generateStoryResponseResultReadingInfoWordCountMin),
+  "estimatedTime": zod.string()
+})
+})
+})
+
+

@@ -20,6 +20,8 @@ tags:
     description: Admin-only staff management
   - name: teacher
     description: Teacher dashboard operations
+  - name: story
+    description: AI-generated story operations
 paths:
   /healthz:
     get:
@@ -1040,6 +1042,30 @@ paths:
           description: Not signed in
         "403":
           description: Cannot moderate this room
+  /stories/generate:
+    post:
+      operationId: generateStory
+      tags: [story]
+      summary: Generate an AI story for a student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateStoryBody"
+      responses:
+        "200":
+          description: Generated story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateStoryResponse"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "500":
+          description: AI generation failed
 components:
   parameters:
     TeacherIdQuery:
@@ -2219,3 +2245,106 @@ components:
       required:
         - studentId
         - durationMinutes
+    StoryType:
+      type: string
+      enum:
+        - adventure
+        - space
+        - mystery
+        - robots-ai
+        - fantasy
+        - ocean
+        - world-exploration
+        - challenge-success
+        - school
+        - nature
+    GenerateStoryBody:
+      type: object
+      properties:
+        studentName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        storyType:
+          $ref: "#/components/schemas/StoryType"
+      required:
+        - studentName
+        - storyType
+    StoryNewWord:
+      type: object
+      properties:
+        word:
+          type: string
+        meaning:
+          type: string
+      required:
+        - word
+        - meaning
+    StoryQuestion:
+      type: object
+      properties:
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+          maxItems: 4
+        correctAnswer:
+          type: string
+      required:
+        - question
+        - options
+        - correctAnswer
+    StoryReadingInfo:
+      type: object
+      properties:
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 5
+        wordCount:
+          type: integer
+          minimum: 0
+        estimatedTime:
+          type: string
+      required:
+        - difficulty
+        - wordCount
+        - estimatedTime
+    GeneratedStory:
+      type: object
+      properties:
+        title:
+          type: string
+        story:
+          type: string
+        newWords:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryNewWord"
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryQuestion"
+        reflectionQuestion:
+          type: string
+        lesson:
+          type: string
+        readingInfo:
+          $ref: "#/components/schemas/StoryReadingInfo"
+      required:
+        - title
+        - story
+        - newWords
+        - questions
+        - reflectionQuestion
+        - lesson
+        - readingInfo
+    GenerateStoryResponse:
+      type: object
+      properties:
+        result:
+          $ref: "#/components/schemas/GeneratedStory"
+      required:
+        - result

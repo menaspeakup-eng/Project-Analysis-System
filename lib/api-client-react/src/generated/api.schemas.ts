@@ -637,6 +637,68 @@ export interface ChatMuteBody {
   reason?: string;
 }
 
+export type StoryType = typeof StoryType[keyof typeof StoryType];
+
+
+export const StoryType = {
+  adventure: 'adventure',
+  space: 'space',
+  mystery: 'mystery',
+  'robots-ai': 'robots-ai',
+  fantasy: 'fantasy',
+  ocean: 'ocean',
+  'world-exploration': 'world-exploration',
+  'challenge-success': 'challenge-success',
+  school: 'school',
+  nature: 'nature',
+} as const;
+
+export interface GenerateStoryBody {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  studentName: string;
+  storyType: StoryType;
+}
+
+export interface StoryNewWord {
+  word: string;
+  meaning: string;
+}
+
+export interface StoryQuestion {
+  question: string;
+  /** @maxItems 4 */
+  options: string[];
+  correctAnswer: string;
+}
+
+export interface StoryReadingInfo {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  difficulty: number;
+  /** @minimum 0 */
+  wordCount: number;
+  estimatedTime: string;
+}
+
+export interface GeneratedStory {
+  title: string;
+  story: string;
+  newWords: StoryNewWord[];
+  questions: StoryQuestion[];
+  reflectionQuestion: string;
+  lesson: string;
+  readingInfo: StoryReadingInfo;
+}
+
+export interface GenerateStoryResponse {
+  result: GeneratedStory;
+}
+
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */

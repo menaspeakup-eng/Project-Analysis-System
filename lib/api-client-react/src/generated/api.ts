@@ -50,6 +50,8 @@ import type {
   GameDetail,
   GameItemsList,
   GameList,
+  GenerateStoryBody,
+  GenerateStoryResponse,
   GetLeaderboardParams,
   GetTeacherChallengeSubmissionsParams,
   GetTeacherChallengesParams,
@@ -3540,4 +3542,75 @@ export function useGetChatMutes<TData = Awaited<ReturnType<typeof getChatMutes>>
 
 
 
+
+export const getGenerateStoryUrl = () => {
+
+
+
+
+  return `/api/stories/generate`
+}
+
+/**
+ * @summary Generate an AI story for a student
+ */
+export const generateStory = async (generateStoryBody: GenerateStoryBody, options?: RequestInit): Promise<GenerateStoryResponse> => {
+
+  return customFetch<GenerateStoryResponse>(getGenerateStoryUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(generateStoryBody)
+  }
+);}
+
+
+
+
+
+export const getGenerateStoryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateStory>>, TError,{data: BodyType<GenerateStoryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateStory>>, TError,{data: BodyType<GenerateStoryBody>}, TContext> => {
+
+const mutationKey = ['generateStory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateStory>>, {data: BodyType<GenerateStoryBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateStory(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateStoryMutationResult = NonNullable<Awaited<ReturnType<typeof generateStory>>>
+    export type GenerateStoryMutationBody = BodyType<GenerateStoryBody>
+    export type GenerateStoryMutationError = ErrorType<void>
+
+    /**
+ * @summary Generate an AI story for a student
+ */
+export const useGenerateStory = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateStory>>, TError,{data: BodyType<GenerateStoryBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateStory>>,
+        TError,
+        {data: BodyType<GenerateStoryBody>},
+        TContext
+      > => {
+      return useMutation(getGenerateStoryMutationOptions(options));
+    }
 

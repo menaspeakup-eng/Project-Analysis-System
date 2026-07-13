@@ -8,6 +8,7 @@ import challengesRouter from "./challenges";
 import identityRouter from "./identity";
 import gamesRouter from "./games";
 import chatRouter from "./chat";
+import storyRouter from "./story";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(teacherRouter);
 router.use(challengesRouter);
 router.use(gamesRouter);
 router.use(chatRouter);
+router.use(storyRouter);
 
 export default router;
