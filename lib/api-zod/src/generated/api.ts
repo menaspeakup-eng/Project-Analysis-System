@@ -1773,7 +1773,28 @@ export const GetLibraryItemResponse = zod.object({
   "sortOrder": zod.number(),
   "createdAt": zod.coerce.date()
 })).nullish()
-})
+}),
+  "submission": zod.object({
+  "id": zod.number(),
+  "libraryItemId": zod.number(),
+  "studentId": zod.number(),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "status": zod.string(),
+  "teacherFeedback": zod.string().nullish(),
+  "answers": zod.array(zod.object({
+  "id": zod.number(),
+  "submissionId": zod.number(),
+  "questionId": zod.number(),
+  "selectedAnswer": zod.string().nullish(),
+  "textAnswer": zod.string().nullish(),
+  "isCorrect": zod.boolean().nullish(),
+  "pointsAwarded": zod.number().nullish(),
+  "status": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})).nullish(),
+  "createdAt": zod.coerce.date()
+}).nullish()
 })
 
 

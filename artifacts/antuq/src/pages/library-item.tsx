@@ -20,7 +20,8 @@ export default function LibraryItem() {
   const queryClient = useQueryClient();
   const [mcqAnswers, setMcqAnswers] = useState<Record<number, string>>({});
   const textRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!data?.submission);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -45,6 +46,8 @@ export default function LibraryItem() {
 
   const item = data.item;
   const questions = item.questions || [];
+  const existingSubmission = data.submission;
+  const isComplete = submitted || !!existingSubmission;
 
   const handleSubmit = async () => {
     if (questions.length === 0) return;
@@ -66,15 +69,16 @@ export default function LibraryItem() {
         textAnswer: q.type === "text" ? (textRefs.current[q.id]?.value || "").trim() : undefined,
       })),
     };
-    console.log("[library-item] submitting payload:", JSON.stringify(payload));
     try {
       await submitMutation.mutateAsync({ data: payload });
       queryClient.invalidateQueries({ queryKey: ["/api/library/class"] });
       queryClient.invalidateQueries({ queryKey: ["/api/library/reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/library/items", { id: item.id }] });
       setSubmitted(true);
       toast.success("تم إرسال إجاباتك بنجاح");
-    } catch (e) {
-      toast.error("حدث خطأ أثناء إرسال الإجابات");
+    } catch (e: any) {
+      const msg = e?.response?.data?.error || "حدث خطأ أثناء إرسال الإجابات";
+      toast.error(msg);
     }
   };
 
@@ -123,7 +127,20 @@ export default function LibraryItem() {
           </Card>
         ) : null}
 
-        {questions.length > 0 && !submitted && (
+        {questions.length > 0 && !isComplete && !started && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardContent className="p-6 text-center space-y-4">
+              <p className="font-black text-foreground text-lg">
+                هل أنت جاهز؟ اختبر فهمك واحصل على {item.totalPoints ?? questions.reduce((s, q) => s + q.points, 0)} نقطة
+              </p>
+              <Button className="rounded-xl font-bold h-12 px-8" onClick={() => setStarted(true)}>
+                اختبر نفسك واحصل على نقاط
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {questions.length > 0 && !isComplete && started && (
           <div className="space-y-4">
             <h2 className="font-black text-foreground text-xl">أسئلة الفهم</h2>
             {questions.map((q, idx) => (
@@ -162,16 +179,20 @@ export default function LibraryItem() {
               onClick={handleSubmit}
               disabled={submitMutation.isPending}
             >
-              {submitMutation.isPending ? "جاري الإرسال..." : "إرسال الإجابات"}
+              {submitMutation.isPending ? "جاري الإرسال..." : "إرسال الإجابات و الحصول على النقاط"}
             </Button>
           </div>
         )}
 
-        {submitted && (
+        {isComplete && (
           <Card className="bg-green-50 border-green-200">
-            <CardContent className="p-6 text-center">
+            <CardContent className="p-6 text-center space-y-2">
               <p className="font-black text-green-700 text-lg">تم إرسال إجاباتك!</p>
-              <p className="text-green-600 font-medium">سيقوم المعلم بمراجعة إجاباتك المفتوحة قريباً.</p>
+              <p className="text-green-600 font-medium">
+                {(existingSubmission?.score ?? 0) > 0
+                  ? `حصلت على ${existingSubmission?.score} من ${existingSubmission?.maxScore} نقطة`
+                  : "سيقوم المعلم بمراجعة إجاباتك المفتوحة قريباً."}
+              </p>
               <Button className="mt-4 rounded-xl font-bold" onClick={() => setLocation(`/library/${item.type}`)}>
                 العودة للقائمة
               </Button>

@@ -3243,6 +3243,9 @@ components:
       properties:
         item:
           $ref: '#/components/schemas/LibraryItem'
+        submission:
+          $ref: '#/components/schemas/LibrarySubmission'
+          nullable: true
     LibraryItemUpsert:
       type: object
       required: [classId, type, title]

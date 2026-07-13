@@ -264,6 +264,16 @@ router.get("/library/items/:id", async (req, res) => {
     orderBy: [asc(libraryQuestionsTable.sortOrder)],
   });
 
+  let submission = null;
+  if (identity.student.role === "student") {
+    submission = await db.query.librarySubmissionsTable.findFirst({
+      where: and(
+        eq(librarySubmissionsTable.libraryItemId, itemId),
+        eq(librarySubmissionsTable.studentId, identity.student.id),
+      ),
+    });
+  }
+
   res.json({
     item: {
       ...item,
@@ -271,6 +281,7 @@ router.get("/library/items/:id", async (req, res) => {
       contentUrl: toStorageUrl(item.contentObjectPath),
       questions,
     },
+    submission,
   });
 });
 
@@ -348,6 +359,17 @@ router.post("/library/submissions", async (req, res) => {
   });
   if (!item || !item.isPublished || item.classId !== identity.student.classId) {
     res.status(403).json({ error: "لا يمكنك الوصول لهذا المحتوى" });
+    return;
+  }
+
+  const existingSubmission = await db.query.librarySubmissionsTable.findFirst({
+    where: and(
+      eq(librarySubmissionsTable.libraryItemId, item.id),
+      eq(librarySubmissionsTable.studentId, identity.student.id),
+    ),
+  });
+  if (existingSubmission) {
+    res.status(409).json({ error: "لقد أجبت على هذا المحتوى مسبقاً" });
     return;
   }
 

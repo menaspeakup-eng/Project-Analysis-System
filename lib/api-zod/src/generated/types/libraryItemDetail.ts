@@ -6,7 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { LibraryItem } from './libraryItem';
+import type { LibrarySubmission } from './librarySubmission';
 
 export interface LibraryItemDetail {
   item: LibraryItem;
+  submission?: LibrarySubmission | null;
 }

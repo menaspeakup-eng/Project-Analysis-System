@@ -947,8 +947,33 @@ export interface LibraryItemList {
   items: LibraryItem[];
 }
 
+export interface LibraryAnswer {
+  id: number;
+  submissionId: number;
+  questionId: number;
+  selectedAnswer?: string | null;
+  textAnswer?: string | null;
+  isCorrect?: boolean | null;
+  pointsAwarded?: number | null;
+  status?: string | null;
+  createdAt: string;
+}
+
+export interface LibrarySubmission {
+  id: number;
+  libraryItemId: number;
+  studentId: number;
+  score: number;
+  maxScore: number;
+  status: string;
+  teacherFeedback?: string | null;
+  answers?: LibraryAnswer[] | null;
+  createdAt: string;
+}
+
 export interface LibraryItemDetail {
   item: LibraryItem;
+  submission?: LibrarySubmission | null;
 }
 
 export type LibraryItemUpsertType = typeof LibraryItemUpsertType[keyof typeof LibraryItemUpsertType];
@@ -1001,30 +1026,6 @@ export interface LibraryAnswerInput {
 export interface LibrarySubmissionBody {
   libraryItemId: number;
   answers: LibraryAnswerInput[];
-}
-
-export interface LibraryAnswer {
-  id: number;
-  submissionId: number;
-  questionId: number;
-  selectedAnswer?: string | null;
-  textAnswer?: string | null;
-  isCorrect?: boolean | null;
-  pointsAwarded?: number | null;
-  status?: string | null;
-  createdAt: string;
-}
-
-export interface LibrarySubmission {
-  id: number;
-  libraryItemId: number;
-  studentId: number;
-  score: number;
-  maxScore: number;
-  status: string;
-  teacherFeedback?: string | null;
-  answers?: LibraryAnswer[] | null;
-  createdAt: string;
 }
 
 export interface LibraryReview {

@@ -6,6 +6,7 @@ import {
   serial,
   jsonb,
   boolean,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -42,16 +43,22 @@ export const libraryQuestionsTable = pgTable("library_questions", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const librarySubmissionsTable = pgTable("library_submissions", {
-  id: serial("id").primaryKey(),
-  libraryItemId: integer("library_item_id").notNull().references(() => libraryItemsTable.id, { onDelete: "cascade" }),
-  studentId: integer("student_id").notNull().references(() => studentsTable.id, { onDelete: "cascade" }),
-  score: integer("score").notNull().default(0), // auto-scored points for mcq
-  maxScore: integer("max_score").notNull().default(0), // total possible points
-  status: text("status").notNull().default("pending"), // pending | accepted | rejected
-  teacherFeedback: text("teacher_feedback"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const librarySubmissionsTable = pgTable(
+  "library_submissions",
+  {
+    id: serial("id").primaryKey(),
+    libraryItemId: integer("library_item_id").notNull().references(() => libraryItemsTable.id, { onDelete: "cascade" }),
+    studentId: integer("student_id").notNull().references(() => studentsTable.id, { onDelete: "cascade" }),
+    score: integer("score").notNull().default(0), // auto-scored points for mcq
+    maxScore: integer("max_score").notNull().default(0), // total possible points
+    status: text("status").notNull().default("pending"), // pending | accepted | rejected
+    teacherFeedback: text("teacher_feedback"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => ({
+    uniqueStudentItem: unique().on(t.libraryItemId, t.studentId),
+  }),
+);
 
 export const libraryAnswersTable = pgTable("library_answers", {
   id: serial("id").primaryKey(),
