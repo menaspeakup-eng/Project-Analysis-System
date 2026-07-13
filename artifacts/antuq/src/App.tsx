@@ -27,6 +27,11 @@ import AIStory from "@/pages/ai-story";
 import Settings from "@/pages/settings";
 import Achievements from "@/pages/achievements";
 import Friends from "@/pages/friends";
+import Library from "@/pages/library";
+import LibraryList from "@/pages/library-list";
+import LibraryItem from "@/pages/library-item";
+import TeacherLibrary from "@/pages/teacher-library";
+import TeacherLibraryReviews from "@/pages/teacher-library-reviews";
 import { useGetIdentityMe } from "@workspace/api-client-react";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -207,6 +212,11 @@ function ClerkProviderWithRoutes() {
             <Route path="/settings" component={Settings} />
             <Route path="/achievements" component={Achievements} />
             <Route path="/friends" component={Friends} />
+            <Route path="/library" component={Library} />
+            <Route path="/library/:type" component={LibraryList} />
+            <Route path="/library-item/:id" component={LibraryItem} />
+            <Route path="/teacher/library" component={TeacherLibrary} />
+            <Route path="/teacher/library/reviews" component={TeacherLibraryReviews} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />
             <Route path="/schools" component={Schools} />

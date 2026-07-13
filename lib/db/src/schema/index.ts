@@ -4,3 +4,4 @@ export * from "./chat";
 export * from "./ai-stories";
 export * from "./activity-logs";
 export * from "./friends";
+export * from "./library";

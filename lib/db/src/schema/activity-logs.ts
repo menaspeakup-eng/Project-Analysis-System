@@ -14,6 +14,7 @@ export const ACTIVITY_TYPES = [
   "points_earned",
   "level_up",
   "quiz_complete",
+  "library_submission",
   "friend_added",
   "friend_accepted",
   "settings_updated",

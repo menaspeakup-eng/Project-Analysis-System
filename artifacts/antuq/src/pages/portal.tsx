@@ -435,9 +435,9 @@ export default function Portal() {
 
         {/* Shortcuts grid */}
         <section>
-          <h3 className="font-black text-foreground text-lg mb-4">استكشف إنطق</h3>
+          <h3 className="font-black text-foreground text-lg mb-4">مكتبة القراءة</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <ComingSoonCard icon={BookOpen} label="مكتبة القراءة" colorClass="bg-primary/15 text-primary" />
+            <ComingSoonCard icon={BookOpen} label="مكتبة القراءة" colorClass="bg-primary/15 text-primary" href="/library" />
             <ComingSoonCard icon={Play} label="الألعاب التعليمية" colorClass="bg-accent/15 text-accent" href="/games" />
             <ComingSoonCard icon={Award} label="الإنجازات" colorClass="bg-secondary/20 text-secondary-foreground" href="/achievements" />
             <ComingSoonCard icon={MessageCircle} label="الشات" colorClass="bg-[hsl(180,60%,90%)] text-[hsl(180,60%,35%)]" href="/chat" />

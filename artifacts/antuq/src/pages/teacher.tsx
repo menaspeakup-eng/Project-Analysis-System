@@ -44,6 +44,7 @@ import {
   Flame,
   MessageCircle,
   Sparkles,
+  BookOpen,
 } from "lucide-react";
 import type { TeacherClass, TeacherStudent } from "@workspace/api-client-react";
 import TeacherChallenges from "./teacher-challenges";
@@ -200,6 +201,14 @@ export default function Teacher() {
               لوحة الأدمن
             </Button>
           )}
+          <Button
+            variant="outline"
+            className="rounded-xl font-bold h-9 border-secondary text-secondary-foreground hover:bg-secondary hover:text-secondary-foreground"
+            onClick={() => setLocation("/teacher/library")}
+          >
+            <BookOpen className="w-4 h-4 ml-2" />
+            المكتبة
+          </Button>
           {canPreview && (
             <Badge variant="outline" className="rounded-full font-bold text-primary border-primary">
               <Eye className="w-4 h-4 ml-1" />

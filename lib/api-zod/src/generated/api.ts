@@ -1608,3 +1608,303 @@ export const GetClassmatesResponse = zod.object({
 })
 
 
+/**
+ * Returns a presigned GCS URL for direct upload. The client sends JSON
+ * metadata here, then uploads the file directly to the returned URL.
+ * @summary Request a presigned URL for file upload
+ */
+
+
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+})
+
+
+
+
+
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+}).optional()
+})
+
+
+/**
+ * Unconditionally public — no authentication or ACL checks.
+ * Searches PUBLIC_OBJECT_SEARCH_PATHS for the given file path.
+ * @summary Serve a public asset from PUBLIC_OBJECT_SEARCH_PATHS
+ */
+export const GetPublicObjectParams = zod.object({
+  "filePath": zod.coerce.string().describe('Relative file path within the public search paths.')
+})
+
+export const GetPublicObjectResponse = zod.unknown()
+
+
+/**
+ * Serves object entities uploaded via presigned URLs.
+ * @summary Serve an object entity from PRIVATE_OBJECT_DIR
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string().describe('Object path within the private object dir.')
+})
+
+export const GetStorageObjectResponse = zod.unknown()
+
+
+/**
+ * @summary List teacher library items
+ */
+export const ListLibraryItemsQueryParams = zod.object({
+  "type": zod.coerce.string().optional(),
+  "classId": zod.coerce.number().optional()
+})
+
+export const ListLibraryItemsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "classId": zod.number(),
+  "teacherId": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "coverObjectPath": zod.string().nullish(),
+  "contentObjectPath": zod.string().nullish(),
+  "bodyText": zod.string().nullish(),
+  "externalUrl": zod.string().nullish(),
+  "isPublished": zod.boolean(),
+  "coverUrl": zod.string().nullish(),
+  "contentUrl": zod.string().nullish(),
+  "questionCount": zod.number().nullish(),
+  "totalPoints": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "questions": zod.array(zod.object({
+  "id": zod.number(),
+  "libraryItemId": zod.number(),
+  "type": zod.string(),
+  "question": zod.string(),
+  "options": zod.array(zod.string()),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number(),
+  "sortOrder": zod.number(),
+  "createdAt": zod.coerce.date()
+})).nullish()
+}))
+})
+
+
+/**
+ * @summary Create or update a library item
+ */
+export const UpsertLibraryItemBody = zod.object({
+  "id": zod.number().nullish(),
+  "classId": zod.number(),
+  "type": zod.enum(['read', 'audio', 'attachment']),
+  "title": zod.string(),
+  "description": zod.string().optional(),
+  "coverObjectPath": zod.string().nullish(),
+  "contentObjectPath": zod.string().nullish(),
+  "bodyText": zod.string().nullish(),
+  "externalUrl": zod.string().nullish(),
+  "isPublished": zod.boolean().optional(),
+  "questions": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "type": zod.enum(['mcq', 'text']),
+  "question": zod.string(),
+  "options": zod.array(zod.string()).optional(),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number().optional(),
+  "sortOrder": zod.number().optional()
+})).optional()
+})
+
+export const UpsertLibraryItemResponse = zod.object({
+  "success": zod.boolean().optional(),
+  "id": zod.number().optional()
+})
+
+
+/**
+ * @summary Get a library item
+ */
+export const GetLibraryItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetLibraryItemResponse = zod.object({
+  "item": zod.object({
+  "id": zod.number(),
+  "classId": zod.number(),
+  "teacherId": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "coverObjectPath": zod.string().nullish(),
+  "contentObjectPath": zod.string().nullish(),
+  "bodyText": zod.string().nullish(),
+  "externalUrl": zod.string().nullish(),
+  "isPublished": zod.boolean(),
+  "coverUrl": zod.string().nullish(),
+  "contentUrl": zod.string().nullish(),
+  "questionCount": zod.number().nullish(),
+  "totalPoints": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "questions": zod.array(zod.object({
+  "id": zod.number(),
+  "libraryItemId": zod.number(),
+  "type": zod.string(),
+  "question": zod.string(),
+  "options": zod.array(zod.string()),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number(),
+  "sortOrder": zod.number(),
+  "createdAt": zod.coerce.date()
+})).nullish()
+})
+})
+
+
+/**
+ * @summary Delete a library item
+ */
+export const DeleteLibraryItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteLibraryItemResponse = zod.object({
+  "deleted": zod.boolean().optional()
+})
+
+
+/**
+ * @summary List published library items for the student's class
+ */
+export const ListClassLibraryItemsQueryParams = zod.object({
+  "type": zod.coerce.string().optional()
+})
+
+export const ListClassLibraryItemsResponse = zod.object({
+  "items": zod.array(zod.object({
+  "id": zod.number(),
+  "classId": zod.number(),
+  "teacherId": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "coverObjectPath": zod.string().nullish(),
+  "contentObjectPath": zod.string().nullish(),
+  "bodyText": zod.string().nullish(),
+  "externalUrl": zod.string().nullish(),
+  "isPublished": zod.boolean(),
+  "coverUrl": zod.string().nullish(),
+  "contentUrl": zod.string().nullish(),
+  "questionCount": zod.number().nullish(),
+  "totalPoints": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date(),
+  "questions": zod.array(zod.object({
+  "id": zod.number(),
+  "libraryItemId": zod.number(),
+  "type": zod.string(),
+  "question": zod.string(),
+  "options": zod.array(zod.string()),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number(),
+  "sortOrder": zod.number(),
+  "createdAt": zod.coerce.date()
+})).nullish()
+}))
+})
+
+
+/**
+ * @summary Submit answers for a library item
+ */
+export const CreateLibrarySubmissionBody = zod.object({
+  "libraryItemId": zod.number(),
+  "answers": zod.array(zod.object({
+  "questionId": zod.number(),
+  "selectedAnswer": zod.string().nullish(),
+  "textAnswer": zod.string().nullish()
+}))
+})
+
+export const CreateLibrarySubmissionResponse = zod.object({
+  "id": zod.number(),
+  "libraryItemId": zod.number(),
+  "studentId": zod.number(),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "status": zod.string(),
+  "teacherFeedback": zod.string().nullish(),
+  "answers": zod.array(zod.object({
+  "id": zod.number(),
+  "submissionId": zod.number(),
+  "questionId": zod.number(),
+  "selectedAnswer": zod.string().nullish(),
+  "textAnswer": zod.string().nullish(),
+  "isCorrect": zod.boolean().nullish(),
+  "pointsAwarded": zod.number().nullish(),
+  "status": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})).nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List text answers pending teacher review
+ */
+export const ListLibraryReviewsResponse = zod.object({
+  "reviews": zod.array(zod.object({
+  "answerId": zod.number(),
+  "question": zod.string(),
+  "textAnswer": zod.string(),
+  "points": zod.number(),
+  "itemTitle": zod.string(),
+  "itemId": zod.number(),
+  "submissionId": zod.number(),
+  "studentId": zod.number(),
+  "studentName": zod.string(),
+  "className": zod.string()
+}))
+})
+
+
+/**
+ * @summary Accept or reject a text answer
+ */
+export const ReviewLibraryAnswerParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ReviewLibraryAnswerBody = zod.object({
+  "status": zod.enum(['accepted', 'rejected'])
+})
+
+export const ReviewLibraryAnswerResponse = zod.object({
+  "id": zod.number(),
+  "submissionId": zod.number(),
+  "questionId": zod.number(),
+  "selectedAnswer": zod.string().nullish(),
+  "textAnswer": zod.string().nullish(),
+  "isCorrect": zod.boolean().nullish(),
+  "pointsAwarded": zod.number().nullish(),
+  "status": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+

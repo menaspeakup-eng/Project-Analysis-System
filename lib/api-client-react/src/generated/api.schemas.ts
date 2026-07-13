@@ -891,6 +891,171 @@ export interface ClassmateList {
   classmates: Classmate[];
 }
 
+export interface ErrorEnvelope {
+  error: string;
+}
+
+export interface UploadUrlRequest {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @minLength 1 */
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata?: UploadUrlRequest;
+}
+
+export interface LibraryQuestion {
+  id: number;
+  libraryItemId: number;
+  type: string;
+  question: string;
+  options: string[];
+  correctAnswer?: string | null;
+  points: number;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface LibraryItem {
+  id: number;
+  classId: number;
+  teacherId: number;
+  type: string;
+  title: string;
+  description: string;
+  coverObjectPath?: string | null;
+  contentObjectPath?: string | null;
+  bodyText?: string | null;
+  externalUrl?: string | null;
+  isPublished: boolean;
+  coverUrl?: string | null;
+  contentUrl?: string | null;
+  questionCount?: number | null;
+  totalPoints?: number | null;
+  createdAt: string;
+  updatedAt: string;
+  questions?: LibraryQuestion[] | null;
+}
+
+export interface LibraryItemList {
+  items: LibraryItem[];
+}
+
+export interface LibraryItemDetail {
+  item: LibraryItem;
+}
+
+export type LibraryItemUpsertType = typeof LibraryItemUpsertType[keyof typeof LibraryItemUpsertType];
+
+
+export const LibraryItemUpsertType = {
+  read: 'read',
+  audio: 'audio',
+  attachment: 'attachment',
+} as const;
+
+export type LibraryQuestionInputType = typeof LibraryQuestionInputType[keyof typeof LibraryQuestionInputType];
+
+
+export const LibraryQuestionInputType = {
+  mcq: 'mcq',
+  text: 'text',
+} as const;
+
+export interface LibraryQuestionInput {
+  id?: number;
+  type: LibraryQuestionInputType;
+  question: string;
+  options?: string[];
+  correctAnswer?: string | null;
+  points?: number;
+  sortOrder?: number;
+}
+
+export interface LibraryItemUpsert {
+  id?: number | null;
+  classId: number;
+  type: LibraryItemUpsertType;
+  title: string;
+  description?: string;
+  coverObjectPath?: string | null;
+  contentObjectPath?: string | null;
+  bodyText?: string | null;
+  externalUrl?: string | null;
+  isPublished?: boolean;
+  questions?: LibraryQuestionInput[];
+}
+
+export interface LibraryAnswerInput {
+  questionId: number;
+  selectedAnswer?: string | null;
+  textAnswer?: string | null;
+}
+
+export interface LibrarySubmissionBody {
+  libraryItemId: number;
+  answers: LibraryAnswerInput[];
+}
+
+export interface LibraryAnswer {
+  id: number;
+  submissionId: number;
+  questionId: number;
+  selectedAnswer?: string | null;
+  textAnswer?: string | null;
+  isCorrect?: boolean | null;
+  pointsAwarded?: number | null;
+  status?: string | null;
+  createdAt: string;
+}
+
+export interface LibrarySubmission {
+  id: number;
+  libraryItemId: number;
+  studentId: number;
+  score: number;
+  maxScore: number;
+  status: string;
+  teacherFeedback?: string | null;
+  answers?: LibraryAnswer[] | null;
+  createdAt: string;
+}
+
+export interface LibraryReview {
+  answerId: number;
+  question: string;
+  textAnswer: string;
+  points: number;
+  itemTitle: string;
+  itemId: number;
+  submissionId: number;
+  studentId: number;
+  studentName: string;
+  className: string;
+}
+
+export interface LibraryReviewList {
+  reviews: LibraryReview[];
+}
+
+export type LibraryReviewBodyStatus = typeof LibraryReviewBodyStatus[keyof typeof LibraryReviewBodyStatus];
+
+
+export const LibraryReviewBodyStatus = {
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface LibraryReviewBody {
+  status: LibraryReviewBodyStatus;
+}
+
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */
@@ -1022,5 +1187,23 @@ teacherId?: TeacherIdQueryParameter;
 export type DeleteTeacherStorySubmission200 = {
   id: number;
   deleted: boolean;
+};
+
+export type ListLibraryItemsParams = {
+type?: string;
+classId?: number;
+};
+
+export type UpsertLibraryItem200 = {
+  success?: boolean;
+  id?: number;
+};
+
+export type DeleteLibraryItem200 = {
+  deleted?: boolean;
+};
+
+export type ListClassLibraryItemsParams = {
+type?: string;
 };
 

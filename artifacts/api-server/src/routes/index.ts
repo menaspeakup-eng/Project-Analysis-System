@@ -11,6 +11,8 @@ import chatRouter from "./chat";
 import storyRouter from "./story";
 import activityLogsRouter from "./activity-logs";
 import friendsRouter from "./friends";
+import storageRouter from "./storage";
+import libraryRouter from "./library";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use(chatRouter);
 router.use(storyRouter);
 router.use(activityLogsRouter);
 router.use(friendsRouter);
+router.use(storageRouter);
+router.use(libraryRouter);
 
 export default router;
