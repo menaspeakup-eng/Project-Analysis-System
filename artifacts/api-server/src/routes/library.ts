@@ -65,6 +65,7 @@ const ReviewTextAnswerBody = z.object({
 });
 
 function parseIntParam(value: string): number | null {
+  if (value === "" || value == null) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
@@ -112,10 +113,11 @@ router.get("/library/items", async (req, res) => {
     whereClauses.push(eq(libraryItemsTable.classId, classId));
   }
 
-  const items = await db.query.libraryItemsTable.findMany({
-    where: whereClauses.length ? and(...whereClauses) : undefined,
-    orderBy: [desc(libraryItemsTable.createdAt)],
-  });
+  const items = await db
+    .select()
+    .from(libraryItemsTable)
+    .where(whereClauses.length ? and(...whereClauses) : undefined)
+    .orderBy(desc(libraryItemsTable.createdAt));
 
   const itemIds = items.map((i) => i.id);
   const questions = itemIds.length
