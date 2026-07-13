@@ -861,40 +861,11 @@ export interface ActivityLogList {
   logs: ActivityLog[];
 }
 
-export interface SendFriendRequestBody {
-  addresseeId: number;
-}
-
-export type FriendshipResponseFriendshipStatus = typeof FriendshipResponseFriendshipStatus[keyof typeof FriendshipResponseFriendshipStatus];
-
-
-export const FriendshipResponseFriendshipStatus = {
-  pending: 'pending',
-  accepted: 'accepted',
-  rejected: 'rejected',
-} as const;
-
-export type FriendshipResponseFriendship = {
-  id: number;
-  requesterId: number;
-  addresseeId: number;
-  status: FriendshipResponseFriendshipStatus;
-  createdAt: string;
-};
-
-export interface FriendshipResponse {
-  friendship: FriendshipResponseFriendship;
-}
-
 export interface Friend {
   id: number;
   name: string;
   points: number;
   avatarConfig: AvatarConfig;
-}
-
-export interface FriendList {
-  friends: Friend[];
 }
 
 export type ClassmateFriendshipStatus = typeof ClassmateFriendshipStatus[keyof typeof ClassmateFriendshipStatus];
@@ -1050,10 +1021,6 @@ teacherId?: TeacherIdQueryParameter;
 
 export type DeleteTeacherStorySubmission200 = {
   id: number;
-  deleted: boolean;
-};
-
-export type RemoveFriend200 = {
   deleted: boolean;
 };
 

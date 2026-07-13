@@ -1285,25 +1285,11 @@ paths:
           description: Not signed in
         "403":
           description: Not an admin
-  /friends:
-    get:
-      operationId: getFriends
-      tags: [friends]
-      summary: List accepted friends
-      responses:
-        "200":
-          description: Friends list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FriendList"
-        "401":
-          description: Not signed in
   /friends/classmates:
     get:
       operationId: getClassmates
       tags: [friends]
-      summary: List classmates with friendship status
+      summary: List classmates
       responses:
         "200":
           description: Classmates list
@@ -1313,100 +1299,6 @@ paths:
                 $ref: "#/components/schemas/ClassmateList"
         "401":
           description: Not signed in
-  /friends/request:
-    post:
-      operationId: sendFriendRequest
-      tags: [friends]
-      summary: Send a friend request to a classmate
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SendFriendRequestBody"
-      responses:
-        "200":
-          description: Request sent
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FriendshipResponse"
-        "400":
-          description: Invalid request
-        "401":
-          description: Not signed in
-        "403":
-          description: Not in the same class
-  /friends/{id}/accept:
-    post:
-      operationId: acceptFriendRequest
-      tags: [friends]
-      summary: Accept a friend request
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FriendshipResponse"
-        "401":
-          description: Not signed in
-        "403":
-          description: Cannot accept this request
-  /friends/{id}/reject:
-    post:
-      operationId: rejectFriendRequest
-      tags: [friends]
-      summary: Reject a friend request
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Rejected
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/FriendshipResponse"
-        "401":
-          description: Not signed in
-        "403":
-          description: Cannot reject this request
-  /friends/{id}:
-    delete:
-      operationId: removeFriend
-      tags: [friends]
-      summary: Remove a friend or cancel a request
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Removed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  deleted:
-                    type: boolean
-                required: [deleted]
-        "401":
-          description: Not signed in
-        "403":
-          description: Cannot remove this friendship
 components:
   parameters:
     TeacherIdQuery:
@@ -2952,48 +2844,6 @@ components:
         - title
         - description
         - createdAt
-    SendFriendRequestBody:
-      type: object
-      properties:
-        addresseeId:
-          type: integer
-      required:
-        - addresseeId
-    FriendshipResponse:
-      type: object
-      properties:
-        friendship:
-          type: object
-          properties:
-            id:
-              type: integer
-            requesterId:
-              type: integer
-            addresseeId:
-              type: integer
-            status:
-              type: string
-              enum: [pending, accepted, rejected]
-            createdAt:
-              type: string
-              format: date-time
-          required:
-            - id
-            - requesterId
-            - addresseeId
-            - status
-            - createdAt
-      required:
-        - friendship
-    FriendList:
-      type: object
-      properties:
-        friends:
-          type: array
-          items:
-            $ref: "#/components/schemas/Friend"
-      required:
-        - friends
     ClassmateList:
       type: object
       properties:

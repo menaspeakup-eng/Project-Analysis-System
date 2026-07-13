@@ -337,12 +337,11 @@ export default function Portal() {
 
             <Button
               size="lg"
-              disabled
-              className="w-full sm:w-auto h-13 px-8 rounded-xl bg-primary/40 text-white font-bold cursor-not-allowed"
+              className="w-full sm:w-auto h-13 px-8 rounded-xl font-bold"
+              onClick={() => setLocation("/ai-story")}
             >
               <Play className="w-5 h-5 ml-2" />
               متابعة التعلم
-              <span className="mr-2 text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">قريباً</span>
             </Button>
           </div>
         </section>

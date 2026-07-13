@@ -1576,34 +1576,7 @@ export const GetAdminActivityLogsResponse = zod.object({
 
 
 /**
- * @summary List accepted friends
- */
-export const getFriendsResponseFriendsItemAvatarConfigNicknameDefault = ``;
-export const getFriendsResponseFriendsItemAvatarConfigNicknameMax = 30;
-
-export const getFriendsResponseFriendsItemAvatarConfigFrameDefault = `none`;
-export const getFriendsResponseFriendsItemAvatarConfigBadgesDefault = [];
-
-export const GetFriendsResponse = zod.object({
-  "friends": zod.array(zod.object({
-  "id": zod.number(),
-  "name": zod.string(),
-  "points": zod.number(),
-  "avatarConfig": zod.object({
-  "bgColor": zod.string(),
-  "accessories": zod.array(zod.string()),
-  "gender": zod.enum(['male', 'female']),
-  "pet": zod.string(),
-  "nickname": zod.string().max(getFriendsResponseFriendsItemAvatarConfigNicknameMax).default(getFriendsResponseFriendsItemAvatarConfigNicknameDefault),
-  "frame": zod.string().default(getFriendsResponseFriendsItemAvatarConfigFrameDefault),
-  "badges": zod.array(zod.string()).default(getFriendsResponseFriendsItemAvatarConfigBadgesDefault)
-})
-}))
-})
-
-
-/**
- * @summary List classmates with friendship status
+ * @summary List classmates
  */
 export const getClassmatesResponseClassmatesItemOneAvatarConfigNicknameDefault = ``;
 export const getClassmatesResponseClassmatesItemOneAvatarConfigNicknameMax = 30;
@@ -1632,72 +1605,6 @@ export const GetClassmatesResponse = zod.object({
   "requesterId": zod.number()
 }).nullish()
 })))
-})
-
-
-/**
- * @summary Send a friend request to a classmate
- */
-export const SendFriendRequestBody = zod.object({
-  "addresseeId": zod.number()
-})
-
-export const SendFriendRequestResponse = zod.object({
-  "friendship": zod.object({
-  "id": zod.number(),
-  "requesterId": zod.number(),
-  "addresseeId": zod.number(),
-  "status": zod.enum(['pending', 'accepted', 'rejected']),
-  "createdAt": zod.coerce.date()
-})
-})
-
-
-/**
- * @summary Accept a friend request
- */
-export const AcceptFriendRequestParams = zod.object({
-  "id": zod.coerce.number()
-})
-
-export const AcceptFriendRequestResponse = zod.object({
-  "friendship": zod.object({
-  "id": zod.number(),
-  "requesterId": zod.number(),
-  "addresseeId": zod.number(),
-  "status": zod.enum(['pending', 'accepted', 'rejected']),
-  "createdAt": zod.coerce.date()
-})
-})
-
-
-/**
- * @summary Reject a friend request
- */
-export const RejectFriendRequestParams = zod.object({
-  "id": zod.coerce.number()
-})
-
-export const RejectFriendRequestResponse = zod.object({
-  "friendship": zod.object({
-  "id": zod.number(),
-  "requesterId": zod.number(),
-  "addresseeId": zod.number(),
-  "status": zod.enum(['pending', 'accepted', 'rejected']),
-  "createdAt": zod.coerce.date()
-})
-})
-
-
-/**
- * @summary Remove a friend or cancel a request
- */
-export const RemoveFriendParams = zod.object({
-  "id": zod.coerce.number()
-})
-
-export const RemoveFriendResponse = zod.object({
-  "deleted": zod.boolean()
 })
 
 

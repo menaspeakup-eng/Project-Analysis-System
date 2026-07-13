@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion, type Variants } from "framer-motion";
-import { BookOpen, Sparkles, ArrowRight, Wand2 } from "lucide-react";
+import { BookOpen, Sparkles, ArrowRight, Wand2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AIStatusIndicator } from "@/components/ai-status";
@@ -37,6 +37,9 @@ export default function AIAssistant() {
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-border">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Link href="/portal" className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center hover:bg-[hsl(265,60%,88%)] transition-colors" aria-label="رجوع">
+              <ArrowRight className="w-5 h-5 rotate-180" />
+            </Link>
             <div className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center">
               <Wand2 className="w-5 h-5" />
             </div>

@@ -52,8 +52,6 @@ import type {
   DeleteStudentAccount200,
   DeleteTeacherChallengeParams,
   DeleteTeacherStorySubmission200,
-  FriendList,
-  FriendshipResponse,
   GameCompletionResult,
   GameDetail,
   GameItemsList,
@@ -73,14 +71,12 @@ import type {
   Leaderboard,
   MoveStudentBody,
   NameCaptureBody,
-  RemoveFriend200,
   RemoveTeacherStudentClassParams,
   ReviewStorySubmissionBody,
   ReviewSubmissionBody,
   ReviewTeacherSubmissionParams,
   ReviewedStorySubmission,
   ReviewedSubmission,
-  SendFriendRequestBody,
   StoryQuizSubmission,
   StoryUsageStatus,
   StudentChallenge,
@@ -4373,83 +4369,6 @@ export function useGetAdminActivityLogs<TData = Awaited<ReturnType<typeof getAdm
 
 
 
-export const getGetFriendsUrl = () => {
-
-
-
-
-  return `/api/friends`
-}
-
-/**
- * @summary List accepted friends
- */
-export const getFriends = async ( options?: RequestInit): Promise<FriendList> => {
-
-  return customFetch<FriendList>(getGetFriendsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetFriendsQueryKey = () => {
-    return [
-    `/api/friends`
-    ] as const;
-    }
-
-
-export const getGetFriendsQueryOptions = <TData = Awaited<ReturnType<typeof getFriends>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFriends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetFriendsQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFriends>>> = ({ signal }) => getFriends({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFriends>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetFriendsQueryResult = NonNullable<Awaited<ReturnType<typeof getFriends>>>
-export type GetFriendsQueryError = ErrorType<void>
-
-
-/**
- * @summary List accepted friends
- */
-
-export function useGetFriends<TData = Awaited<ReturnType<typeof getFriends>>, TError = ErrorType<void>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFriends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetFriendsQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
 export const getGetClassmatesUrl = () => {
 
 
@@ -4459,7 +4378,7 @@ export const getGetClassmatesUrl = () => {
 }
 
 /**
- * @summary List classmates with friendship status
+ * @summary List classmates
  */
 export const getClassmates = async ( options?: RequestInit): Promise<ClassmateList> => {
 
@@ -4506,7 +4425,7 @@ export type GetClassmatesQueryError = ErrorType<void>
 
 
 /**
- * @summary List classmates with friendship status
+ * @summary List classmates
  */
 
 export function useGetClassmates<TData = Awaited<ReturnType<typeof getClassmates>>, TError = ErrorType<void>>(
@@ -4526,288 +4445,4 @@ export function useGetClassmates<TData = Awaited<ReturnType<typeof getClassmates
 
 
 
-
-export const getSendFriendRequestUrl = () => {
-
-
-
-
-  return `/api/friends/request`
-}
-
-/**
- * @summary Send a friend request to a classmate
- */
-export const sendFriendRequest = async (sendFriendRequestBody: SendFriendRequestBody, options?: RequestInit): Promise<FriendshipResponse> => {
-
-  return customFetch<FriendshipResponse>(getSendFriendRequestUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(sendFriendRequestBody)
-  }
-);}
-
-
-
-
-
-export const getSendFriendRequestMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendFriendRequest>>, TError,{data: BodyType<SendFriendRequestBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof sendFriendRequest>>, TError,{data: BodyType<SendFriendRequestBody>}, TContext> => {
-
-const mutationKey = ['sendFriendRequest'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendFriendRequest>>, {data: BodyType<SendFriendRequestBody>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  sendFriendRequest(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type SendFriendRequestMutationResult = NonNullable<Awaited<ReturnType<typeof sendFriendRequest>>>
-    export type SendFriendRequestMutationBody = BodyType<SendFriendRequestBody>
-    export type SendFriendRequestMutationError = ErrorType<void>
-
-    /**
- * @summary Send a friend request to a classmate
- */
-export const useSendFriendRequest = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendFriendRequest>>, TError,{data: BodyType<SendFriendRequestBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof sendFriendRequest>>,
-        TError,
-        {data: BodyType<SendFriendRequestBody>},
-        TContext
-      > => {
-      return useMutation(getSendFriendRequestMutationOptions(options));
-    }
-
-export const getAcceptFriendRequestUrl = (id: number,) => {
-
-
-
-
-  return `/api/friends/${id}/accept`
-}
-
-/**
- * @summary Accept a friend request
- */
-export const acceptFriendRequest = async (id: number, options?: RequestInit): Promise<FriendshipResponse> => {
-
-  return customFetch<FriendshipResponse>(getAcceptFriendRequestUrl(id),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-
-
-export const getAcceptFriendRequestMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptFriendRequest>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof acceptFriendRequest>>, TError,{id: number}, TContext> => {
-
-const mutationKey = ['acceptFriendRequest'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptFriendRequest>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
-
-          return  acceptFriendRequest(id,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type AcceptFriendRequestMutationResult = NonNullable<Awaited<ReturnType<typeof acceptFriendRequest>>>
-
-    export type AcceptFriendRequestMutationError = ErrorType<void>
-
-    /**
- * @summary Accept a friend request
- */
-export const useAcceptFriendRequest = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptFriendRequest>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof acceptFriendRequest>>,
-        TError,
-        {id: number},
-        TContext
-      > => {
-      return useMutation(getAcceptFriendRequestMutationOptions(options));
-    }
-
-export const getRejectFriendRequestUrl = (id: number,) => {
-
-
-
-
-  return `/api/friends/${id}/reject`
-}
-
-/**
- * @summary Reject a friend request
- */
-export const rejectFriendRequest = async (id: number, options?: RequestInit): Promise<FriendshipResponse> => {
-
-  return customFetch<FriendshipResponse>(getRejectFriendRequestUrl(id),
-  {
-    ...options,
-    method: 'POST'
-
-
-  }
-);}
-
-
-
-
-
-export const getRejectFriendRequestMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectFriendRequest>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof rejectFriendRequest>>, TError,{id: number}, TContext> => {
-
-const mutationKey = ['rejectFriendRequest'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectFriendRequest>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
-
-          return  rejectFriendRequest(id,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RejectFriendRequestMutationResult = NonNullable<Awaited<ReturnType<typeof rejectFriendRequest>>>
-
-    export type RejectFriendRequestMutationError = ErrorType<void>
-
-    /**
- * @summary Reject a friend request
- */
-export const useRejectFriendRequest = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectFriendRequest>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof rejectFriendRequest>>,
-        TError,
-        {id: number},
-        TContext
-      > => {
-      return useMutation(getRejectFriendRequestMutationOptions(options));
-    }
-
-export const getRemoveFriendUrl = (id: number,) => {
-
-
-
-
-  return `/api/friends/${id}`
-}
-
-/**
- * @summary Remove a friend or cancel a request
- */
-export const removeFriend = async (id: number, options?: RequestInit): Promise<RemoveFriend200> => {
-
-  return customFetch<RemoveFriend200>(getRemoveFriendUrl(id),
-  {
-    ...options,
-    method: 'DELETE'
-
-
-  }
-);}
-
-
-
-
-
-export const getRemoveFriendMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFriend>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof removeFriend>>, TError,{id: number}, TContext> => {
-
-const mutationKey = ['removeFriend'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeFriend>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
-
-          return  removeFriend(id,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type RemoveFriendMutationResult = NonNullable<Awaited<ReturnType<typeof removeFriend>>>
-
-    export type RemoveFriendMutationError = ErrorType<void>
-
-    /**
- * @summary Remove a friend or cancel a request
- */
-export const useRemoveFriend = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeFriend>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof removeFriend>>,
-        TError,
-        {id: number},
-        TContext
-      > => {
-      return useMutation(getRemoveFriendMutationOptions(options));
-    }
 

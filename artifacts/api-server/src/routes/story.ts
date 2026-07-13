@@ -195,7 +195,7 @@ function parseStoryText(raw: string): GeneratedStory {
       .filter(Boolean);
     if (lines.length < 2) continue;
     const firstLine = lines[0] || "";
-    const questionMatch = firstLine.match(/^(?:\d+[\.\-]\s*)?(.+?\?)/);
+    const questionMatch = firstLine.match(/^(?:\d+[\.\-]\s*)?(.+?(?:\?|؟))/);
     const question = questionMatch ? questionMatch[1] : firstLine;
     const options: { letter: string; text: string }[] = [];
     let correctLetter = "";
