@@ -8,6 +8,7 @@ import {
   useClaimTeacherStudent,
   useUpdateTeacherStudent,
   useRemoveTeacherStudentClass,
+  useAllowStudentAiStory,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -42,10 +43,12 @@ import {
   Gamepad2,
   Flame,
   MessageCircle,
+  Sparkles,
 } from "lucide-react";
 import type { TeacherClass, TeacherStudent } from "@workspace/api-client-react";
 import TeacherChallenges from "./teacher-challenges";
 import TeacherGames from "./teacher-games";
+import TeacherAiStories from "./teacher-ai-stories";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 function getTeacherIdFromUrl(): number | null {
@@ -82,10 +85,12 @@ export default function Teacher() {
   const { mutate: claimStudent } = useClaimTeacherStudent();
   const { mutate: updateStudent } = useUpdateTeacherStudent();
   const { mutate: removeStudent } = useRemoveTeacherStudentClass();
+  const { mutate: allowAiStory } = useAllowStudentAiStory();
 
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null);
   const [editingPoints, setEditingPoints] = useState<{ id: number; points: number } | null>(null);
   const [claiming, setClaiming] = useState<number | null>(null);
+  const [allowingAiStory, setAllowingAiStory] = useState<number | null>(null);
   const [selectedClass, setSelectedClass] = useState<TeacherClass | null>(null);
 
   useEffect(() => {
@@ -152,9 +157,21 @@ export default function Teacher() {
     );
   };
 
+  const handleAllowAiStory = (studentId: number) => {
+    allowAiStory(
+      { id: studentId },
+      {
+        onSuccess: () => {
+          setAllowingAiStory(null);
+          invalidate();
+        },
+      },
+    );
+  };
+
   const classes = classesData?.classes ?? [];
   const unclaimed = unclaimedData?.students ?? [];
-  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges" | "chat">("students");
+  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges" | "ai-stories" | "chat">("students");
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -230,6 +247,14 @@ export default function Teacher() {
             التحديات
           </Button>
           <Button
+            variant={activeTab === "ai-stories" ? "default" : "ghost"}
+            className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "ai-stories" ? "bg-[hsl(265,60%,45%)] text-white" : "text-muted-foreground"}`}
+            onClick={() => setActiveTab("ai-stories")}
+          >
+            <Sparkles className="w-4 h-4 ml-2" />
+            قصصي الذكية
+          </Button>
+          <Button
             variant={activeTab === "chat" ? "default" : "ghost"}
             className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "chat" ? "bg-primary text-white" : "text-muted-foreground"}`}
             onClick={() => setActiveTab("chat")}
@@ -273,6 +298,8 @@ export default function Teacher() {
 
         {activeTab === "challenges" && <TeacherChallenges teacherIdParam={teacherIdParam} classes={classes} />}
 
+        {activeTab === "ai-stories" && <TeacherAiStories />}
+
         {activeTab === "chat" && (
           <section className="flex flex-col min-h-[70dvh] rounded-3xl border border-border bg-white overflow-hidden shadow-sm">
             <ChatPanel backUrl="/teacher" />
@@ -300,6 +327,10 @@ export default function Teacher() {
           onStartClaim={(s) => setClaiming(s.id)}
           onCancelClaim={() => setClaiming(null)}
           onClaim={(studentId) => handleClaim(studentId, selectedClass.id)}
+          allowingAiStory={allowingAiStory}
+          onStartAllowAiStory={(s) => setAllowingAiStory(s.id)}
+          onCancelAllowAiStory={() => setAllowingAiStory(null)}
+          onAllowAiStory={handleAllowAiStory}
           onClose={() => setSelectedClass(null)}
         />
       )}
@@ -363,6 +394,10 @@ function ClassStudentsDialog({
   onStartClaim,
   onCancelClaim,
   onClaim,
+  allowingAiStory,
+  onStartAllowAiStory,
+  onCancelAllowAiStory,
+  onAllowAiStory,
   onClose,
 }: {
   cls: TeacherClass;
@@ -383,6 +418,10 @@ function ClassStudentsDialog({
   onStartClaim: (s: TeacherStudent) => void;
   onCancelClaim: () => void;
   onClaim: (studentId: number) => void;
+  allowingAiStory: number | null;
+  onStartAllowAiStory: (s: TeacherStudent) => void;
+  onCancelAllowAiStory: () => void;
+  onAllowAiStory: (studentId: number) => void;
   onClose: () => void;
 }) {
   return (
@@ -510,6 +549,37 @@ function ClassStudentsDialog({
                               <Trash2 className="w-4 h-4 ml-1" />
                               إزالة
                             </Button>
+                            {allowingAiStory === s.id ? (
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  className="rounded-xl h-8 font-bold"
+                                  onClick={() => onAllowAiStory(s.id)}
+                                >
+                                  <Check className="w-4 h-4 ml-1" />
+                                  سماح
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="rounded-xl h-8 font-bold text-muted-foreground"
+                                  onClick={onCancelAllowAiStory}
+                                >
+                                  <X className="w-4 h-4 ml-1" />
+                                  إلغاء
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="rounded-xl h-8 font-bold border-[hsl(265,60%,45%)] text-[hsl(265,60%,45%)] hover:bg-[hsl(265,60%,92%)]"
+                                onClick={() => onStartAllowAiStory(s)}
+                              >
+                                <Sparkles className="w-4 h-4 ml-1" />
+                                قصة إضافية
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

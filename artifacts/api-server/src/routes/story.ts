@@ -1,6 +1,15 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod";
-import { resolveIdentity, requireIdentity } from "../lib/identity";
+import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { resolveIdentity, requireIdentity, requireTeacher } from "../lib/identity";
+import {
+  db,
+  aiStorySessionsTable,
+  aiStoryQuizSubmissionsTable,
+  aiStoryDailyAllowancesTable,
+  studentsTable,
+  classesTable,
+} from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -21,6 +30,7 @@ export type StoryType = (typeof STORY_TYPES)[number];
 
 const OPENAI_BASE_URL = process.env["OPENAI_BASE_URL"] || "https://openrouter.ai/api/v1";
 const OPENAI_MODEL = process.env["OPENAI_MODEL"] || "openai/gpt-4o-mini";
+const POINTS_PER_CORRECT_ANSWER = 10;
 
 const STORY_TYPE_LABELS: Record<StoryType, string> = {
   adventure: "مغامرة",
@@ -40,6 +50,21 @@ const GenerateStoryBody = z.object({
   storyType: z.enum(STORY_TYPES),
 });
 
+const QuizAnswersBody = z.object({
+  sessionId: z.number().int().positive(),
+  answers: z.array(
+    z.object({
+      questionIndex: z.number().int().min(0),
+      selectedAnswer: z.string().min(1),
+    }),
+  ),
+});
+
+const ReviewSubmissionBody = z.object({
+  status: z.enum(["accepted", "rejected"]),
+  teacherFeedback: z.string().max(500).optional(),
+});
+
 type GeneratedStory = {
   title: string;
   story: string;
@@ -54,63 +79,50 @@ type GeneratedStory = {
   };
 };
 
+function todayDate(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
+async function getDailyUsage(studentId: number): Promise<{ used: number; limit: number; extra: number }> {
+  const today = todayDate();
+  const [sessions, allowance] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)`.mapWith(Number) })
+      .from(aiStorySessionsTable)
+      .where(
+        and(
+          eq(aiStorySessionsTable.studentId, studentId),
+          eq(aiStorySessionsTable.forDate, today),
+        ),
+      ),
+    db.query.aiStoryDailyAllowancesTable.findFirst({
+      where: and(
+        eq(aiStoryDailyAllowancesTable.studentId, studentId),
+        eq(aiStoryDailyAllowancesTable.forDate, today),
+      ),
+    }),
+  ]);
+  const used = sessions[0]?.count ?? 0;
+  const extra = allowance?.extraUses ?? 0;
+  return { used, limit: 1 + extra, extra };
+}
+
+async function requireDailyStoryAllowance(studentId: number) {
+  const { used, limit } = await getDailyUsage(studentId);
+  if (used >= limit) {
+    const err = new Error("لقد استنفذت محاولات إنشاء القصص اليوم. تحدث إلى معلمك إذا أردت محاولة إضافية.") as Error & {
+      status?: number;
+      code?: string;
+    };
+    err.status = 429;
+    err.code = "daily_limit_exceeded";
+    throw err;
+  }
+}
+
 function buildPrompt(studentName: string, storyType: StoryType): string {
   const typeLabel = STORY_TYPE_LABELS[storyType];
-  return `أنت كاتب قصص تعليمية محترف ومتخصص في تنمية مهارة القراءة للطلاب.
-
-مهمتك هي إنشاء قصة عربية تعليمية جديدة بالكامل.
-
-بيانات الطالب:
-
-- الاسم: ${studentName}
-- نوع القصة: ${typeLabel}
-
-التعليمات:
-
-- اجعل اسم الطالب هو بطل القصة.
-- أنشئ قصة أصلية بالكامل، ولا تكرر قصصاً معروفة.
-- اكتب باللغة العربية الفصحى فقط.
-- ضع التشكيل على جميع كلمات القصة قدر الإمكان لتسهيل القراءة.
-- اجعل اللغة سهلة ومناسبة للطلاب من عمر 12 سنة فما فوق.
-- اجعل الأحداث ممتعة ومشوقة دون مبالغة.
-- لا تستخدم الرعب أو العنف أو الرومانسية أو أي محتوى غير مناسب.
-- اجعل القصة تنتهي بقيمة تربوية أو درس مستفاد.
-- استخدم جملاً قصيرة وواضحة لتناسب التدريب على القراءة.
-- أضف حواراً بسيطاً بين الشخصيات.
-- اجعل القصة مناسبة للقراءة بصوت مرتفع.
-- لا تستخدم كلمات عامية.
-- لا تستخدم الرموز التعبيرية داخل القصة.
-
-حجم القصة:
-
-- بين 300 و450 كلمة.
-- زمن القراءة التقريبي من دقيقتين إلى أربع دقائق.
-
-بعد انتهاء القصة أرجع البيانات بهذا الترتيب فقط:
-
-# عنوان القصة
-
-# القصة
-
-# الكلمات الجديدة
-اكتب 5 كلمات جديدة مع شرح مبسط جداً لكل كلمة.
-
-# أسئلة الفهم
-أنشئ 5 أسئلة اختيار من متعدد، ولكل سؤال 4 خيارات وحدد الإجابة الصحيحة.
-
-# سؤال تفكير
-اكتب سؤالاً مفتوحاً يدعو الطالب للتفكير.
-
-# الدرس المستفاد
-اكتب الدرس المستفاد في سطر واحد.
-
-# معلومات القراءة
-- مستوى الصعوبة: (1-5)
-- عدد الكلمات.
-- الزمن المتوقع للقراءة.
-
-مهم جداً:
-لا تكتب أي مقدمة مثل "إليك القصة" أو "بالتأكيد"، ولا تشرح ما ستفعله، بل أعد النتيجة مباشرة بالتنسيق المطلوب فقط.`;
+  return `اكتب قصة عربية فصحى قصيرة (300–450 كلمة) بعنوان واضح. يكون البطل: ${studentName}، ونوع القصة: ${typeLabel}.\n\nالمتطلبات:\n- لغة سهلة، جمل قصيرة، تشكيل ممكن، بدون عامية أو رموز تعبيرية.\n- بدون رعب أو رومانسية أو عنف.\n- حوار بسيط، ودرس أخلاقي في النهاية.\n\nأعد النتيجة بالتنسيق التالي فقط، بدون مقدمة:\n\n# عنوان القصة\n\n# القصة\n\n# الكلمات الجديدة\n5 كلمات مع معناها المختصر.\n\n# أسئلة الفهم\n5 أسئلة اختيار من متعدد، لكل سؤال 4 خيارات وذكر الإجابة الصحيحة.\n\n# سؤال تفكير\nسؤال مفتوح للتفكير.\n\n# الدرس المستفاد\nدرس مستفاد في سطر.\n\n# معلومات القراءة\n- مستوى الصعوبة: 1-5\n- عدد الكلمات\n- الزمن المتوقع للقراءة`;
 }
 
 function parseStoryText(raw: string): GeneratedStory {
@@ -130,7 +142,8 @@ function parseStoryText(raw: string): GeneratedStory {
   const questionsRaw = sections.get("أسئلة الفهم") || "";
   const reflectionQuestion = sections.get("سؤال تفكير") || "";
   const lesson = sections.get("الدرس المستفاد") || "";
-  const readingInfoRaw = sections.get("معلومات الققراءة") || sections.get("معلومات القراءة") || "";
+  const readingInfoRaw =
+    sections.get("معلومات الققراءة") || sections.get("معلومات القراءة") || "";
 
   const newWords: GeneratedStory["newWords"] = [];
   const wordLines = newWordsRaw.split("\n").filter((l) => l.trim());
@@ -146,9 +159,14 @@ function parseStoryText(raw: string): GeneratedStory {
   }
 
   const questions: GeneratedStory["questions"] = [];
-  const questionBlocks = questionsRaw.split(/\n(?=\d+[\.\-]\s|S\d|س\d|Question|\?)/).filter((b) => b.trim());
+  const questionBlocks = questionsRaw
+    .split(/\n(?=\d+[\.\-]\s|S\d|س\d|Question|\?)/)
+    .filter((b) => b.trim());
   for (const block of questionBlocks) {
-    const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+    const lines = block
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
     const firstLine = lines[0] || "";
     const questionMatch = firstLine.match(/^(?:\d+[\.\-]\s*)?(.+?\?)/);
     const question = questionMatch ? questionMatch[1] : firstLine;
@@ -213,6 +231,18 @@ function getOpenAIErrorMessage(errorBody: unknown): string {
   return message || "حدث خطأ في الاتصال بالذكاء الاصطناعي";
 }
 
+router.get("/stories/usage", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  try {
+    const usage = await getDailyUsage(identity.student.id);
+    res.json({ ...usage, remaining: Math.max(0, usage.limit - usage.used) });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "خطأ غير معروف";
+    res.status(500).json({ error: message });
+  }
+});
+
 router.post("/stories/generate", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
@@ -221,6 +251,14 @@ router.post("/stories/generate", async (req, res) => {
   const apiKey = process.env["OPENAI_API_KEY"];
   if (!apiKey) {
     res.status(500).json({ error: "OPENAI_API_KEY غير مضبوط" });
+    return;
+  }
+
+  try {
+    await requireDailyStoryAllowance(identity.student.id);
+  } catch (err) {
+    const typed = err as Error & { status?: number; code?: string };
+    res.status(typed.status || 429).json({ error: typed.message, code: typed.code });
     return;
   }
 
@@ -237,13 +275,15 @@ router.post("/stories/generate", async (req, res) => {
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
-        max_tokens: 4096,
+        temperature: 0.6,
+        max_tokens: 2048,
       }),
     });
 
     if (!openaiRes.ok) {
-      const json = (await openaiRes.json().catch(() => ({}))) as { error?: { message?: string; code?: string } };
+      const json = (await openaiRes.json().catch(() => ({}))) as {
+        error?: { message?: string; code?: string };
+      };
       res.status(502).json({ error: getOpenAIErrorMessage(json) });
       return;
     }
@@ -265,11 +305,249 @@ router.post("/stories/generate", async (req, res) => {
     }
 
     const result = parseStoryText(rawText);
-    res.json({ result });
+
+    const [session] = await db
+      .insert(aiStorySessionsTable)
+      .values({
+        studentId: identity.student.id,
+        storyType: body.storyType,
+        studentName: body.studentName,
+        title: result.title,
+        story: result.story,
+        generatedContent: result as unknown as Record<string, unknown>,
+        forDate: todayDate(),
+      })
+      .returning();
+
+    res.json({ result, sessionId: session.id });
   } catch (err) {
     const message = err instanceof Error ? err.message : "خطأ غير معروف";
     res.status(500).json({ error: message });
   }
+});
+
+router.post("/stories/quiz/submit", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+
+  const body = QuizAnswersBody.parse(req.body);
+  const session = await db.query.aiStorySessionsTable.findFirst({
+    where: eq(aiStorySessionsTable.id, body.sessionId),
+  });
+
+  if (!session) {
+    res.status(404).json({ error: "القصة غير موجودة" });
+    return;
+  }
+  if (session.studentId !== identity.student.id) {
+    res.status(403).json({ error: "لا يمكنك إرسال إجابات لقصة طالب آخر" });
+    return;
+  }
+
+  const existing = await db.query.aiStoryQuizSubmissionsTable.findFirst({
+    where: and(
+      eq(aiStoryQuizSubmissionsTable.studentId, identity.student.id),
+      eq(aiStoryQuizSubmissionsTable.sessionId, body.sessionId),
+    ),
+  });
+  if (existing) {
+    res.status(400).json({ error: "لقد أرسلت إجاباتك لهذه القصة من قبل" });
+    return;
+  }
+
+  const content = session.generatedContent as unknown as GeneratedStory;
+  const questions = content.questions ?? [];
+
+  const answers = body.answers.map((a) => {
+    const question = questions[a.questionIndex];
+    const isCorrect = Boolean(question && a.selectedAnswer === question.correctAnswer);
+    return {
+      questionIndex: a.questionIndex,
+      question: question?.question || "",
+      selectedAnswer: a.selectedAnswer,
+      correctAnswer: question?.correctAnswer || "",
+      isCorrect,
+    };
+  });
+
+  const score = answers.filter((a) => a.isCorrect).length;
+  const maxScore = questions.length;
+
+  const [submission] = await db
+    .insert(aiStoryQuizSubmissionsTable)
+    .values({
+      sessionId: body.sessionId,
+      studentId: identity.student.id,
+      answers,
+      score,
+      maxScore,
+      status: "pending",
+    })
+    .returning();
+
+  res.json({ submission });
+});
+
+router.get("/teacher/stories/submissions", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireTeacher(identity);
+
+  const teacherClassIds = identity.teacherClassIds;
+  if (teacherClassIds.length === 0) {
+    res.json({ submissions: [] });
+    return;
+  }
+
+  const studentsInClasses = await db
+    .select({ studentId: studentsTable.id, classId: studentsTable.classId })
+    .from(studentsTable)
+    .where(
+      and(
+        sql`${studentsTable.classId} IN (${sql.join(teacherClassIds.map(String), sql`,`)})`,
+        eq(studentsTable.role, "student"),
+      ),
+    );
+
+  const studentIds = studentsInClasses.map((s) => s.studentId);
+  if (studentIds.length === 0) {
+    res.json({ submissions: [] });
+    return;
+  }
+
+  const submissions = await db.query.aiStoryQuizSubmissionsTable.findMany({
+    where: sql`${aiStoryQuizSubmissionsTable.studentId} IN (${sql.join(studentIds.map(String), sql`,`)})`,
+    orderBy: sql`${aiStoryQuizSubmissionsTable.createdAt} DESC`,
+  });
+
+  const students = await db.query.studentsTable.findMany({
+    where: sql`${studentsTable.id} IN (${sql.join(studentIds.map(String), sql`,`)})`,
+  });
+  const studentsById = new Map(students.map((s) => [s.id, s]));
+
+  const sessionIds = submissions.map((s) => s.sessionId);
+  const sessions =
+    sessionIds.length > 0
+      ? await db.query.aiStorySessionsTable.findMany({
+          where: sql`${aiStorySessionsTable.id} IN (${sql.join(sessionIds.map(String), sql`,`)})`,
+        })
+      : [];
+  const sessionsById = new Map(sessions.map((s) => [s.id, s]));
+
+  res.json({
+    submissions: submissions.map((s) => ({
+      ...s,
+      student: studentsById.get(s.studentId) ?? null,
+      session: sessionsById.get(s.sessionId) ?? null,
+    })),
+  });
+});
+
+router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireTeacher(identity);
+
+  const submissionId = Number(req.params.id);
+  if (!Number.isFinite(submissionId)) {
+    res.status(400).json({ error: "معرّف الإجابة غير صالح" });
+    return;
+  }
+
+  const body = ReviewSubmissionBody.parse(req.body);
+  const submission = await db.query.aiStoryQuizSubmissionsTable.findFirst({
+    where: eq(aiStoryQuizSubmissionsTable.id, submissionId),
+  });
+
+  if (!submission) {
+    res.status(404).json({ error: "الإجابة غير موجودة" });
+    return;
+  }
+  if (submission.status === "accepted") {
+    res.status(400).json({ error: "تم تقييم هذه الإجابة مسبقاً" });
+    return;
+  }
+
+  const student = await db.query.studentsTable.findFirst({
+    where: eq(studentsTable.id, submission.studentId),
+  });
+  if (!student || !student.classId) {
+    res.status(404).json({ error: "الطالب غير مرتبط بصف" });
+    return;
+  }
+  if (!identity.isAdmin && !identity.teacherClassIds.includes(student.classId)) {
+    res.status(403).json({ error: "لا يمكنك تقييم طالب من صف آخر" });
+    return;
+  }
+
+  const pointsAwarded = body.status === "accepted" ? submission.score * POINTS_PER_CORRECT_ANSWER : 0;
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(aiStoryQuizSubmissionsTable)
+      .set({
+        status: body.status,
+        teacherFeedback: body.teacherFeedback ?? null,
+        pointsAwarded: body.status === "accepted" ? pointsAwarded : null,
+        reviewedAt: new Date(),
+      })
+      .where(eq(aiStoryQuizSubmissionsTable.id, submissionId));
+
+    if (body.status === "accepted" && pointsAwarded > 0) {
+      await tx
+        .update(studentsTable)
+        .set({ points: sql`${studentsTable.points} + ${pointsAwarded}` })
+        .where(eq(studentsTable.id, submission.studentId));
+    }
+  });
+
+  res.json({ id: submissionId, status: body.status, pointsAwarded, teacherFeedback: body.teacherFeedback });
+});
+
+router.post("/teacher/students/:id/allow-ai-story", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireTeacher(identity);
+
+  const studentId = Number(req.params.id);
+  if (!Number.isFinite(studentId)) {
+    res.status(400).json({ error: "معرّف الطالب غير صالح" });
+    return;
+  }
+
+  const student = await db.query.studentsTable.findFirst({ where: eq(studentsTable.id, studentId) });
+  if (!student || !student.classId) {
+    res.status(404).json({ error: "الطالب غير موجود أو غير مرتبط بصف" });
+    return;
+  }
+  if (!identity.isAdmin && !identity.teacherClassIds.includes(student.classId)) {
+    res.status(403).json({ error: "لا يمكنك السماح لطالب من صف آخر" });
+    return;
+  }
+
+  const today = todayDate();
+  const existing = await db.query.aiStoryDailyAllowancesTable.findFirst({
+    where: and(
+      eq(aiStoryDailyAllowancesTable.studentId, studentId),
+      eq(aiStoryDailyAllowancesTable.forDate, today),
+    ),
+  });
+
+  if (existing) {
+    const [updated] = await db
+      .update(aiStoryDailyAllowancesTable)
+      .set({ extraUses: existing.extraUses + 1 })
+      .where(eq(aiStoryDailyAllowancesTable.id, existing.id))
+      .returning();
+    res.json({ allowed: true, extraUses: updated.extraUses, forDate: today });
+    return;
+  }
+
+  const [created] = await db
+    .insert(aiStoryDailyAllowancesTable)
+    .values({ studentId, forDate: today, extraUses: 1 })
+    .returning();
+  res.json({ allowed: true, extraUses: created.extraUses, forDate: today });
 });
 
 router.get("/stories/health", async (_req, res) => {
@@ -295,7 +573,9 @@ router.get("/stories/health", async (_req, res) => {
     });
 
     if (!openaiRes.ok) {
-      const json = (await openaiRes.json().catch(() => ({}))) as { error?: { message?: string; code?: string } };
+      const json = (await openaiRes.json().catch(() => ({}))) as {
+        error?: { message?: string; code?: string };
+      };
       res.status(503).json({ status: "error", message: getOpenAIErrorMessage(json) });
       return;
     }

@@ -697,6 +697,109 @@ export interface GeneratedStory {
 
 export interface GenerateStoryResponse {
   result: GeneratedStory;
+  sessionId: number;
+}
+
+export interface StoryUsageStatus {
+  used: number;
+  limit: number;
+  extra: number;
+  remaining: number;
+}
+
+export interface StoryQuizAnswer {
+  questionIndex: number;
+  selectedAnswer: string;
+}
+
+export interface SubmitStoryQuizBody {
+  sessionId: number;
+  answers: StoryQuizAnswer[];
+}
+
+export interface StoryQuizAnswerResult {
+  questionIndex: number;
+  question: string;
+  selectedAnswer: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+}
+
+export type StoryQuizSubmissionRecordStatus = typeof StoryQuizSubmissionRecordStatus[keyof typeof StoryQuizSubmissionRecordStatus];
+
+
+export const StoryQuizSubmissionRecordStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface StoryQuizSubmissionRecord {
+  id: number;
+  sessionId: number;
+  studentId: number;
+  answers: StoryQuizAnswerResult[];
+  score: number;
+  maxScore: number;
+  status: StoryQuizSubmissionRecordStatus;
+  pointsAwarded?: number | null;
+  teacherFeedback?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+}
+
+export interface StoryQuizSubmission {
+  submission: StoryQuizSubmissionRecord;
+}
+
+export type TeacherStorySubmissionSession = {
+  id: number;
+  title: string;
+  storyType: string;
+};
+
+export type TeacherStorySubmission = StoryQuizSubmissionRecord & {
+  student?: StudentProfile;
+  session?: TeacherStorySubmissionSession;
+};
+
+export interface TeacherStorySubmissionList {
+  submissions: TeacherStorySubmission[];
+}
+
+export type ReviewStorySubmissionBodyStatus = typeof ReviewStorySubmissionBodyStatus[keyof typeof ReviewStorySubmissionBodyStatus];
+
+
+export const ReviewStorySubmissionBodyStatus = {
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ReviewStorySubmissionBody {
+  status: ReviewStorySubmissionBodyStatus;
+  /** @maxLength 500 */
+  teacherFeedback?: string;
+}
+
+export type ReviewedStorySubmissionStatus = typeof ReviewedStorySubmissionStatus[keyof typeof ReviewedStorySubmissionStatus];
+
+
+export const ReviewedStorySubmissionStatus = {
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ReviewedStorySubmission {
+  id: number;
+  status: ReviewedStorySubmissionStatus;
+  pointsAwarded?: number | null;
+  teacherFeedback?: string | null;
+}
+
+export interface AllowedAiStoryResponse {
+  allowed: boolean;
+  extraUses: number;
+  forDate: string;
 }
 
 export type AIHealthStatusStatus = typeof AIHealthStatusStatus[keyof typeof AIHealthStatusStatus];

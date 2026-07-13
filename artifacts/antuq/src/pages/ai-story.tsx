@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Link } from "wouter";
-import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, CheckCircle2 } from "lucide-react";
+import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, CheckCircle2, Target, Lock, AlertTriangle, Trophy, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -13,8 +14,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { AIStatusIndicator } from "@/components/ai-status";
-import { useGenerateStory, type StoryType, type ApiError } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  useGenerateStory,
+  useGetStoriesUsage,
+  getGetStoriesUsageQueryKey,
+  useSubmitStoryQuiz,
+  type StoryType,
+  type ApiError,
+  type StoryQuizAnswer,
+} from "@workspace/api-client-react";
 
 function getApiErrorMessage(error: unknown): string | null {
   if (!error) return null;
@@ -22,6 +33,17 @@ function getApiErrorMessage(error: unknown): string | null {
     const data = (error as ApiError<unknown>).data;
     if (data && typeof data === "object" && "error" in data && typeof (data as { error?: string }).error === "string") {
       return (data as { error: string }).error;
+    }
+  }
+  return null;
+}
+
+function getApiErrorCode(error: unknown): string | null {
+  if (!error) return null;
+  if (error instanceof Error && "data" in error) {
+    const data = (error as ApiError<unknown>).data;
+    if (data && typeof data === "object" && "code" in data && typeof (data as { code?: string }).code === "string") {
+      return (data as { code: string }).code;
     }
   }
   return null;
@@ -56,24 +78,76 @@ const staggerItem: Variants = {
 };
 
 export default function AIStory() {
+  const { toast } = useToast();
   const [studentName, setStudentName] = useState("");
   const [storyType, setStoryType] = useState<StoryType | "">("");
   const [submitted, setSubmitted] = useState(false);
-  const { mutate: generateStory, data, isPending, error } = useGenerateStory();
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [quizMode, setQuizMode] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+  const { mutate: generateStory, data, isPending, error, reset } = useGenerateStory();
+  const { data: usageData, refetch: refetchUsage } = useGetStoriesUsage({
+    query: { queryKey: getGetStoriesUsageQueryKey() },
+  });
+  const { mutate: submitQuiz, data: quizResultData, isPending: isSubmittingQuiz } = useSubmitStoryQuiz();
 
   const result = data?.result;
+  const quizResult = quizResultData?.submission;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentName.trim() || !storyType) return;
     setSubmitted(true);
-    generateStory({ data: { studentName: studentName.trim(), storyType: storyType as StoryType } });
+    reset();
+    generateStory(
+      { data: { studentName: studentName.trim(), storyType: storyType as StoryType } },
+      {
+        onSuccess: (res) => {
+          setSessionId(res.sessionId);
+          refetchUsage();
+        },
+      },
+    );
   };
 
   const handleNewStory = () => {
     setSubmitted(false);
     setStudentName("");
     setStoryType("");
+    setSessionId(null);
+    setQuizMode(false);
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    reset();
+  };
+
+  const isLimitReached = usageData && usageData.remaining <= 0;
+
+  const handleQuizSubmit = () => {
+    if (!sessionId || !result?.questions) return;
+    const answeredCount = Object.keys(quizAnswers).length;
+    if (answeredCount < result.questions.length) {
+      toast({ title: "أجب على جميع الأسئلة أولاً", variant: "destructive" });
+      return;
+    }
+    const answers: StoryQuizAnswer[] = result.questions.map((_, idx) => ({
+      questionIndex: idx,
+      selectedAnswer: quizAnswers[idx] ?? "",
+    }));
+    submitQuiz(
+      { data: { sessionId, answers } },
+      {
+        onSuccess: () => {
+          setQuizSubmitted(true);
+          toast({ title: "تم إرسال الإجابات للمعلم", description: "ستظهر النتيجة بعد مراجعة المعلم" });
+        },
+        onError: (err) => {
+          toast({ title: "تعذر إرسال الإجابات", description: getApiErrorMessage(err) ?? "حاول مرة أخرى", variant: "destructive" });
+        },
+      },
+    );
   };
 
   return (
@@ -92,6 +166,28 @@ export default function AIStory() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 relative z-10">
+        {/* Usage banner */}
+        {usageData && (
+          <div className={`mb-6 rounded-2xl border px-4 py-3 flex items-center justify-between ${usageData.remaining > 0 ? "bg-emerald-50 border-emerald-100" : "bg-amber-50 border-amber-100"}`}>
+            <div className="flex items-center gap-2 text-sm font-bold">
+              {usageData.remaining > 0 ? (
+                <>
+                  <Trophy className="w-4 h-4 text-emerald-600" />
+                  <span className="text-emerald-700">لديك {usageData.remaining} {usageData.remaining === 1 ? "قصة" : "قصص"} متبقية اليوم</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 text-amber-600" />
+                  <span className="text-amber-700">استنفذت قصتك اليومية. اطلب من معلمك السماح بقصة إضافية.</span>
+                </>
+              )}
+            </div>
+            <Badge variant="outline" className="rounded-full font-bold border-current">
+              {usageData.used}/{usageData.limit}
+            </Badge>
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {!submitted || isPending ? (
             <motion.div
@@ -156,7 +252,7 @@ export default function AIStory() {
                         type="submit"
                         size="lg"
                         className="w-full h-14 rounded-xl text-lg font-bold"
-                        disabled={isPending || !studentName.trim() || !storyType}
+                        disabled={isPending || !studentName.trim() || !storyType || isLimitReached}
                       >
                         {isPending ? (
                           <>
@@ -175,23 +271,17 @@ export default function AIStory() {
                           </>
                         )}
                       </Button>
+
+                      {isLimitReached && (
+                        <div className="flex items-center gap-2 text-amber-600 text-sm font-bold bg-amber-50 rounded-xl p-3">
+                          <AlertTriangle className="w-4 h-4" />
+                          لقد استنفذت محاولاتك اليوم. تحدث إلى معلمك ليمنحك محاولة إضافية.
+                        </div>
+                      )}
                     </form>
                   </CardContent>
                 </Card>
               </motion.div>
-
-              {isPending && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="mt-8 text-center"
-                >
-                  <div className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-white border border-border shadow-sm">
-                    <Loader2 className="w-6 h-6 animate-spin text-[hsl(265,60%,45%)]" />
-                    <span className="font-bold text-foreground">يقوم الذكاء الاصطناعي بكتابة قصتك...</span>
-                  </div>
-                </motion.div>
-              )}
 
               {error && (
                 <motion.div variants={staggerItem} className="mt-6 p-4 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 text-center">
@@ -199,6 +289,9 @@ export default function AIStory() {
                   <p className="text-sm font-medium opacity-90">
                     {getApiErrorMessage(error) ?? "تعذر الاتصال بالذكاء الاصطناعي. حاول مرة أخرى."}
                   </p>
+                  {getApiErrorCode(error) === "daily_limit_exceeded" && (
+                    <p className="text-xs mt-2 opacity-80">اطلب من معلمك السماح بقصة إضافية.</p>
+                  )}
                 </motion.div>
               )}
             </motion.div>
@@ -262,7 +355,7 @@ export default function AIStory() {
                       </div>
                     )}
 
-                    {/* Questions */}
+                    {/* Questions display */}
                     {result?.questions && result.questions.length > 0 && (
                       <div>
                         <h3 className="font-black text-lg mb-3 flex items-center gap-2">
@@ -320,6 +413,113 @@ export default function AIStory() {
                 </Card>
               </motion.div>
 
+              {/* Quiz CTA */}
+              {!quizMode && !quizSubmitted && !quizResult && (
+                <motion.div variants={staggerItem}>
+                  <Card className="rounded-3xl border-border bg-gradient-to-br from-[hsl(265,60%,96%)] to-white overflow-hidden">
+                    <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center shrink-0">
+                        <Target className="w-8 h-8" />
+                      </div>
+                      <div className="flex-1 text-center md:text-right">
+                        <h3 className="font-black text-xl mb-2">اختبر نفسك لزيادة نقاطك</h3>
+                        <p className="text-muted-foreground font-medium">
+                          أجب على أسئلة الفهم، ثم يراجع المعلم إجاباتك ويمنحك النقاط على كل إجابة صحيحة.
+                        </p>
+                      </div>
+                      <Button size="lg" className="rounded-xl h-14 px-8 font-bold shrink-0" onClick={() => setQuizMode(true)}>
+                        ابدأ الاختبار
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* Quiz form */}
+              {quizMode && !quizSubmitted && !quizResult && (
+                <motion.div variants={staggerItem}>
+                  <Card className="rounded-3xl border-border bg-white shadow-sm overflow-hidden">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-xl font-black flex items-center gap-2">
+                        <Target className="w-6 h-6 text-[hsl(265,60%,45%)]" />
+                        اختبر فهمك للقصة
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {result?.questions?.map((q, idx) => (
+                        <div key={idx} className="space-y-3">
+                          <p className="font-bold text-foreground">
+                            {idx + 1}. {q.question}
+                          </p>
+                          <RadioGroup
+                            value={quizAnswers[idx] ?? ""}
+                            onValueChange={(value) => setQuizAnswers((prev) => ({ ...prev, [idx]: value }))}
+                            className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                          >
+                            {q.options.map((opt) => (
+                              <div key={opt} className="flex items-center gap-2 rounded-xl border border-border bg-[hsl(40,33%,98%)] p-3 hover:bg-[hsl(40,33%,96%)] transition-colors">
+                                <RadioGroupItem value={opt} id={`q-${idx}-${opt}`} />
+                                <Label htmlFor={`q-${idx}-${opt}`} className="flex-1 font-medium text-sm cursor-pointer">
+                                  {opt}
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        </div>
+                      ))}
+                      <Button
+                        size="lg"
+                        className="w-full h-14 rounded-xl text-lg font-bold"
+                        onClick={handleQuizSubmit}
+                        disabled={isSubmittingQuiz}
+                      >
+                        {isSubmittingQuiz ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            جاري الإرسال...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-5 h-5" />
+                            إرسال الإجابات
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* Quiz result */}
+              {(quizSubmitted || quizResult) && (
+                <motion.div variants={staggerItem}>
+                  <Card className="rounded-3xl border-border bg-white shadow-sm overflow-hidden">
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-xl font-black flex items-center gap-2">
+                        <Trophy className="w-6 h-6 text-accent" />
+                        نتيجة الاختبار
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 rounded-2xl bg-accent/10 flex items-center justify-center text-accent font-black text-2xl">
+                          {(quizResult?.score ?? 0)}/{quizResult?.maxScore ?? result?.questions?.length ?? 0}
+                        </div>
+                        <div>
+                          <p className="font-black text-lg">إجابات صحيحة: {quizResult?.score ?? 0}</p>
+                          <p className="text-muted-foreground font-medium">
+                            الحالة: {quizResult?.status === "accepted" ? "تم قبولها وإضافة النقاط" : "بانتظار مراجعة المعلم"}
+                          </p>
+                          {quizResult?.pointsAwarded != null && (
+                            <p className="text-accent font-bold">+{quizResult.pointsAwarded} نقطة</p>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
               {/* Action buttons */}
               <motion.div variants={staggerItem} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Button variant="outline" size="lg" className="rounded-xl h-12 font-bold" disabled>
@@ -330,11 +530,7 @@ export default function AIStory() {
                   <Mic className="w-5 h-5" />
                   اقرأ القصة
                 </Button>
-                <Button
-                  size="lg"
-                  className="rounded-xl h-12 font-bold"
-                  onClick={handleNewStory}
-                >
+                <Button size="lg" className="rounded-xl h-12 font-bold" onClick={handleNewStory}>
                   <RefreshCw className="w-5 h-5" />
                   أنشئ قصة جديدة
                 </Button>

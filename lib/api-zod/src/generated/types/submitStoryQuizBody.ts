@@ -5,9 +5,9 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { GeneratedStory } from './generatedStory';
+import type { StoryQuizAnswer } from './storyQuizAnswer';
 
-export interface GenerateStoryResponse {
-  result: GeneratedStory;
+export interface SubmitStoryQuizBody {
   sessionId: number;
+  answers: StoryQuizAnswer[];
 }

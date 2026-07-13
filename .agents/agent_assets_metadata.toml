@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "dBmX0_RlvvDsLOUtBnvS-"
+uri = "file://screenshots/ai-story-v2.jpg"
+type = "image"
+title = "AI Story Page"
+
+[[outputs]]
+id = "-DxLYBCSqF2YwqB-PgTkw"
+uri = "file://screenshots/teacher-v2.jpg"
+type = "image"
+title = "Teacher Dashboard"

@@ -27,6 +27,7 @@ import type {
   AdminToggleTeacherBody,
   AdminUser,
   AdminUserList,
+  AllowedAiStoryResponse,
   AvatarConfig,
   ChallengeSubmission,
   ChatMessage,
@@ -67,19 +68,25 @@ import type {
   MoveStudentBody,
   NameCaptureBody,
   RemoveTeacherStudentClassParams,
+  ReviewStorySubmissionBody,
   ReviewSubmissionBody,
   ReviewTeacherSubmissionParams,
+  ReviewedStorySubmission,
   ReviewedSubmission,
+  StoryQuizSubmission,
+  StoryUsageStatus,
   StudentChallenge,
   StudentChallengeList,
   StudentProfile,
   SubmitChallengeBody,
+  SubmitStoryQuizBody,
   TeacherChallenge,
   TeacherChallengeList,
   TeacherClassList,
   TeacherGame,
   TeacherGameList,
   TeacherGameStats,
+  TeacherStorySubmissionList,
   TeacherStudent,
   TeacherStudentClass,
   TeacherSubmissionList,
@@ -3553,7 +3560,7 @@ export const getGetStoriesHealthUrl = () => {
 }
 
 /**
- * Verifies the Gemini API key and model connectivity.
+ * Verifies the OpenAI/OpenRouter API key and model connectivity.
  * @summary Check AI story service health
  */
 export const getStoriesHealth = async ( options?: RequestInit): Promise<AIHealthStatus> => {
@@ -3691,5 +3698,373 @@ export const useGenerateStory = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getGenerateStoryMutationOptions(options));
+    }
+
+export const getGetStoriesUsageUrl = () => {
+
+
+
+
+  return `/api/stories/usage`
+}
+
+/**
+ * @summary Get today's AI story usage for the signed-in student
+ */
+export const getStoriesUsage = async ( options?: RequestInit): Promise<StoryUsageStatus> => {
+
+  return customFetch<StoryUsageStatus>(getGetStoriesUsageUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStoriesUsageQueryKey = () => {
+    return [
+    `/api/stories/usage`
+    ] as const;
+    }
+
+
+export const getGetStoriesUsageQueryOptions = <TData = Awaited<ReturnType<typeof getStoriesUsage>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStoriesUsage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStoriesUsageQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStoriesUsage>>> = ({ signal }) => getStoriesUsage({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStoriesUsage>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStoriesUsageQueryResult = NonNullable<Awaited<ReturnType<typeof getStoriesUsage>>>
+export type GetStoriesUsageQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get today's AI story usage for the signed-in student
+ */
+
+export function useGetStoriesUsage<TData = Awaited<ReturnType<typeof getStoriesUsage>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStoriesUsage>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStoriesUsageQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSubmitStoryQuizUrl = () => {
+
+
+
+
+  return `/api/stories/quiz/submit`
+}
+
+/**
+ * @summary Submit a student's answers to the story quiz
+ */
+export const submitStoryQuiz = async (submitStoryQuizBody: SubmitStoryQuizBody, options?: RequestInit): Promise<StoryQuizSubmission> => {
+
+  return customFetch<StoryQuizSubmission>(getSubmitStoryQuizUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(submitStoryQuizBody)
+  }
+);}
+
+
+
+
+
+export const getSubmitStoryQuizMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitStoryQuiz>>, TError,{data: BodyType<SubmitStoryQuizBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitStoryQuiz>>, TError,{data: BodyType<SubmitStoryQuizBody>}, TContext> => {
+
+const mutationKey = ['submitStoryQuiz'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitStoryQuiz>>, {data: BodyType<SubmitStoryQuizBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  submitStoryQuiz(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitStoryQuizMutationResult = NonNullable<Awaited<ReturnType<typeof submitStoryQuiz>>>
+    export type SubmitStoryQuizMutationBody = BodyType<SubmitStoryQuizBody>
+    export type SubmitStoryQuizMutationError = ErrorType<void>
+
+    /**
+ * @summary Submit a student's answers to the story quiz
+ */
+export const useSubmitStoryQuiz = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitStoryQuiz>>, TError,{data: BodyType<SubmitStoryQuizBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitStoryQuiz>>,
+        TError,
+        {data: BodyType<SubmitStoryQuizBody>},
+        TContext
+      > => {
+      return useMutation(getSubmitStoryQuizMutationOptions(options));
+    }
+
+export const getGetTeacherStorySubmissionsUrl = () => {
+
+
+
+
+  return `/api/teacher/stories/submissions`
+}
+
+/**
+ * @summary List AI story quiz submissions for the teacher's classes
+ */
+export const getTeacherStorySubmissions = async ( options?: RequestInit): Promise<TeacherStorySubmissionList> => {
+
+  return customFetch<TeacherStorySubmissionList>(getGetTeacherStorySubmissionsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTeacherStorySubmissionsQueryKey = () => {
+    return [
+    `/api/teacher/stories/submissions`
+    ] as const;
+    }
+
+
+export const getGetTeacherStorySubmissionsQueryOptions = <TData = Awaited<ReturnType<typeof getTeacherStorySubmissions>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherStorySubmissions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTeacherStorySubmissionsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeacherStorySubmissions>>> = ({ signal }) => getTeacherStorySubmissions({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeacherStorySubmissions>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTeacherStorySubmissionsQueryResult = NonNullable<Awaited<ReturnType<typeof getTeacherStorySubmissions>>>
+export type GetTeacherStorySubmissionsQueryError = ErrorType<void>
+
+
+/**
+ * @summary List AI story quiz submissions for the teacher's classes
+ */
+
+export function useGetTeacherStorySubmissions<TData = Awaited<ReturnType<typeof getTeacherStorySubmissions>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherStorySubmissions>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTeacherStorySubmissionsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getReviewTeacherStorySubmissionUrl = (id: number,) => {
+
+
+
+
+  return `/api/teacher/stories/submissions/${id}/review`
+}
+
+/**
+ * @summary Accept or reject an AI story quiz submission
+ */
+export const reviewTeacherStorySubmission = async (id: number,
+    reviewStorySubmissionBody: ReviewStorySubmissionBody, options?: RequestInit): Promise<ReviewedStorySubmission> => {
+
+  return customFetch<ReviewedStorySubmission>(getReviewTeacherStorySubmissionUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(reviewStorySubmissionBody)
+  }
+);}
+
+
+
+
+
+export const getReviewTeacherStorySubmissionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewTeacherStorySubmission>>, TError,{id: number;data: BodyType<ReviewStorySubmissionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewTeacherStorySubmission>>, TError,{id: number;data: BodyType<ReviewStorySubmissionBody>}, TContext> => {
+
+const mutationKey = ['reviewTeacherStorySubmission'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewTeacherStorySubmission>>, {id: number;data: BodyType<ReviewStorySubmissionBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewTeacherStorySubmission(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewTeacherStorySubmissionMutationResult = NonNullable<Awaited<ReturnType<typeof reviewTeacherStorySubmission>>>
+    export type ReviewTeacherStorySubmissionMutationBody = BodyType<ReviewStorySubmissionBody>
+    export type ReviewTeacherStorySubmissionMutationError = ErrorType<void>
+
+    /**
+ * @summary Accept or reject an AI story quiz submission
+ */
+export const useReviewTeacherStorySubmission = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewTeacherStorySubmission>>, TError,{id: number;data: BodyType<ReviewStorySubmissionBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewTeacherStorySubmission>>,
+        TError,
+        {id: number;data: BodyType<ReviewStorySubmissionBody>},
+        TContext
+      > => {
+      return useMutation(getReviewTeacherStorySubmissionMutationOptions(options));
+    }
+
+export const getAllowStudentAiStoryUrl = (id: number,) => {
+
+
+
+
+  return `/api/teacher/students/${id}/allow-ai-story`
+}
+
+/**
+ * @summary Grant an extra AI story use to a student for today
+ */
+export const allowStudentAiStory = async (id: number, options?: RequestInit): Promise<AllowedAiStoryResponse> => {
+
+  return customFetch<AllowedAiStoryResponse>(getAllowStudentAiStoryUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAllowStudentAiStoryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof allowStudentAiStory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof allowStudentAiStory>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['allowStudentAiStory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof allowStudentAiStory>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  allowStudentAiStory(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AllowStudentAiStoryMutationResult = NonNullable<Awaited<ReturnType<typeof allowStudentAiStory>>>
+
+    export type AllowStudentAiStoryMutationError = ErrorType<void>
+
+    /**
+ * @summary Grant an extra AI story use to a student for today
+ */
+export const useAllowStudentAiStory = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof allowStudentAiStory>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof allowStudentAiStory>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getAllowStudentAiStoryMutationOptions(options));
     }
 

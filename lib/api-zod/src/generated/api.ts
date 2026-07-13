@@ -1304,7 +1304,7 @@ export const GetChatMutesResponse = zod.object({
 
 
 /**
- * Verifies the Gemini API key and model connectivity.
+ * Verifies the OpenAI/OpenRouter API key and model connectivity.
  * @summary Check AI story service health
  */
 export const GetStoriesHealthResponse = zod.object({
@@ -1354,7 +1354,146 @@ export const GenerateStoryResponse = zod.object({
   "wordCount": zod.number().min(generateStoryResponseResultReadingInfoWordCountMin),
   "estimatedTime": zod.string()
 })
+}),
+  "sessionId": zod.number()
 })
+
+
+/**
+ * @summary Get today's AI story usage for the signed-in student
+ */
+export const GetStoriesUsageResponse = zod.object({
+  "used": zod.number(),
+  "limit": zod.number(),
+  "extra": zod.number(),
+  "remaining": zod.number()
+})
+
+
+/**
+ * @summary Submit a student's answers to the story quiz
+ */
+export const SubmitStoryQuizBody = zod.object({
+  "sessionId": zod.number(),
+  "answers": zod.array(zod.object({
+  "questionIndex": zod.number(),
+  "selectedAnswer": zod.string()
+}))
+})
+
+export const SubmitStoryQuizResponse = zod.object({
+  "submission": zod.object({
+  "id": zod.number(),
+  "sessionId": zod.number(),
+  "studentId": zod.number(),
+  "answers": zod.array(zod.object({
+  "questionIndex": zod.number(),
+  "question": zod.string(),
+  "selectedAnswer": zod.string(),
+  "correctAnswer": zod.string(),
+  "isCorrect": zod.boolean()
+})),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "pointsAwarded": zod.number().nullish(),
+  "teacherFeedback": zod.string().nullish(),
+  "reviewedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary List AI story quiz submissions for the teacher's classes
+ */
+export const getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigNicknameDefault = ``;
+export const getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigNicknameMax = 30;
+
+export const getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigFrameDefault = `none`;
+export const getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigBadgesDefault = [];
+
+export const GetTeacherStorySubmissionsResponse = zod.object({
+  "submissions": zod.array(zod.object({
+  "id": zod.number(),
+  "sessionId": zod.number(),
+  "studentId": zod.number(),
+  "answers": zod.array(zod.object({
+  "questionIndex": zod.number(),
+  "question": zod.string(),
+  "selectedAnswer": zod.string(),
+  "correctAnswer": zod.string(),
+  "isCorrect": zod.boolean()
+})),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "pointsAwarded": zod.number().nullish(),
+  "teacherFeedback": zod.string().nullish(),
+  "reviewedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+}).and(zod.object({
+  "student": zod.object({
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string(),
+  "nickname": zod.string().max(getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigNicknameMax).default(getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getTeacherStorySubmissionsResponseSubmissionsItemTwoStudentAvatarConfigBadgesDefault)
+}),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()])
+}).optional(),
+  "session": zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "storyType": zod.string()
+}).optional()
+})))
+})
+
+
+/**
+ * @summary Accept or reject an AI story quiz submission
+ */
+export const ReviewTeacherStorySubmissionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const reviewTeacherStorySubmissionBodyTeacherFeedbackMax = 500;
+
+
+
+export const ReviewTeacherStorySubmissionBody = zod.object({
+  "status": zod.enum(['accepted', 'rejected']),
+  "teacherFeedback": zod.string().max(reviewTeacherStorySubmissionBodyTeacherFeedbackMax).optional()
+})
+
+export const ReviewTeacherStorySubmissionResponse = zod.object({
+  "id": zod.number(),
+  "status": zod.enum(['accepted', 'rejected']),
+  "pointsAwarded": zod.number().nullish(),
+  "teacherFeedback": zod.string().nullish()
+})
+
+
+/**
+ * @summary Grant an extra AI story use to a student for today
+ */
+export const AllowStudentAiStoryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AllowStudentAiStoryResponse = zod.object({
+  "allowed": zod.boolean(),
+  "extraUses": zod.number(),
+  "forDate": zod.coerce.date()
 })
 
 

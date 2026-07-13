@@ -1047,7 +1047,7 @@ paths:
       operationId: getStoriesHealth
       tags: [story]
       summary: Check AI story service health
-      description: Verifies the Gemini API key and model connectivity.
+      description: Verifies the OpenAI/OpenRouter API key and model connectivity.
       responses:
         "200":
           description: AI service is healthy
@@ -1083,8 +1083,122 @@ paths:
           description: Invalid body
         "401":
           description: Not signed in
+        "429":
+          description: Daily AI story limit exceeded
         "500":
           description: AI generation failed
+  /stories/usage:
+    get:
+      operationId: getStoriesUsage
+      tags: [story]
+      summary: Get today's AI story usage for the signed-in student
+      responses:
+        "200":
+          description: Usage status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoryUsageStatus"
+        "401":
+          description: Not signed in
+  /stories/quiz/submit:
+    post:
+      operationId: submitStoryQuiz
+      tags: [story]
+      summary: Submit a student's answers to the story quiz
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitStoryQuizBody"
+      responses:
+        "200":
+          description: Submission stored and scored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoryQuizSubmission"
+        "400":
+          description: Invalid body or duplicate submission
+        "401":
+          description: Not signed in
+        "404":
+          description: Story session not found
+  /teacher/stories/submissions:
+    get:
+      operationId: getTeacherStorySubmissions
+      tags: [story, teacher]
+      summary: List AI story quiz submissions for the teacher's classes
+      responses:
+        "200":
+          description: Submissions list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherStorySubmissionList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher
+  /teacher/stories/submissions/{id}/review:
+    post:
+      operationId: reviewTeacherStorySubmission
+      tags: [story, teacher]
+      summary: Accept or reject an AI story quiz submission
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewStorySubmissionBody"
+      responses:
+        "200":
+          description: Review result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewedStorySubmission"
+        "400":
+          description: Invalid body or already accepted
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or wrong class
+        "404":
+          description: Submission not found
+  /teacher/students/{id}/allow-ai-story:
+    post:
+      operationId: allowStudentAiStory
+      tags: [story, teacher]
+      summary: Grant an extra AI story use to a student for today
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Allowance granted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AllowedAiStoryResponse"
+        "400":
+          description: Invalid student id
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or wrong class
+        "404":
+          description: Student not found
 components:
   parameters:
     TeacherIdQuery:
@@ -2365,8 +2479,188 @@ components:
       properties:
         result:
           $ref: "#/components/schemas/GeneratedStory"
+        sessionId:
+          type: integer
       required:
         - result
+        - sessionId
+    StoryUsageStatus:
+      type: object
+      properties:
+        used:
+          type: integer
+        limit:
+          type: integer
+        extra:
+          type: integer
+        remaining:
+          type: integer
+      required:
+        - used
+        - limit
+        - extra
+        - remaining
+    SubmitStoryQuizBody:
+      type: object
+      properties:
+        sessionId:
+          type: integer
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryQuizAnswer"
+      required:
+        - sessionId
+        - answers
+    StoryQuizAnswer:
+      type: object
+      properties:
+        questionIndex:
+          type: integer
+        selectedAnswer:
+          type: string
+      required:
+        - questionIndex
+        - selectedAnswer
+    StoryQuizSubmission:
+      type: object
+      properties:
+        submission:
+          $ref: "#/components/schemas/StoryQuizSubmissionRecord"
+      required:
+        - submission
+    StoryQuizAnswerResult:
+      type: object
+      properties:
+        questionIndex:
+          type: integer
+        question:
+          type: string
+        selectedAnswer:
+          type: string
+        correctAnswer:
+          type: string
+        isCorrect:
+          type: boolean
+      required:
+        - questionIndex
+        - question
+        - selectedAnswer
+        - correctAnswer
+        - isCorrect
+    StoryQuizSubmissionRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: integer
+        studentId:
+          type: integer
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryQuizAnswerResult"
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        pointsAwarded:
+          type: integer
+          nullable: true
+        teacherFeedback:
+          type: string
+          nullable: true
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - sessionId
+        - studentId
+        - answers
+        - score
+        - maxScore
+        - status
+        - createdAt
+    TeacherStorySubmissionList:
+      type: object
+      properties:
+        submissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherStorySubmission"
+      required:
+        - submissions
+    TeacherStorySubmission:
+      allOf:
+        - $ref: "#/components/schemas/StoryQuizSubmissionRecord"
+        - type: object
+          properties:
+            student:
+              $ref: "#/components/schemas/StudentProfile"
+            session:
+              type: object
+              properties:
+                id:
+                  type: integer
+                title:
+                  type: string
+                storyType:
+                  type: string
+              required:
+                - id
+                - title
+                - storyType
+    ReviewStorySubmissionBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected]
+        teacherFeedback:
+          type: string
+          maxLength: 500
+      required:
+        - status
+    ReviewedStorySubmission:
+      type: object
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+          enum: [accepted, rejected]
+        pointsAwarded:
+          type: integer
+          nullable: true
+        teacherFeedback:
+          type: string
+          nullable: true
+      required:
+        - id
+        - status
+    AllowedAiStoryResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        extraUses:
+          type: integer
+        forDate:
+          type: string
+          format: date
+      required:
+        - allowed
+        - extraUses
+        - forDate
     AIHealthStatus:
       type: object
       properties:
