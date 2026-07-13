@@ -8,3 +8,6 @@
 - [Pre-baked character+accessory models](prebaked-accessory-models.md) — antuq switched from runtime accessory compositing to one fully pre-modeled GLB per gender+accessory; compress new ones with gltf-transform before shipping.
 - [Orval zod export conflicts](orval-zod-export-conflicts.md) — adding OpenAPI query params makes orval emit conflicting param exports from generated/api and generated/types; point package exports at generated/api.ts and delete the generated index.ts.
 - [Backend zod import mismatch](backend-zod-import-mismatch.md) — catalog zod is v3 while lib/db uses zod/v4; backend routes should import zod (v3) and not zod/v4.
+- [Express route circular imports](express-route-circular-imports.md) — importing helpers between sibling route files creates circular deps; move shared helpers under `src/lib/`.
+- [StudentProfile id omission](student-profile-id-omission.md) — generated StudentProfile has no `id`; for lists of other users define a separate Friend schema or add `id` to StudentProfile and enrich every endpoint.
+- [AvatarConfig parse on raw rows](avatar-config-parse-on-raw-rows.md) — when returning raw student rows without `enrichStudentProfile`, parse `avatarConfig` with the zod schema or the frontend receives invalid defaults.

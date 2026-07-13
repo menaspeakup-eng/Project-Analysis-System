@@ -64,6 +64,7 @@ export const getStudentProfileResponseAvatarConfigFrameDefault = `none`;
 export const getStudentProfileResponseAvatarConfigBadgesDefault = [];
 
 export const GetStudentProfileResponse = zod.object({
+  "id": zod.number(),
   "name": zod.string(),
   "points": zod.number(),
   "avatarConfig": zod.object({
@@ -101,6 +102,7 @@ export const updateStudentNameResponseAvatarConfigFrameDefault = `none`;
 export const updateStudentNameResponseAvatarConfigBadgesDefault = [];
 
 export const UpdateStudentNameResponse = zod.object({
+  "id": zod.number(),
   "name": zod.string(),
   "points": zod.number(),
   "avatarConfig": zod.object({
@@ -116,6 +118,15 @@ export const UpdateStudentNameResponse = zod.object({
   "className": zod.union([zod.string(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
   "teacherEmail": zod.union([zod.string(),zod.null()])
+})
+
+
+/**
+ * Deletes the Clerk user and the local student row. This action is irreversible.
+ * @summary Delete the signed-in student's account
+ */
+export const DeleteStudentAccountResponse = zod.object({
+  "deleted": zod.boolean()
 })
 
 
@@ -145,6 +156,7 @@ export const updateStudentAvatarResponseAvatarConfigFrameDefault = `none`;
 export const updateStudentAvatarResponseAvatarConfigBadgesDefault = [];
 
 export const UpdateStudentAvatarResponse = zod.object({
+  "id": zod.number(),
   "name": zod.string(),
   "points": zod.number(),
   "avatarConfig": zod.object({
@@ -1391,13 +1403,17 @@ export const SubmitStoryQuizResponse = zod.object({
   "question": zod.string(),
   "selectedAnswer": zod.string(),
   "correctAnswer": zod.string(),
-  "isCorrect": zod.boolean()
+  "isCorrect": zod.boolean(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']).nullish(),
+  "points": zod.number().nullish(),
+  "note": zod.string().nullish()
 })),
   "score": zod.number(),
   "maxScore": zod.number(),
   "status": zod.enum(['pending', 'accepted', 'rejected']),
   "pointsAwarded": zod.number().nullish(),
   "teacherFeedback": zod.string().nullish(),
+  "reviewedBy": zod.number().nullish(),
   "reviewedAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
 })
@@ -1423,17 +1439,22 @@ export const GetTeacherStorySubmissionsResponse = zod.object({
   "question": zod.string(),
   "selectedAnswer": zod.string(),
   "correctAnswer": zod.string(),
-  "isCorrect": zod.boolean()
+  "isCorrect": zod.boolean(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']).nullish(),
+  "points": zod.number().nullish(),
+  "note": zod.string().nullish()
 })),
   "score": zod.number(),
   "maxScore": zod.number(),
   "status": zod.enum(['pending', 'accepted', 'rejected']),
   "pointsAwarded": zod.number().nullish(),
   "teacherFeedback": zod.string().nullish(),
+  "reviewedBy": zod.number().nullish(),
   "reviewedAt": zod.coerce.date().nullish(),
   "createdAt": zod.coerce.date()
 }).and(zod.object({
   "student": zod.object({
+  "id": zod.number(),
   "name": zod.string(),
   "points": zod.number(),
   "avatarConfig": zod.object({
@@ -1468,11 +1489,19 @@ export const ReviewTeacherStorySubmissionParams = zod.object({
 
 export const reviewTeacherStorySubmissionBodyTeacherFeedbackMax = 500;
 
+export const reviewTeacherStorySubmissionBodyAnswersItemNoteMax = 500;
+
 
 
 export const ReviewTeacherStorySubmissionBody = zod.object({
   "status": zod.enum(['accepted', 'rejected']),
-  "teacherFeedback": zod.string().max(reviewTeacherStorySubmissionBodyTeacherFeedbackMax).optional()
+  "teacherFeedback": zod.string().max(reviewTeacherStorySubmissionBodyTeacherFeedbackMax).optional(),
+  "answers": zod.array(zod.object({
+  "questionIndex": zod.number(),
+  "status": zod.enum(['accepted', 'rejected']),
+  "points": zod.number().optional(),
+  "note": zod.string().max(reviewTeacherStorySubmissionBodyAnswersItemNoteMax).optional()
+})).optional()
 })
 
 export const ReviewTeacherStorySubmissionResponse = zod.object({
@@ -1480,6 +1509,19 @@ export const ReviewTeacherStorySubmissionResponse = zod.object({
   "status": zod.enum(['accepted', 'rejected']),
   "pointsAwarded": zod.number().nullish(),
   "teacherFeedback": zod.string().nullish()
+})
+
+
+/**
+ * @summary Delete an AI story quiz submission and reverse awarded points
+ */
+export const DeleteTeacherStorySubmissionParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteTeacherStorySubmissionResponse = zod.object({
+  "id": zod.number(),
+  "deleted": zod.boolean()
 })
 
 
@@ -1494,6 +1536,168 @@ export const AllowStudentAiStoryResponse = zod.object({
   "allowed": zod.boolean(),
   "extraUses": zod.number(),
   "forDate": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get activity logs for the signed-in student
+ */
+export const GetActivityLogsResponse = zod.object({
+  "logs": zod.array(zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "metadata": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary Get activity logs for any student (admin only)
+ */
+export const GetAdminActivityLogsParams = zod.object({
+  "studentId": zod.coerce.number()
+})
+
+export const GetAdminActivityLogsResponse = zod.object({
+  "logs": zod.array(zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "type": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "metadata": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+}))
+})
+
+
+/**
+ * @summary List accepted friends
+ */
+export const getFriendsResponseFriendsItemAvatarConfigNicknameDefault = ``;
+export const getFriendsResponseFriendsItemAvatarConfigNicknameMax = 30;
+
+export const getFriendsResponseFriendsItemAvatarConfigFrameDefault = `none`;
+export const getFriendsResponseFriendsItemAvatarConfigBadgesDefault = [];
+
+export const GetFriendsResponse = zod.object({
+  "friends": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string(),
+  "nickname": zod.string().max(getFriendsResponseFriendsItemAvatarConfigNicknameMax).default(getFriendsResponseFriendsItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getFriendsResponseFriendsItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getFriendsResponseFriendsItemAvatarConfigBadgesDefault)
+})
+}))
+})
+
+
+/**
+ * @summary List classmates with friendship status
+ */
+export const getClassmatesResponseClassmatesItemOneAvatarConfigNicknameDefault = ``;
+export const getClassmatesResponseClassmatesItemOneAvatarConfigNicknameMax = 30;
+
+export const getClassmatesResponseClassmatesItemOneAvatarConfigFrameDefault = `none`;
+export const getClassmatesResponseClassmatesItemOneAvatarConfigBadgesDefault = [];
+
+export const GetClassmatesResponse = zod.object({
+  "classmates": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string(),
+  "nickname": zod.string().max(getClassmatesResponseClassmatesItemOneAvatarConfigNicknameMax).default(getClassmatesResponseClassmatesItemOneAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getClassmatesResponseClassmatesItemOneAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getClassmatesResponseClassmatesItemOneAvatarConfigBadgesDefault)
+})
+}).and(zod.object({
+  "friendship": zod.object({
+  "id": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "requesterId": zod.number()
+}).nullish()
+})))
+})
+
+
+/**
+ * @summary Send a friend request to a classmate
+ */
+export const SendFriendRequestBody = zod.object({
+  "addresseeId": zod.number()
+})
+
+export const SendFriendRequestResponse = zod.object({
+  "friendship": zod.object({
+  "id": zod.number(),
+  "requesterId": zod.number(),
+  "addresseeId": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "createdAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Accept a friend request
+ */
+export const AcceptFriendRequestParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AcceptFriendRequestResponse = zod.object({
+  "friendship": zod.object({
+  "id": zod.number(),
+  "requesterId": zod.number(),
+  "addresseeId": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "createdAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Reject a friend request
+ */
+export const RejectFriendRequestParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RejectFriendRequestResponse = zod.object({
+  "friendship": zod.object({
+  "id": zod.number(),
+  "requesterId": zod.number(),
+  "addresseeId": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "createdAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary Remove a friend or cancel a request
+ */
+export const RemoveFriendParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RemoveFriendResponse = zod.object({
+  "deleted": zod.boolean()
 })
 
 

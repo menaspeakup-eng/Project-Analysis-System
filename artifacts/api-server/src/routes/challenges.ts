@@ -13,6 +13,7 @@ import {
   requireIdentity,
   requireTeacher,
 } from "../lib/identity";
+import { logActivity } from "../lib/activity-logs";
 
 const router: IRouter = Router();
 
@@ -601,6 +602,13 @@ router.post("/student/challenges/:id/submit", async (req, res) => {
     res.status(409).json({ error: "لقد أرسلت إجابة لهذا التحدي مسبقاً" });
     return;
   }
+
+  await logActivity(student.id, {
+    type: "challenge_complete",
+    title: "أنهى تحدٍ يومي",
+    description: `أرسل إجابة للتحدي "${challenge.title}"`,
+    metadata: JSON.stringify({ challengeId: challenge.id }),
+  });
 
   res.status(201).json({
     id: created.id,

@@ -16,6 +16,7 @@ import {
   requireIdentity,
   requireTeacher,
 } from "../lib/identity";
+import { logActivity } from "../lib/activity-logs";
 
 const router: IRouter = Router();
 
@@ -318,6 +319,13 @@ router.post("/games/:id/complete", async (req, res) => {
       completedAt: now(),
     })
     .returning();
+
+  await logActivity(studentId, {
+    type: "game_complete",
+    title: "أنهى لعبة",
+    description: `أنهى لعبة "${game.name}" وحصل على ${game.pointsReward} نقطة`,
+    metadata: JSON.stringify({ gameId: game.id, score: body.score ?? 0 }),
+  });
 
   res.status(201).json({
     id: session.id,

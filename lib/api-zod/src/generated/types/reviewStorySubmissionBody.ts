@@ -5,10 +5,12 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ReviewStoryQuestionBody } from './reviewStoryQuestionBody';
 import type { ReviewStorySubmissionBodyStatus } from './reviewStorySubmissionBodyStatus';
 
 export interface ReviewStorySubmissionBody {
   status: ReviewStorySubmissionBodyStatus;
   /** @maxLength 500 */
   teacherFeedback?: string;
+  answers?: ReviewStoryQuestionBody[];
 }

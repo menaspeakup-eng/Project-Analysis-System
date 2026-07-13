@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { z } from "zod";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { resolveIdentity, requireIdentity, requireTeacher } from "../lib/identity";
+import { logActivity } from "../lib/activity-logs";
 import {
   db,
   aiStorySessionsTable,
@@ -60,9 +61,17 @@ const QuizAnswersBody = z.object({
   ),
 });
 
+const ReviewQuestionBody = z.object({
+  questionIndex: z.number().int().min(0),
+  status: z.enum(["accepted", "rejected"]),
+  points: z.number().int().min(0).max(100).default(10),
+  note: z.string().max(500).optional(),
+});
+
 const ReviewSubmissionBody = z.object({
   status: z.enum(["accepted", "rejected"]),
   teacherFeedback: z.string().max(500).optional(),
+  answers: z.array(ReviewQuestionBody).optional(),
 });
 
 type GeneratedStory = {
@@ -81,6 +90,23 @@ type GeneratedStory = {
 
 function todayDate(): string {
   return new Date().toISOString().split("T")[0];
+}
+
+function normalizeLetter(letter: string): string {
+  const normalized = letter.trim().toLowerCase();
+  const map: Record<string, string> = {
+    أ: "أ",
+    ب: "ب",
+    ج: "ج",
+    د: "د",
+    a: "أ",
+    b: "ب",
+    c: "ج",
+    d: "د",
+    "آ": "أ",
+    "إ": "أ",
+  };
+  return map[normalized] ?? normalized;
 }
 
 async function getDailyUsage(studentId: number): Promise<{ used: number; limit: number; extra: number }> {
@@ -122,7 +148,7 @@ async function requireDailyStoryAllowance(studentId: number) {
 
 function buildPrompt(studentName: string, storyType: StoryType): string {
   const typeLabel = STORY_TYPE_LABELS[storyType];
-  return `اكتب قصة عربية فصحى قصيرة (300–450 كلمة) بعنوان واضح. يكون البطل: ${studentName}، ونوع القصة: ${typeLabel}.\n\nالمتطلبات:\n- لغة سهلة، جمل قصيرة، تشكيل ممكن، بدون عامية أو رموز تعبيرية.\n- بدون رعب أو رومانسية أو عنف.\n- حوار بسيط، ودرس أخلاقي في النهاية.\n\nأعد النتيجة بالتنسيق التالي فقط، بدون مقدمة:\n\n# عنوان القصة\n\n# القصة\n\n# الكلمات الجديدة\n5 كلمات مع معناها المختصر.\n\n# أسئلة الفهم\n5 أسئلة اختيار من متعدد، لكل سؤال 4 خيارات وذكر الإجابة الصحيحة.\n\n# سؤال تفكير\nسؤال مفتوح للتفكير.\n\n# الدرس المستفاد\nدرس مستفاد في سطر.\n\n# معلومات القراءة\n- مستوى الصعوبة: 1-5\n- عدد الكلمات\n- الزمن المتوقع للقراءة`;
+  return `اكتب قصة عربية فصحى قصيرة (300–400 كلمة) مشكولة بالتشكيل الكامل (الفتحة والضمة والكسرة والسكون والتنوين والشدة والمد)، بطلها: ${studentName}، ونوعها: ${typeLabel}.\n\nالشروط:\n- لغة سهلة، جمل قصيرة، بدون عامية أو رموز تعبيرية.\n- بدون رعب أو رومانسية أو عنف.\n- حوار بسيط، ودرس أخلاقي في النهاية.\n\nأعد النتيجة بالتنسيق التالي فقط، بدون مقدمة أو شرح أو أقواس حول العنوان:\n\n# عنوان القصة\n[العنوان مشكول في سطر واحد]\n\n# القصة\n[القصة مشكولة بفقرات]\n\n# الكلمات الجديدة\n1. كلمة: معناها\n2. كلمة: معناها\n3. كلمة: معناها\n4. كلمة: معناها\n5. كلمة: معناها\n\n# أسئلة الفهم\nاكتب بالضبط 5 أسئلة اختيار من متعدد، كل سؤال بـ 4 خيارات (أ، ب، ج، د)، وذكر الإجابة الصحيحة بحرف واحد.\n\n1. السؤال؟\n   أ) خيار\n   ب) خيار\n   ج) خيار\n   د) خيار\n   الإجابة الصحيحة: ب\n\n2. السؤال؟ ...\n\n...\n\n5. السؤال؟ ...\n\n# سؤال للتفكير\n[سؤال مفتوح]\n\n# الدرس المستفاد\n[درس في سطر]\n\n# معلومات القراءة\n- مستوى الصعوبة: 1-5\n- عدد الكلمات: عدد\n- الزمن المتوقع للقراءة: دقائق`;
 }
 
 function parseStoryText(raw: string): GeneratedStory {
@@ -160,30 +186,37 @@ function parseStoryText(raw: string): GeneratedStory {
 
   const questions: GeneratedStory["questions"] = [];
   const questionBlocks = questionsRaw
-    .split(/\n(?=\d+[\.\-]\s|S\d|س\d|Question|\?)/)
+    .split(/\n(?=\d+[\.\-]\s+|S\d|س\d|Question)/)
     .filter((b) => b.trim());
   for (const block of questionBlocks) {
     const lines = block
       .split("\n")
       .map((l) => l.trim())
       .filter(Boolean);
+    if (lines.length < 2) continue;
     const firstLine = lines[0] || "";
     const questionMatch = firstLine.match(/^(?:\d+[\.\-]\s*)?(.+?\?)/);
     const question = questionMatch ? questionMatch[1] : firstLine;
-    const options: string[] = [];
-    let correctAnswer = "";
+    const options: { letter: string; text: string }[] = [];
+    let correctLetter = "";
     for (const line of lines.slice(1)) {
-      const optionMatch = line.match(/^[-\u0660-\u0669a-dA-D۰-۹]\s*[\.\-)]\s*(.+)$/);
+      const correctMatch = line.match(/(?:الإجابة الصحيحة|الإجابة)[\s:]\s*([أبجدABCDabcd])/);
+      if (correctMatch) {
+        correctLetter = normalizeLetter(correctMatch[1]);
+        continue;
+      }
+      const optionMatch = line.match(/^([-\u0660-\u0669a-dA-D۰-۹])\s*[\.\-)]\s*(.+)$/);
       if (optionMatch) {
-        const text = optionMatch[1].replace(/\s*\(?(?:الإجابة الصحيحة|صحيح|correct)\)?/i, "").trim();
-        if (line.match(/(?:الإجابة الصحيحة|صحيح|correct)/i)) {
-          correctAnswer = text;
-        }
-        options.push(text);
+        const letter = normalizeLetter(optionMatch[1]);
+        const text = optionMatch[2]
+          .replace(/\s*\(?(?:الإجابة الصحيحة|صحيح|correct)\)?/i, "")
+          .trim();
+        options.push({ letter, text });
       }
     }
     if (options.length >= 2) {
-      questions.push({ question, options: options.slice(0, 4), correctAnswer });
+      const correctAnswer = options.find((o) => o.letter === correctLetter)?.text ?? options[0].text;
+      questions.push({ question, options: options.slice(0, 4).map((o) => o.text), correctAnswer });
     }
     if (questions.length >= 5) break;
   }
@@ -319,6 +352,13 @@ router.post("/stories/generate", async (req, res) => {
       })
       .returning();
 
+    await logActivity(identity.student.id, {
+      type: "story_complete",
+      title: "أنشأ قصة ذكية",
+      description: `أنشأ قصة جديدة بعنوان "${result.title}"`,
+      metadata: JSON.stringify({ storyType: body.storyType }),
+    });
+
     res.json({ result, sessionId: session.id });
   } catch (err) {
     const message = err instanceof Error ? err.message : "خطأ غير معروف";
@@ -384,6 +424,13 @@ router.post("/stories/quiz/submit", async (req, res) => {
       status: "pending",
     })
     .returning();
+
+  await logActivity(identity.student.id, {
+    type: "quiz_complete",
+    title: "أكمل اختبار قصة",
+    description: `حصل على ${score} من ${maxScore} في اختبار القصة`,
+    metadata: JSON.stringify({ sessionId: body.sessionId, score, maxScore }),
+  });
 
   res.json({ submission });
 });
@@ -480,7 +527,33 @@ router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
     return;
   }
 
-  const pointsAwarded = body.status === "accepted" ? submission.score * POINTS_PER_CORRECT_ANSWER : 0;
+  // Merge per-question decisions into the stored answers.
+  const storedAnswers = (submission.answers ?? []) as Array<{
+    questionIndex: number;
+    question: string;
+    selectedAnswer: string;
+    correctAnswer: string;
+    isCorrect: boolean;
+    status?: "accepted" | "rejected";
+    points?: number;
+    note?: string;
+  }>;
+  const decisions = body.answers ?? [];
+  const updatedAnswers = storedAnswers.map((a) => {
+    const decision = decisions.find((d) => d.questionIndex === a.questionIndex);
+    if (!decision) return a;
+    return {
+      ...a,
+      status: decision.status,
+      points: decision.points,
+      note: decision.note,
+    };
+  });
+
+  const pointsAwarded =
+    body.status === "accepted"
+      ? updatedAnswers.reduce((sum, a) => sum + (a.status === "accepted" ? (a.points ?? POINTS_PER_CORRECT_ANSWER) : 0), 0)
+      : 0;
 
   await db.transaction(async (tx) => {
     await tx
@@ -488,7 +561,9 @@ router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
       .set({
         status: body.status,
         teacherFeedback: body.teacherFeedback ?? null,
-        pointsAwarded: body.status === "accepted" ? pointsAwarded : null,
+        answers: updatedAnswers as unknown as Record<string, unknown>[],
+        pointsAwarded: body.status === "accepted" ? pointsAwarded : 0,
+        reviewedBy: identity.student.id,
         reviewedAt: new Date(),
       })
       .where(eq(aiStoryQuizSubmissionsTable.id, submissionId));
@@ -502,6 +577,50 @@ router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
   });
 
   res.json({ id: submissionId, status: body.status, pointsAwarded, teacherFeedback: body.teacherFeedback });
+});
+
+router.delete("/teacher/stories/submissions/:id", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireTeacher(identity);
+
+  const submissionId = Number(req.params.id);
+  if (!Number.isFinite(submissionId)) {
+    res.status(400).json({ error: "معرّف الإجابة غير صالح" });
+    return;
+  }
+
+  const submission = await db.query.aiStoryQuizSubmissionsTable.findFirst({
+    where: eq(aiStoryQuizSubmissionsTable.id, submissionId),
+  });
+  if (!submission) {
+    res.status(404).json({ error: "الإجابة غير موجودة" });
+    return;
+  }
+
+  const student = await db.query.studentsTable.findFirst({
+    where: eq(studentsTable.id, submission.studentId),
+  });
+  if (!student || !student.classId) {
+    res.status(404).json({ error: "الطالب غير مرتبط بصف" });
+    return;
+  }
+  if (!identity.isAdmin && !identity.teacherClassIds.includes(student.classId)) {
+    res.status(403).json({ error: "لا يمكنك حذف إجابة طالب من صف آخر" });
+    return;
+  }
+
+  await db.transaction(async (tx) => {
+    if (submission.status === "accepted" && submission.pointsAwarded && submission.pointsAwarded > 0) {
+      await tx
+        .update(studentsTable)
+        .set({ points: sql`${studentsTable.points} - ${submission.pointsAwarded}` })
+        .where(eq(studentsTable.id, submission.studentId));
+    }
+    await tx.delete(aiStoryQuizSubmissionsTable).where(eq(aiStoryQuizSubmissionsTable.id, submissionId));
+  });
+
+  res.json({ id: submissionId, deleted: true });
 });
 
 router.post("/teacher/students/:id/allow-ai-story", async (req, res) => {

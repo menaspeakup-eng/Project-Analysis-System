@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Link } from "wouter";
-import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, CheckCircle2, Target, Lock, AlertTriangle, Trophy, Send } from "lucide-react";
+import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, CheckCircle2, Target, Lock, AlertTriangle, Trophy, Send, Home, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,6 +86,7 @@ export default function AIStory() {
   const [quizMode, setQuizMode] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   const { mutate: generateStory, data, isPending, error, reset } = useGenerateStory();
   const { data: usageData, refetch: refetchUsage } = useGetStoriesUsage({
@@ -141,6 +142,7 @@ export default function AIStory() {
       {
         onSuccess: () => {
           setQuizSubmitted(true);
+          setQuizMode(false);
           toast({ title: "تم إرسال الإجابات للمعلم", description: "ستظهر النتيجة بعد مراجعة المعلم" });
         },
         onError: (err) => {
@@ -150,16 +152,24 @@ export default function AIStory() {
     );
   };
 
+  const currentQuestion = result?.questions?.[currentQuestionIndex];
+  const totalQuestions = result?.questions?.length ?? 0;
+  const answeredQuestions = Object.keys(quizAnswers).length;
+  const allAnswered = totalQuestions > 0 && answeredQuestions === totalQuestions;
+
   return (
     <div className="min-h-[100dvh] bg-background relative overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-border">
         <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/ai-assistant" className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center hover:bg-[hsl(265,60%,88%)] transition-colors">
+          <div className="flex items-center gap-2">
+            <Link href="/ai-assistant" className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center hover:bg-[hsl(265,60%,88%)] transition-colors" aria-label="رجوع">
               <ArrowRight className="w-5 h-5 rotate-180" />
             </Link>
-            <h1 className="text-lg font-black text-foreground">📖 قصتي الذكية</h1>
+            <Link href="/portal" className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center hover:bg-primary/20 transition-colors" aria-label="الرئيسية">
+              <Home className="w-5 h-5" />
+            </Link>
+            <h1 className="text-lg font-black text-foreground mr-2">📖 قصتي الذكية</h1>
           </div>
           <AIStatusIndicator />
         </div>
@@ -440,51 +450,90 @@ export default function AIStory() {
                 <motion.div variants={staggerItem}>
                   <Card className="rounded-3xl border-border bg-white shadow-sm overflow-hidden">
                     <CardHeader className="pb-4">
-                      <CardTitle className="text-xl font-black flex items-center gap-2">
-                        <Target className="w-6 h-6 text-[hsl(265,60%,45%)]" />
-                        اختبر فهمك للقصة
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl font-black flex items-center gap-2">
+                          <Target className="w-6 h-6 text-[hsl(265,60%,45%)]" />
+                          اختبر فهمك للقصة
+                        </CardTitle>
+                        <Badge variant="outline" className="rounded-full font-bold">
+                          السؤال {currentQuestionIndex + 1} من {totalQuestions}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 h-2 w-full bg-muted rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[hsl(265,60%,55%)] transition-all duration-300"
+                          style={{ width: `${totalQuestions > 0 ? ((currentQuestionIndex + 1) / totalQuestions) * 100 : 0}%` }}
+                        />
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                      {result?.questions?.map((q, idx) => (
-                        <div key={idx} className="space-y-3">
-                          <p className="font-bold text-foreground">
-                            {idx + 1}. {q.question}
+                      {currentQuestion && (
+                        <div className="space-y-4">
+                          <p className="font-bold text-foreground text-lg">
+                            {currentQuestionIndex + 1}. {currentQuestion.question}
                           </p>
                           <RadioGroup
-                            value={quizAnswers[idx] ?? ""}
-                            onValueChange={(value) => setQuizAnswers((prev) => ({ ...prev, [idx]: value }))}
-                            className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+                            value={quizAnswers[currentQuestionIndex] ?? ""}
+                            onValueChange={(value) => setQuizAnswers((prev) => ({ ...prev, [currentQuestionIndex]: value }))}
+                            className="grid grid-cols-1 gap-2"
                           >
-                            {q.options.map((opt) => (
-                              <div key={opt} className="flex items-center gap-2 rounded-xl border border-border bg-[hsl(40,33%,98%)] p-3 hover:bg-[hsl(40,33%,96%)] transition-colors">
-                                <RadioGroupItem value={opt} id={`q-${idx}-${opt}`} />
-                                <Label htmlFor={`q-${idx}-${opt}`} className="flex-1 font-medium text-sm cursor-pointer">
+                            {currentQuestion.options.map((opt) => (
+                              <div key={opt} className={`flex items-center gap-3 rounded-xl border p-4 hover:bg-[hsl(40,33%,96%)] transition-colors cursor-pointer ${quizAnswers[currentQuestionIndex] === opt ? "border-[hsl(265,60%,55%)] bg-[hsl(265,60%,96%)]" : "border-border bg-[hsl(40,33%,98%)]"}`}>
+                                <RadioGroupItem value={opt} id={`q-${currentQuestionIndex}-${opt}`} />
+                                <Label htmlFor={`q-${currentQuestionIndex}-${opt}`} className="flex-1 font-medium text-base cursor-pointer">
                                   {opt}
                                 </Label>
                               </div>
                             ))}
                           </RadioGroup>
                         </div>
-                      ))}
-                      <Button
-                        size="lg"
-                        className="w-full h-14 rounded-xl text-lg font-bold"
-                        onClick={handleQuizSubmit}
-                        disabled={isSubmittingQuiz}
-                      >
-                        {isSubmittingQuiz ? (
-                          <>
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            جاري الإرسال...
-                          </>
+                      )}
+
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          className="rounded-xl h-12 font-bold flex-1"
+                          onClick={() => setCurrentQuestionIndex((i) => Math.max(0, i - 1))}
+                          disabled={currentQuestionIndex === 0}
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                          السابق
+                        </Button>
+                        {currentQuestionIndex < totalQuestions - 1 ? (
+                          <Button
+                            className="rounded-xl h-12 font-bold flex-1"
+                            onClick={() => setCurrentQuestionIndex((i) => Math.min(totalQuestions - 1, i + 1))}
+                            disabled={!quizAnswers[currentQuestionIndex]}
+                          >
+                            التالي
+                            <ChevronLeft className="w-5 h-5" />
+                          </Button>
                         ) : (
-                          <>
-                            <Send className="w-5 h-5" />
-                            إرسال الإجابات
-                          </>
+                          <Button
+                            className="rounded-xl h-12 font-bold flex-1"
+                            onClick={handleQuizSubmit}
+                            disabled={isSubmittingQuiz || !allAnswered}
+                          >
+                            {isSubmittingQuiz ? (
+                              <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                جاري الإرسال...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="w-5 h-5" />
+                                إرسال الإجابات
+                              </>
+                            )}
+                          </Button>
                         )}
-                      </Button>
+                      </div>
+
+                      {!allAnswered && (
+                        <p className="text-sm text-muted-foreground font-medium text-center">
+                          أجبت على {answeredQuestions} من {totalQuestions} أسئلة.
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>

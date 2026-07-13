@@ -7,13 +7,9 @@
  */
 import type { AvatarConfig } from './avatarConfig';
 
-export interface StudentProfile {
+export interface Friend {
   id: number;
   name: string;
   points: number;
   avatarConfig: AvatarConfig;
-  classId: number | null;
-  className: string | null;
-  teacherName: string | null;
-  teacherEmail: string | null;
 }

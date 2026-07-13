@@ -7,6 +7,7 @@ import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { ThemeProvider } from 'next-themes';
 
 import Home from "@/pages/home";
 import Portal from "@/pages/portal";
@@ -23,6 +24,9 @@ import NotFound from "@/pages/not-found";
 import ChatPage from "@/pages/chat";
 import AIAssistant from "@/pages/ai-assistant";
 import AIStory from "@/pages/ai-story";
+import Settings from "@/pages/settings";
+import Achievements from "@/pages/achievements";
+import Friends from "@/pages/friends";
 import { useGetIdentityMe } from "@workspace/api-client-react";
 
 const clerkPubKey = publishableKeyFromHost(
@@ -200,6 +204,9 @@ function ClerkProviderWithRoutes() {
             <Route path="/chat" component={ChatPage} />
             <Route path="/ai-assistant" component={AIAssistant} />
             <Route path="/ai-story" component={AIStory} />
+            <Route path="/settings" component={Settings} />
+            <Route path="/achievements" component={Achievements} />
+            <Route path="/friends" component={Friends} />
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />
             <Route path="/schools" component={Schools} />
@@ -214,9 +221,11 @@ function ClerkProviderWithRoutes() {
 
 function App() {
   return (
-    <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
-    </WouterRouter>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <WouterRouter base={basePath}>
+        <ClerkProviderWithRoutes />
+      </WouterRouter>
+    </ThemeProvider>
   );
 }
 

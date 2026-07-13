@@ -9,6 +9,8 @@ import identityRouter from "./identity";
 import gamesRouter from "./games";
 import chatRouter from "./chat";
 import storyRouter from "./story";
+import activityLogsRouter from "./activity-logs";
+import friendsRouter from "./friends";
 
 const router: IRouter = Router();
 
@@ -22,5 +24,7 @@ router.use(challengesRouter);
 router.use(gamesRouter);
 router.use(chatRouter);
 router.use(storyRouter);
+router.use(activityLogsRouter);
+router.use(friendsRouter);
 
 export default router;

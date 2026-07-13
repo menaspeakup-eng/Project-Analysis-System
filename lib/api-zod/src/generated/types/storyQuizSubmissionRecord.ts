@@ -18,6 +18,7 @@ export interface StoryQuizSubmissionRecord {
   status: StoryQuizSubmissionRecordStatus;
   pointsAwarded?: number | null;
   teacherFeedback?: string | null;
+  reviewedBy?: number | null;
   reviewedAt?: Date | null;
   createdAt: Date;
 }

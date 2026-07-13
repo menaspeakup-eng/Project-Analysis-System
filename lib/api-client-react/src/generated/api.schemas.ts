@@ -54,6 +54,7 @@ export interface Identity {
 }
 
 export interface StudentProfile {
+  id: number;
   name: string;
   points: number;
   avatarConfig: AvatarConfig;
@@ -717,12 +718,24 @@ export interface SubmitStoryQuizBody {
   answers: StoryQuizAnswer[];
 }
 
+export type StoryQuizAnswerResultStatus = typeof StoryQuizAnswerResultStatus[keyof typeof StoryQuizAnswerResultStatus] | null;
+
+
+export const StoryQuizAnswerResultStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
 export interface StoryQuizAnswerResult {
   questionIndex: number;
   question: string;
   selectedAnswer: string;
   correctAnswer: string;
   isCorrect: boolean;
+  status?: StoryQuizAnswerResultStatus;
+  points?: number | null;
+  note?: string | null;
 }
 
 export type StoryQuizSubmissionRecordStatus = typeof StoryQuizSubmissionRecordStatus[keyof typeof StoryQuizSubmissionRecordStatus];
@@ -744,6 +757,7 @@ export interface StoryQuizSubmissionRecord {
   status: StoryQuizSubmissionRecordStatus;
   pointsAwarded?: number | null;
   teacherFeedback?: string | null;
+  reviewedBy?: number | null;
   reviewedAt?: string | null;
   createdAt: string;
 }
@@ -775,10 +789,27 @@ export const ReviewStorySubmissionBodyStatus = {
   rejected: 'rejected',
 } as const;
 
+export type ReviewStoryQuestionBodyStatus = typeof ReviewStoryQuestionBodyStatus[keyof typeof ReviewStoryQuestionBodyStatus];
+
+
+export const ReviewStoryQuestionBodyStatus = {
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ReviewStoryQuestionBody {
+  questionIndex: number;
+  status: ReviewStoryQuestionBodyStatus;
+  points?: number;
+  /** @maxLength 500 */
+  note?: string;
+}
+
 export interface ReviewStorySubmissionBody {
   status: ReviewStorySubmissionBodyStatus;
   /** @maxLength 500 */
   teacherFeedback?: string;
+  answers?: ReviewStoryQuestionBody[];
 }
 
 export type ReviewedStorySubmissionStatus = typeof ReviewedStorySubmissionStatus[keyof typeof ReviewedStorySubmissionStatus];
@@ -816,10 +847,87 @@ export interface AIHealthStatus {
   model?: string;
 }
 
+export interface ActivityLog {
+  id: number;
+  studentId: number;
+  type: string;
+  title: string;
+  description: string;
+  metadata?: string | null;
+  createdAt: string;
+}
+
+export interface ActivityLogList {
+  logs: ActivityLog[];
+}
+
+export interface SendFriendRequestBody {
+  addresseeId: number;
+}
+
+export type FriendshipResponseFriendshipStatus = typeof FriendshipResponseFriendshipStatus[keyof typeof FriendshipResponseFriendshipStatus];
+
+
+export const FriendshipResponseFriendshipStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export type FriendshipResponseFriendship = {
+  id: number;
+  requesterId: number;
+  addresseeId: number;
+  status: FriendshipResponseFriendshipStatus;
+  createdAt: string;
+};
+
+export interface FriendshipResponse {
+  friendship: FriendshipResponseFriendship;
+}
+
+export interface Friend {
+  id: number;
+  name: string;
+  points: number;
+  avatarConfig: AvatarConfig;
+}
+
+export interface FriendList {
+  friends: Friend[];
+}
+
+export type ClassmateFriendshipStatus = typeof ClassmateFriendshipStatus[keyof typeof ClassmateFriendshipStatus];
+
+
+export const ClassmateFriendshipStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export type ClassmateFriendship = {
+  id: number;
+  status: ClassmateFriendshipStatus;
+  requesterId: number;
+} | null;
+
+export type Classmate = Friend & {
+  friendship?: ClassmateFriendship;
+};
+
+export interface ClassmateList {
+  classmates: Classmate[];
+}
+
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */
 export type TeacherIdQueryParameter = number;
+
+export type DeleteStudentAccount200 = {
+  deleted: boolean;
+};
 
 export type GetTeacherChallengesParams = {
 /**
@@ -938,5 +1046,14 @@ export type GetTeacherGameStatsParams = {
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */
 teacherId?: TeacherIdQueryParameter;
+};
+
+export type DeleteTeacherStorySubmission200 = {
+  id: number;
+  deleted: boolean;
+};
+
+export type RemoveFriend200 = {
+  deleted: boolean;
 };
 

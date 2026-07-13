@@ -59,6 +59,7 @@ export const aiStoryQuizSubmissionsTable = pgTable(
     status: text("status").notNull().default("pending"),
     pointsAwarded: integer("points_awarded"),
     teacherFeedback: text("teacher_feedback"),
+    reviewedBy: integer("reviewed_by").references(() => studentsTable.id, { onDelete: "set null" }),
     reviewedAt: timestamp("reviewed_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

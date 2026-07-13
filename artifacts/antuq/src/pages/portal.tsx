@@ -6,6 +6,7 @@ import {
   useGetStudentProfile,
   useGetLeaderboard,
   useGetIdentityMe,
+  useGetActivityLogs,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -173,6 +174,7 @@ export default function Portal() {
     { classId: profile?.classId ?? undefined },
     { query: { enabled: !!isSignedIn } as never },
   );
+  const { data: activityData } = useGetActivityLogs({ query: { enabled: !!isSignedIn } as never });
 
   // Google sometimes populates fullName without splitting it into first/last name,
   // so fall back through fullName before the generic placeholder.
@@ -407,13 +409,29 @@ export default function Portal() {
               <Trophy className="w-5 h-5 text-secondary-foreground" />
               أحدث الإنجازات
             </h3>
-            <span className="text-xs font-bold text-muted-foreground bg-background px-3 py-1 rounded-full border border-border">
-              قريباً
-            </span>
+            <Link href="/achievements" className="text-xs font-bold text-primary hover:underline">
+              عرض الكل
+            </Link>
           </div>
-          <p className="text-muted-foreground font-medium text-sm">
-            أنجز دروسك وألعابك الأولى لتبدأ بجمع الإنجازات هنا.
-          </p>
+          {(activityData?.logs?.length ?? 0) === 0 ? (
+            <p className="text-muted-foreground font-medium text-sm">
+              أنجز دروسك وألعابك الأولى لتبدأ بجمع الإنجازات هنا.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {activityData?.logs?.slice(0, 3).map((log) => (
+                <div key={log.id} className="flex items-center gap-3 rounded-2xl bg-muted/30 p-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <Check className="w-4 h-4" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-sm text-foreground">{log.title}</p>
+                    <p className="text-xs text-muted-foreground">{log.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Shortcuts grid */}
@@ -421,12 +439,12 @@ export default function Portal() {
           <h3 className="font-black text-foreground text-lg mb-4">استكشف انطق</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <ComingSoonCard icon={Play} label="الألعاب التعليمية" colorClass="bg-accent/15 text-accent" href="/games" />
-            <ComingSoonCard icon={BookOpen} label="المكتبة" colorClass="bg-primary/15 text-primary" />
-            <ComingSoonCard icon={Award} label="جميع الإنجازات" colorClass="bg-secondary/20 text-secondary-foreground" />
+            <ComingSoonCard icon={BookOpen} label="قصصي الذكية" colorClass="bg-primary/15 text-primary" href="/ai-story" />
+            <ComingSoonCard icon={Award} label="الإنجازات" colorClass="bg-secondary/20 text-secondary-foreground" href="/achievements" />
             <ComingSoonCard icon={MessageCircle} label="الشات" colorClass="bg-[hsl(180,60%,90%)] text-[hsl(180,60%,35%)]" href="/chat" />
             <ComingSoonCard icon={Sparkles} label="مساعد القراءة الذكي" colorClass="bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)]" href="/ai-assistant" />
-            <ComingSoonCard icon={Users} label="الأصدقاء" colorClass="bg-[hsl(335,75%,94%)] text-[hsl(335,75%,50%)]" />
-            <ComingSoonCard icon={Settings} label="الإعدادات" colorClass="bg-muted text-muted-foreground" />
+            <ComingSoonCard icon={Users} label="الأصدقاء" colorClass="bg-[hsl(335,75%,94%)] text-[hsl(335,75%,50%)]" href="/friends" />
+            <ComingSoonCard icon={Settings} label="الإعدادات" colorClass="bg-muted text-muted-foreground" href="/settings" />
           </div>
         </section>
       </main>

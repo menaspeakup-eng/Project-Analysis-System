@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StoryQuizAnswerResultStatus } from './storyQuizAnswerResultStatus';
 
 export interface StoryQuizAnswerResult {
   questionIndex: number;
@@ -12,4 +13,7 @@ export interface StoryQuizAnswerResult {
   selectedAnswer: string;
   correctAnswer: string;
   isCorrect: boolean;
+  status?: StoryQuizAnswerResultStatus;
+  points?: number | null;
+  note?: string | null;
 }

@@ -86,6 +86,26 @@ paths:
                 $ref: "#/components/schemas/StudentProfile"
         "401":
           description: Not signed in
+    delete:
+      operationId: deleteStudentAccount
+      tags: [student]
+      summary: Delete the signed-in student's account
+      description: Deletes the Clerk user and the local student row. This action is irreversible.
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                required: [deleted]
+        "401":
+          description: Not signed in
+        "500":
+          description: Deletion failed
   /student/avatar:
     patch:
       operationId: updateStudentAvatar
@@ -1173,6 +1193,36 @@ paths:
           description: Not a teacher or wrong class
         "404":
           description: Submission not found
+  /teacher/stories/submissions/{id}:
+    delete:
+      operationId: deleteTeacherStorySubmission
+      tags: [story, teacher]
+      summary: Delete an AI story quiz submission and reverse awarded points
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  deleted:
+                    type: boolean
+                required: [id, deleted]
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or wrong class
+        "404":
+          description: Submission not found
   /teacher/students/{id}/allow-ai-story:
     post:
       operationId: allowStudentAiStory
@@ -1199,6 +1249,164 @@ paths:
           description: Not a teacher or wrong class
         "404":
           description: Student not found
+  /activity-logs:
+    get:
+      operationId: getActivityLogs
+      tags: [activity]
+      summary: Get activity logs for the signed-in student
+      responses:
+        "200":
+          description: Activity logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityLogList"
+        "401":
+          description: Not signed in
+  /admin/activity-logs/{studentId}:
+    get:
+      operationId: getAdminActivityLogs
+      tags: [admin, activity]
+      summary: Get activity logs for any student (admin only)
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Activity logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivityLogList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not an admin
+  /friends:
+    get:
+      operationId: getFriends
+      tags: [friends]
+      summary: List accepted friends
+      responses:
+        "200":
+          description: Friends list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendList"
+        "401":
+          description: Not signed in
+  /friends/classmates:
+    get:
+      operationId: getClassmates
+      tags: [friends]
+      summary: List classmates with friendship status
+      responses:
+        "200":
+          description: Classmates list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassmateList"
+        "401":
+          description: Not signed in
+  /friends/request:
+    post:
+      operationId: sendFriendRequest
+      tags: [friends]
+      summary: Send a friend request to a classmate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendFriendRequestBody"
+      responses:
+        "200":
+          description: Request sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendshipResponse"
+        "400":
+          description: Invalid request
+        "401":
+          description: Not signed in
+        "403":
+          description: Not in the same class
+  /friends/{id}/accept:
+    post:
+      operationId: acceptFriendRequest
+      tags: [friends]
+      summary: Accept a friend request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendshipResponse"
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot accept this request
+  /friends/{id}/reject:
+    post:
+      operationId: rejectFriendRequest
+      tags: [friends]
+      summary: Reject a friend request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FriendshipResponse"
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot reject this request
+  /friends/{id}:
+    delete:
+      operationId: removeFriend
+      tags: [friends]
+      summary: Remove a friend or cancel a request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                required: [deleted]
+        "401":
+          description: Not signed in
+        "403":
+          description: Cannot remove this friendship
 components:
   parameters:
     TeacherIdQuery:
@@ -1308,6 +1516,8 @@ components:
     StudentProfile:
       type: object
       properties:
+        id:
+          type: integer
         name:
           type: string
         points:
@@ -1331,6 +1541,7 @@ components:
             - type: string
             - type: "null"
       required:
+        - id
         - name
         - points
         - avatarConfig
@@ -2542,6 +2753,16 @@ components:
           type: string
         isCorrect:
           type: boolean
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+          nullable: true
+        points:
+          type: integer
+          nullable: true
+        note:
+          type: string
+          nullable: true
       required:
         - questionIndex
         - question
@@ -2573,6 +2794,9 @@ components:
           nullable: true
         teacherFeedback:
           type: string
+          nullable: true
+        reviewedBy:
+          type: integer
           nullable: true
         reviewedAt:
           type: string
@@ -2628,7 +2852,27 @@ components:
         teacherFeedback:
           type: string
           maxLength: 500
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReviewStoryQuestionBody"
       required:
+        - status
+    ReviewStoryQuestionBody:
+      type: object
+      properties:
+        questionIndex:
+          type: integer
+        status:
+          type: string
+          enum: [accepted, rejected]
+        points:
+          type: integer
+        note:
+          type: string
+          maxLength: 500
+      required:
+        - questionIndex
         - status
     ReviewedStorySubmission:
       type: object
@@ -2673,3 +2917,125 @@ components:
           type: string
       required:
         - status
+    ActivityLogList:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityLog"
+      required:
+        - logs
+    ActivityLog:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        type:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - studentId
+        - type
+        - title
+        - description
+        - createdAt
+    SendFriendRequestBody:
+      type: object
+      properties:
+        addresseeId:
+          type: integer
+      required:
+        - addresseeId
+    FriendshipResponse:
+      type: object
+      properties:
+        friendship:
+          type: object
+          properties:
+            id:
+              type: integer
+            requesterId:
+              type: integer
+            addresseeId:
+              type: integer
+            status:
+              type: string
+              enum: [pending, accepted, rejected]
+            createdAt:
+              type: string
+              format: date-time
+          required:
+            - id
+            - requesterId
+            - addresseeId
+            - status
+            - createdAt
+      required:
+        - friendship
+    FriendList:
+      type: object
+      properties:
+        friends:
+          type: array
+          items:
+            $ref: "#/components/schemas/Friend"
+      required:
+        - friends
+    ClassmateList:
+      type: object
+      properties:
+        classmates:
+          type: array
+          items:
+            $ref: "#/components/schemas/Classmate"
+      required:
+        - classmates
+    Friend:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        points:
+          type: integer
+        avatarConfig:
+          $ref: "#/components/schemas/AvatarConfig"
+      required:
+        - id
+        - name
+        - points
+        - avatarConfig
+    Classmate:
+      allOf:
+        - $ref: "#/components/schemas/Friend"
+        - type: object
+          properties:
+            friendship:
+              type: object
+              properties:
+                id:
+                  type: integer
+                status:
+                  type: string
+                  enum: [pending, accepted, rejected]
+                requesterId:
+                  type: integer
+              required:
+                - id
+                - status
+                - requesterId
+              nullable: true

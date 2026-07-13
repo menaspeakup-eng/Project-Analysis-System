@@ -14,6 +14,7 @@ import {
   UpdateStudentAvatarResponse,
 } from "@workspace/api-zod";
 import { isAccessoriesUnlocked, isPetUnlocked } from "../lib/avatarUnlocks";
+import { logActivity } from "../lib/activity-logs";
 
 const router: IRouter = Router();
 
@@ -21,7 +22,7 @@ const UpdateStudentNameBody = z.object({
   name: z.string().min(1).max(120),
 });
 
-async function getOrCreateStudent(userId: string) {
+export async function getOrCreateStudent(userId: string) {
   const existing = await db.query.studentsTable.findFirst({
     where: eq(studentsTable.clerkUserId, userId),
   });
@@ -74,6 +75,7 @@ async function enrichStudentProfile(student: typeof studentsTable.$inferSelect) 
   }
 
   return {
+    id: student.id,
     name: student.name,
     points: student.points,
     avatarConfig: avatarConfigSchema.parse(student.avatarConfig),
@@ -113,9 +115,35 @@ router.patch("/student/me", async (req, res) => {
     .where(eq(studentsTable.id, student.id))
     .returning();
 
+  await logActivity(student.id, {
+    type: "name_change",
+    title: "غيّر الاسم",
+    description: `تم تحديث الاسم إلى "${body.name}"`,
+  });
+
   const profile = await enrichStudentProfile(updated);
   const data = GetStudentProfileResponse.parse(profile);
   res.json(data);
+});
+
+router.delete("/student/me", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const student = await getOrCreateStudent(userId);
+  try {
+    await clerkClient.users.deleteUser(userId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "فشل حذف حساب المستخدم";
+    res.status(500).json({ error: message });
+    return;
+  }
+
+  await db.delete(studentsTable).where(eq(studentsTable.id, student.id));
+  res.json({ deleted: true });
 });
 
 router.patch("/student/avatar", async (req, res) => {
@@ -142,6 +170,13 @@ router.patch("/student/avatar", async (req, res) => {
     .set({ avatarConfig: body })
     .where(eq(studentsTable.id, student.id))
     .returning();
+
+  await logActivity(student.id, {
+    type: "avatar_change",
+    title: "غيّر الشخصية الكرتونية",
+    description: "تم تحديث مظهر الشخصية",
+    metadata: JSON.stringify({ gender: body.gender }),
+  });
 
   const profile = await enrichStudentProfile(updated);
   const data = UpdateStudentAvatarResponse.parse(profile);
