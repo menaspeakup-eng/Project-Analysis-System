@@ -19,6 +19,8 @@ export const STORY_TYPES = [
 
 export type StoryType = (typeof STORY_TYPES)[number];
 
+const GEMINI_MODEL = process.env["GEMINI_MODEL"] || "gemini-2.5-pro";
+
 const STORY_TYPE_LABELS: Record<StoryType, string> = {
   adventure: "مغامرة",
   space: "الفضاء",
@@ -191,6 +193,24 @@ function parseStoryText(raw: string): GeneratedStory {
   };
 }
 
+function getGeminiErrorMessage(geminiError: unknown): string {
+  if (typeof geminiError === "string") return geminiError;
+  if (!geminiError || typeof geminiError !== "object") return "حدث خطأ في الاتصال بالذكاء الاصطناعي";
+  const error = geminiError as Record<string, unknown>;
+  const message =
+    typeof error.message === "string" ? error.message : Array.isArray(error.message) ? error.message.join(" ") : "";
+  if (message.includes("quota") || message.includes("Quota")) {
+    return "الحساب المجاني للذكاء الاصطناعي وصل للحد الأقصى. يرجى تفعيل الفوترة أو استخدام مفتاح آخر.";
+  }
+  if (message.includes("no longer available") || message.includes("not found") || message.includes("does not exist")) {
+    return `نموذج الذكاء الاصطناعي المستخدم (${GEMINI_MODEL}) غير متاح على هذا المفتاح. يرجى اختيار نموذج آخر.`;
+  }
+  if (message.includes("API key not valid") || message.includes("API Key not valid")) {
+    return "مفتاح الذكاء الاصطناعي غير صالح. يرجى التحقق من GEMINI_API_KEY.";
+  }
+  return message || "حدث خطأ في الاتصال بالذكاء الاصطناعي";
+}
+
 router.post("/stories/generate", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
@@ -203,7 +223,7 @@ router.post("/stories/generate", async (req, res) => {
   }
 
   const prompt = buildPrompt(body.studentName, body.storyType);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
 
   try {
     const geminiRes = await fetch(url, {
@@ -219,8 +239,9 @@ router.post("/stories/generate", async (req, res) => {
     });
 
     if (!geminiRes.ok) {
-      const text = await geminiRes.text();
-      res.status(502).json({ error: "فشل الاتصال بـ Gemini", details: text });
+      const json = (await geminiRes.json().catch(() => ({}))) as { error?: { message?: string } } | string;
+      const geminiError = typeof json === "string" ? json : json.error;
+      res.status(502).json({ error: getGeminiErrorMessage(geminiError) });
       return;
     }
 
@@ -236,7 +257,7 @@ router.post("/stories/generate", async (req, res) => {
 
     const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
     if (!rawText) {
-      res.status(502).json({ error: "لم يعيد Gemini نصاً", details: json });
+      res.status(502).json({ error: "لم يعيد الذكاء الاصطناعي نصاً للقصة. حاول مرة أخرى." });
       return;
     }
 
@@ -245,6 +266,38 @@ router.post("/stories/generate", async (req, res) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : "خطأ غير معروف";
     res.status(500).json({ error: message });
+  }
+});
+
+router.get("/stories/health", async (_req, res) => {
+  const apiKey = process.env["GEMINI_API_KEY"];
+  if (!apiKey) {
+    res.status(503).json({ status: "error", message: "GEMINI_API_KEY غير مضبوط" });
+    return;
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  try {
+    const geminiRes = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: "مرحبا" }] }],
+        generationConfig: { maxOutputTokens: 1 },
+      }),
+    });
+
+    if (!geminiRes.ok) {
+      const json = (await geminiRes.json().catch(() => ({}))) as { error?: { message?: string } } | string;
+      const geminiError = typeof json === "string" ? json : json.error;
+      res.status(503).json({ status: "error", message: getGeminiErrorMessage(geminiError) });
+      return;
+    }
+
+    res.json({ status: "ok", model: GEMINI_MODEL });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "خطأ غير معروف";
+    res.status(503).json({ status: "error", message });
   }
 });
 

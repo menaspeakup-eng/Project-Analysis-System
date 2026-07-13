@@ -699,6 +699,20 @@ export interface GenerateStoryResponse {
   result: GeneratedStory;
 }
 
+export type AIHealthStatusStatus = typeof AIHealthStatusStatus[keyof typeof AIHealthStatusStatus];
+
+
+export const AIHealthStatusStatus = {
+  ok: 'ok',
+  error: 'error',
+} as const;
+
+export interface AIHealthStatus {
+  status: AIHealthStatusStatus;
+  message?: string;
+  model?: string;
+}
+
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */

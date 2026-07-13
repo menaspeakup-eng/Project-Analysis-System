@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AIHealthStatus,
   AdminClass,
   AdminClassList,
   AdminStudentClass,
@@ -3531,6 +3532,84 @@ export function useGetChatMutes<TData = Awaited<ReturnType<typeof getChatMutes>>
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetChatMutesQueryOptions(classId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetStoriesHealthUrl = () => {
+
+
+
+
+  return `/api/stories/health`
+}
+
+/**
+ * Verifies the Gemini API key and model connectivity.
+ * @summary Check AI story service health
+ */
+export const getStoriesHealth = async ( options?: RequestInit): Promise<AIHealthStatus> => {
+
+  return customFetch<AIHealthStatus>(getGetStoriesHealthUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStoriesHealthQueryKey = () => {
+    return [
+    `/api/stories/health`
+    ] as const;
+    }
+
+
+export const getGetStoriesHealthQueryOptions = <TData = Awaited<ReturnType<typeof getStoriesHealth>>, TError = ErrorType<AIHealthStatus>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStoriesHealth>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStoriesHealthQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStoriesHealth>>> = ({ signal }) => getStoriesHealth({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStoriesHealth>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStoriesHealthQueryResult = NonNullable<Awaited<ReturnType<typeof getStoriesHealth>>>
+export type GetStoriesHealthQueryError = ErrorType<AIHealthStatus>
+
+
+/**
+ * @summary Check AI story service health
+ */
+
+export function useGetStoriesHealth<TData = Awaited<ReturnType<typeof getStoriesHealth>>, TError = ErrorType<AIHealthStatus>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStoriesHealth>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStoriesHealthQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

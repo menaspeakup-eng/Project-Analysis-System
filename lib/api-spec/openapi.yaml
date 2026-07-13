@@ -1042,6 +1042,25 @@ paths:
           description: Not signed in
         "403":
           description: Cannot moderate this room
+  /stories/health:
+    get:
+      operationId: getStoriesHealth
+      tags: [story]
+      summary: Check AI story service health
+      description: Verifies the Gemini API key and model connectivity.
+      responses:
+        "200":
+          description: AI service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIHealthStatus"
+        "503":
+          description: AI service is unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIHealthStatus"
   /stories/generate:
     post:
       operationId: generateStory
@@ -2348,3 +2367,15 @@ components:
           $ref: "#/components/schemas/GeneratedStory"
       required:
         - result
+    AIHealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, error]
+        message:
+          type: string
+        model:
+          type: string
+      required:
+        - status

@@ -13,7 +13,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGenerateStory, type StoryType } from "@workspace/api-client-react";
+import { AIStatusIndicator } from "@/components/ai-status";
+import { useGenerateStory, type StoryType, type ApiError } from "@workspace/api-client-react";
+
+function getApiErrorMessage(error: unknown): string | null {
+  if (!error) return null;
+  if (error instanceof Error && "data" in error) {
+    const data = (error as ApiError<unknown>).data;
+    if (data && typeof data === "object" && "error" in data && typeof (data as { error?: string }).error === "string") {
+      return (data as { error: string }).error;
+    }
+  }
+  return null;
+}
 
 const storyTypes = [
   { value: "adventure", label: "🏕️ مغامرة", emoji: "🏕️" },
@@ -68,11 +80,14 @@ export default function AIStory() {
     <div className="min-h-[100dvh] bg-background relative overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center gap-3">
-          <Link href="/ai-assistant" className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center hover:bg-[hsl(265,60%,88%)] transition-colors">
-            <ArrowRight className="w-5 h-5 rotate-180" />
-          </Link>
-          <h1 className="text-lg font-black text-foreground">📖 قصتي الذكية</h1>
+        <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link href="/ai-assistant" className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center hover:bg-[hsl(265,60%,88%)] transition-colors">
+              <ArrowRight className="w-5 h-5 rotate-180" />
+            </Link>
+            <h1 className="text-lg font-black text-foreground">📖 قصتي الذكية</h1>
+          </div>
+          <AIStatusIndicator />
         </div>
       </header>
 
@@ -179,8 +194,11 @@ export default function AIStory() {
               )}
 
               {error && (
-                <motion.div variants={staggerItem} className="mt-6 p-4 rounded-2xl bg-destructive/10 text-destructive font-bold text-center">
-                  حدث خطأ أثناء إنشاء القصة. حاول مرة أخرى.
+                <motion.div variants={staggerItem} className="mt-6 p-4 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 text-center">
+                  <p className="font-bold mb-1">حدث خطأ أثناء إنشاء القصة</p>
+                  <p className="text-sm font-medium opacity-90">
+                    {getApiErrorMessage(error) ?? "تعذر الاتصال بالذكاء الاصطناعي. حاول مرة أخرى."}
+                  </p>
                 </motion.div>
               )}
             </motion.div>

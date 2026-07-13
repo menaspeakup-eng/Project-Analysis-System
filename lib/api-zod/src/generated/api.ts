@@ -1304,6 +1304,17 @@ export const GetChatMutesResponse = zod.object({
 
 
 /**
+ * Verifies the Gemini API key and model connectivity.
+ * @summary Check AI story service health
+ */
+export const GetStoriesHealthResponse = zod.object({
+  "status": zod.enum(['ok', 'error']),
+  "message": zod.string().optional(),
+  "model": zod.string().optional()
+})
+
+
+/**
  * @summary Generate an AI story for a student
  */
 export const generateStoryBodyStudentNameMax = 120;

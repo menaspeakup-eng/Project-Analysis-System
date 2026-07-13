@@ -3,6 +3,7 @@ import { motion, type Variants } from "framer-motion";
 import { BookOpen, Sparkles, ArrowRight, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { AIStatusIndicator } from "@/components/ai-status";
 
 const container: Variants = {
   hidden: { opacity: 0 },
@@ -34,11 +35,14 @@ export default function AIAssistant() {
     <div className="min-h-[100dvh] bg-background relative overflow-hidden">
       {/* Header */}
       <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center">
-            <Wand2 className="w-5 h-5" />
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)] flex items-center justify-center">
+              <Wand2 className="w-5 h-5" />
+            </div>
+            <h1 className="text-lg font-black text-foreground">مساعد القراءة الذكي</h1>
           </div>
-          <h1 className="text-lg font-black text-foreground">مساعد القراءة الذكي</h1>
+          <AIStatusIndicator />
         </div>
       </header>
 

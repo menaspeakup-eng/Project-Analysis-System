@@ -13,6 +13,8 @@ export * from './adminToggleTeacherBody';
 export * from './adminUser';
 export * from './adminUserList';
 export * from './adminUserRole';
+export * from './aIHealthStatus';
+export * from './aIHealthStatusStatus';
 export * from './avatarConfig';
 export * from './avatarConfigGender';
 export * from './challengeSubmission';
