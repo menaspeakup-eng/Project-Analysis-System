@@ -16,4 +16,5 @@ export interface StudentProfile {
   className: string | null;
   teacherName: string | null;
   teacherEmail: string | null;
+  imageUrl: string | null;
 }

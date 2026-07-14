@@ -68,6 +68,8 @@ export const studentsTable = pgTable("students", {
   // Nullable because rows created before this field existed may not have
   // backfilled it yet — see identity.ts's self-healing fetch-on-read.
   email: text("email"),
+  // Profile image URL from Clerk's user object (Google/Clerk avatar).
+  imageUrl: text("image_url"),
   // "student" | "teacher" — admin is resolved from email, not stored here.
   role: text("role").notNull().default("student"),
   // Every new sign-in auto-fills `name` from the Google/Clerk profile but

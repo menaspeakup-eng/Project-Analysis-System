@@ -1690,6 +1690,10 @@ components:
           oneOf:
             - type: string
             - type: "null"
+        imageUrl:
+          oneOf:
+            - type: string
+            - type: "null"
       required:
         - id
         - name
@@ -1699,6 +1703,7 @@ components:
         - className
         - teacherName
         - teacherEmail
+        - imageUrl
     NameCaptureBody:
       type: object
       properties:

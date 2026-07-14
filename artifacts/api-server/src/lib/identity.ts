@@ -39,6 +39,7 @@ export async function resolveIdentity(req: Request): Promise<MaybeIdentity> {
 
   const clerkUser = await clerkClient.users.getUser(userId);
   const email = normalizeEmail(clerkUser.primaryEmailAddress?.emailAddress);
+  const imageUrl = clerkUser.imageUrl || null;
   const clerkName =
     clerkUser.fullName ||
     clerkUser.firstName ||
@@ -50,27 +51,35 @@ export async function resolveIdentity(req: Request): Promise<MaybeIdentity> {
   });
 
   if (!student) {
-    // First visit: create a row with the Google/Clerk name, but mark it as
-    // unconfirmed so the UI forces the user to type their real name once.
+    // First visit: create a row with the Google/Clerk name and image, but mark
+    // it as unconfirmed so the UI forces the user to type their real name once.
     const [created] = await db
       .insert(studentsTable)
       .values({
         clerkUserId: userId,
         name: clerkName,
         email: email || undefined,
+        imageUrl,
         role: "student",
         nameConfirmed: false,
       })
       .returning();
     student = created;
-  } else if (!student.email && email) {
-    // Backfill email for rows created before this column existed.
-    const [updated] = await db
-      .update(studentsTable)
-      .set({ email })
-      .where(eq(studentsTable.id, student.id))
-      .returning();
-    student = updated;
+  } else {
+    // Backfill and keep email/image in sync with Clerk.
+    const updates: Partial<typeof studentsTable.$inferInsert> = {};
+    if (!student.email && email) updates.email = email;
+    if (student.email !== email && email) updates.email = email;
+    if (student.imageUrl !== imageUrl) updates.imageUrl = imageUrl;
+
+    if (Object.keys(updates).length > 0) {
+      const [updated] = await db
+        .update(studentsTable)
+        .set(updates)
+        .where(eq(studentsTable.id, student.id))
+        .returning();
+      student = updated;
+    }
   }
 
   if (!student) return null;

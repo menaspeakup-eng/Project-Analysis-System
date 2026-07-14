@@ -36,6 +36,7 @@ export async function getOrCreateStudent(userId: string) {
     clerkUser.primaryEmailAddress?.emailAddress ||
     "صديقنا البطل";
   const email = clerkUser.primaryEmailAddress?.emailAddress || null;
+  const imageUrl = clerkUser.imageUrl || null;
 
   const [created] = await db
     .insert(studentsTable)
@@ -43,6 +44,7 @@ export async function getOrCreateStudent(userId: string) {
       clerkUserId: userId,
       name,
       email,
+      imageUrl,
       role: "student",
       nameConfirmed: false,
       points: 0,
@@ -83,6 +85,7 @@ async function enrichStudentProfile(student: typeof studentsTable.$inferSelect) 
     className,
     teacherName,
     teacherEmail,
+    imageUrl: student.imageUrl,
   };
 }
 

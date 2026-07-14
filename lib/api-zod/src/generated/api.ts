@@ -79,7 +79,8 @@ export const GetStudentProfileResponse = zod.object({
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
-  "teacherEmail": zod.union([zod.string(),zod.null()])
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "imageUrl": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -117,7 +118,8 @@ export const UpdateStudentNameResponse = zod.object({
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
-  "teacherEmail": zod.union([zod.string(),zod.null()])
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "imageUrl": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -171,7 +173,8 @@ export const UpdateStudentAvatarResponse = zod.object({
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
-  "teacherEmail": zod.union([zod.string(),zod.null()])
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "imageUrl": zod.union([zod.string(),zod.null()])
 })
 
 
@@ -1469,7 +1472,8 @@ export const GetTeacherStorySubmissionsResponse = zod.object({
   "classId": zod.union([zod.number(),zod.null()]),
   "className": zod.union([zod.string(),zod.null()]),
   "teacherName": zod.union([zod.string(),zod.null()]),
-  "teacherEmail": zod.union([zod.string(),zod.null()])
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "imageUrl": zod.union([zod.string(),zod.null()])
 }).optional(),
   "session": zod.object({
   "id": zod.number(),
