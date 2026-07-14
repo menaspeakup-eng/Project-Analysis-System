@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Link } from "wouter";
-import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, CheckCircle2, Target, Lock, AlertTriangle, Trophy, Send, Home, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, Target, Lock, AlertTriangle, Trophy, Send, Home, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -359,39 +359,6 @@ export default function AIStory() {
                             >
                               <span className="font-black text-foreground text-lg">{w.word}</span>
                               <span className="text-sm text-muted-foreground font-medium">{w.meaning}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Questions display */}
-                    {result?.questions && result.questions.length > 0 && (
-                      <div>
-                        <h3 className="font-black text-lg mb-3 flex items-center gap-2">
-                          <CheckCircle2 className="w-5 h-5 text-accent" />
-                          أسئلة الفهم
-                        </h3>
-                        <div className="space-y-4">
-                          {result.questions.map((q, idx) => (
-                            <div key={idx} className="bg-[hsl(40,33%,98%)] rounded-2xl p-4 border border-border">
-                              <p className="font-bold text-foreground mb-3">
-                                {idx + 1}. {q.question}
-                              </p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {q.options.map((opt, optIdx) => (
-                                  <div
-                                    key={optIdx}
-                                    className={`rounded-xl px-3 py-2 text-sm font-medium border ${
-                                      opt === q.correctAnswer
-                                        ? "bg-accent/10 border-accent text-accent-foreground"
-                                        : "bg-white border-border text-muted-foreground"
-                                    }`}
-                                  >
-                                    {opt}
-                                  </div>
-                                ))}
-                              </div>
                             </div>
                           ))}
                         </div>
