@@ -9,7 +9,7 @@ import {
   librarySubmissionsTable,
   studentGameSessionsTable,
 } from "@workspace/db";
-import { eq, inArray, and, gte, lte, sql, count, avg, asc } from "drizzle-orm";
+import { eq, inArray, and, gte, lte, asc } from "drizzle-orm";
 import {
   resolveIdentity,
   requireIdentity,
@@ -34,7 +34,6 @@ function parseDateRange(query: z.infer<typeof DateRangeQuery>) {
     to = new Date(query.to);
     to.setHours(23, 59, 59, 999);
   } else {
-    // Default to last 30 days if no range provided.
     from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29);
   }
 
@@ -83,7 +82,6 @@ router.get("/teacher/analytics", async (req, res) => {
       ? Number(req.query.teacherId)
       : identity.student.id;
 
-  // Resolve which classes the teacher can see.
   const classesQuery = await db.query.classesTable.findMany({
     where: eq(classesTable.teacherId, teacherId),
     orderBy: [asc(classesTable.id)],
@@ -115,7 +113,6 @@ router.get("/teacher/analytics", async (req, res) => {
   });
   const studentIds = students.map((s) => s.id);
 
-  // Activity in the selected period.
   const activityInPeriod = studentIds.length
     ? await db.query.activityLogsTable.findMany({
         where: and(
@@ -126,9 +123,6 @@ router.get("/teacher/analytics", async (req, res) => {
       })
     : [];
 
-  const activeStudentIds = new Set(activityInPeriod.map((a) => a.studentId));
-
-  // AI story quizzes in period.
   const storyQuizzes = studentIds.length
     ? await db.query.aiStoryQuizSubmissionsTable.findMany({
         where: and(
@@ -139,7 +133,6 @@ router.get("/teacher/analytics", async (req, res) => {
       })
     : [];
 
-  // Library submissions in period.
   const librarySubmissions = studentIds.length
     ? await db.query.librarySubmissionsTable.findMany({
         where: and(
@@ -150,7 +143,6 @@ router.get("/teacher/analytics", async (req, res) => {
       })
     : [];
 
-  // Game sessions in period.
   const gameSessions = studentIds.length
     ? await db.query.studentGameSessionsTable.findMany({
         where: and(
@@ -161,25 +153,29 @@ router.get("/teacher/analytics", async (req, res) => {
       })
     : [];
 
-  // Story completions from activity logs (fallback to quizzes when no explicit log).
-  const storyCompleteLogs = activityInPeriod.filter((a) => a.type === "story_complete");
-  const storiesCompleted = storyCompleteLogs.length || new Set(storyQuizzes.map((q) => q.sessionId)).size;
+  const activeStudentIds = new Set<number>();
+  for (const item of [...activityInPeriod, ...storyQuizzes, ...librarySubmissions, ...gameSessions]) {
+    activeStudentIds.add((item as { studentId: number }).studentId);
+  }
 
-  // Tests = quizzes + library submissions + quiz_complete activity logs.
-  const quizCompleteLogs = activityInPeriod.filter((a) => a.type === "quiz_complete");
-  const testsCompleted = quizCompleteLogs.length + storyQuizzes.length + librarySubmissions.length;
+  // Each AI story quiz submission represents a completed story.
+  const storiesCompleted = storyQuizzes.length;
+  // Tests = AI story quizzes + library submissions.
+  const testsCompleted = storyQuizzes.length + librarySubmissions.length;
 
-  // Score aggregates.
+  // Success rate = average correctness percentage across all scored submissions.
   const allScores = [
     ...storyQuizzes.map((q) => ({ max: q.maxScore, score: q.score })),
     ...librarySubmissions.map((s) => ({ max: s.maxScore, score: s.score })),
   ];
   const successRate = allScores.length
-    ? Math.round((allScores.reduce((sum, s) => sum + (s.max > 0 ? (s.score / s.max) * 100 : 0), 0) / allScores.length))
+    ? Math.round(
+        allScores.reduce((sum, s) => sum + (s.max > 0 ? (s.score / s.max) * 100 : 0), 0) /
+          allScores.length,
+      )
     : 0;
 
   // Per-student metrics.
-  const studentsById = new Map(students.map((s) => [s.id, s]));
   const metricsByStudent = new Map<
     number,
     {
@@ -206,11 +202,9 @@ router.get("/teacher/analytics", async (req, res) => {
     return metricsByStudent.get(studentId)!;
   }
 
-  storyCompleteLogs.forEach((log) => {
-    initMetrics(log.studentId).stories += 1;
-  });
   storyQuizzes.forEach((q) => {
     const m = initMetrics(q.studentId);
+    m.stories += 1;
     m.quizzes += 1;
     m.scoreSum += q.score;
     m.scoreMaxSum += q.maxScore;
@@ -221,17 +215,22 @@ router.get("/teacher/analytics", async (req, res) => {
     m.scoreSum += s.score;
     m.scoreMaxSum += s.maxScore;
   });
-  quizCompleteLogs.forEach((log) => {
-    initMetrics(log.studentId).quizzes += 1;
-  });
   gameSessions.forEach((g) => {
     initMetrics(g.studentId).games += 1;
   });
 
-  // Daily activity (all activity logs grouped by date).
+  // Daily activity from all scored/tracked events (activity logs + quizzes + submissions + games).
   const dailyMap = new Map<string, number>();
-  for (const log of activityInPeriod) {
-    const date = new Date(log.createdAt).toISOString().split("T")[0];
+  const dailyEvents = [
+    ...activityInPeriod,
+    ...storyQuizzes,
+    ...librarySubmissions,
+    ...gameSessions,
+  ];
+  for (const event of dailyEvents) {
+    const ts = (event as { createdAt?: Date | string; completedAt?: Date | string }).createdAt ?? (event as { completedAt?: Date | string }).completedAt;
+    if (!ts) continue;
+    const date = new Date(ts).toISOString().split("T")[0];
     dailyMap.set(date, (dailyMap.get(date) || 0) + 1);
   }
   const dailyActivity = Array.from(dailyMap.entries())
@@ -249,7 +248,7 @@ router.get("/teacher/analytics", async (req, res) => {
     };
     const totalTests = m.quizzes + m.librarySubmissions;
     const avgScore = m.scoreMaxSum > 0 ? Math.round((m.scoreSum / m.scoreMaxSum) * 100) : 0;
-    const progress = avgScore; // Progress proxy: correctness rate.
+    const progress = avgScore;
     const level = classifyStudentLevel(avgScore);
 
     return {

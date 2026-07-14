@@ -54,6 +54,8 @@ import {
   Target,
   TrendingUp,
   Activity,
+  HelpCircle,
+  Info,
 } from "lucide-react";
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -293,14 +295,32 @@ export default function TeacherAnalytics({
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-            <SummaryCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={summary?.totalStudents ?? 0} color="bg-blue-50 text-blue-600" />
-            <SummaryCard icon={<Activity className="w-5 h-5" />} label="المشاركين" value={summary?.activeStudents ?? 0} color="bg-emerald-50 text-emerald-600" />
-            <SummaryCard icon={<Trophy className="w-5 h-5" />} label="متوسط النقاط" value={summary?.avgPoints ?? 0} color="bg-amber-50 text-amber-600" />
-            <SummaryCard icon={<Target className="w-5 h-5" />} label="متوسط النتيجة" value={`${summary?.avgScore ?? 0}%`} color="bg-rose-50 text-rose-600" />
-            <SummaryCard icon={<BookOpen className="w-5 h-5" />} label="القصص المكتملة" value={summary?.storiesCompleted ?? 0} color="bg-purple-50 text-purple-600" />
-            <SummaryCard icon={<TrendingUp className="w-5 h-5" />} label="الاختبارات" value={summary?.testsCompleted ?? 0} color="bg-cyan-50 text-cyan-600" />
-            <SummaryCard icon={<Calendar className="w-5 h-5" />} label="نسبة النجاح" value={`${summary?.successRate ?? 0}%`} color="bg-teal-50 text-teal-600" />
+            <SummaryCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={summary?.totalStudents ?? 0} color="bg-blue-50 text-blue-600" hint="عدد الطلاب المسجلين في الصف/الصفوف المختارة" />
+            <SummaryCard icon={<Activity className="w-5 h-5" />} label="المشاركين" value={summary?.activeStudents ?? 0} color="bg-emerald-50 text-emerald-600" hint="طلاب لديهم أي نشاط في الفترة: قصة، اختبار، أو لعبة" />
+            <SummaryCard icon={<Trophy className="w-5 h-5" />} label="متوسط النقاط" value={summary?.avgPoints ?? 0} color="bg-amber-50 text-amber-600" hint="متوسط نقاط جميع الطلاب في الصف/الصفوف" />
+            <SummaryCard icon={<Target className="w-5 h-5" />} label="متوسط نسبة القراءة الصحيحة" value={`${summary?.avgScore ?? 0}%`} color="bg-rose-50 text-rose-600" hint="متوسط نتائج اختبارات القصص والمكتبة للطلاب" />
+            <SummaryCard icon={<BookOpen className="w-5 h-5" />} label="القصص المكتملة" value={summary?.storiesCompleted ?? 0} color="bg-purple-50 text-purple-600" hint="عدد اختبارات القصص الذكية التي أتمها الطلاب" />
+            <SummaryCard icon={<TrendingUp className="w-5 h-5" />} label="الاختبارات المنجزة" value={summary?.testsCompleted ?? 0} color="bg-cyan-50 text-cyan-600" hint="اختبارات القصص الذكية + اختبارات المكتبة" />
+            <SummaryCard icon={<Calendar className="w-5 h-5" />} label="نسبة القراءة الصحيحة" value={`${summary?.successRate ?? 0}%`} color="bg-teal-50 text-teal-600" hint="متوسط الإجابات الصحيحة في جميع الاختبارات" />
           </div>
+
+          {/* Methodology */}
+          <Card className="rounded-3xl border-border shadow-sm bg-[hsl(40,33%,98%)]">
+            <CardHeader className="flex items-center gap-2 pb-2">
+              <Info className="w-5 h-5 text-primary" />
+              <CardTitle className="font-black text-foreground text-base">كيف تُحسب هذه الأرقام؟</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm font-medium text-muted-foreground">
+                <MethodologyItem title="المشاركين" description="طالب له نشاط واحد على الأقل خلال الفترة المختارة." />
+                <MethodologyItem title="القصص المكتملة" description="عدد اختبارات القصص الذكية (AI Story) التي أتمها الطلاب." />
+                <MethodologyItem title="الاختبارات المنجزة" description="مجموع اختبارات القصص الذكية واختبارات المكتبة." />
+                <MethodologyItem title="نسبة القراءة الصحيحة" description="(الإجابات الصحيحة ÷ إجمالي الأسئلة) × 100، بمتوسط جميع الاختبارات." />
+                <MethodologyItem title="نسبة التقدم" description="نفس نسبة القراءة الصحيحة للطالب؛ تعكس دقة الإجابات." />
+                <MethodologyItem title="تصنيف المستوى" description="ممتاز ≥90% · جيد جداً ≥75% · جيد ≥60% · يحتاج تحسين ≥40% · يحتاج متابعة <40%" />
+              </ul>
+            </CardContent>
+          </Card>
 
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -428,7 +448,8 @@ export default function TeacherAnalytics({
                     <TableHead className="font-bold text-right">النقاط</TableHead>
                     <TableHead className="font-bold text-right">نسبة القراءة الصحيحة</TableHead>
                     <TableHead className="font-bold text-right">القصص المكتملة</TableHead>
-                    <TableHead className="font-bold text-right">الاختبارات</TableHead>
+                    <TableHead className="font-bold text-right">الاختبارات المنجزة</TableHead>
+                    <TableHead className="font-bold text-right">نسبة القراءة الصحيحة</TableHead>
                     <TableHead className="font-bold text-right">التقدم</TableHead>
                     <TableHead className="font-bold text-right">الملاحظات</TableHead>
                   </TableRow>
@@ -460,24 +481,38 @@ function SummaryCard({
   label,
   value,
   color,
+  hint,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number | string;
   color: string;
+  hint?: string;
 }) {
   return (
-    <Card className="rounded-2xl border-border shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm" title={hint}>
       <CardContent className="p-4 flex items-center gap-4">
         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
           {icon}
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-2xl font-black text-foreground">{value}</p>
-          <p className="text-sm font-bold text-muted-foreground">{label}</p>
+          <p className="text-sm font-bold text-muted-foreground truncate">{label}</p>
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function MethodologyItem({ title, description }: { title: string; description: string }) {
+  return (
+    <li className="flex items-start gap-2">
+      <span className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0"></span>
+      <span className="text-foreground">
+        <span className="font-bold text-foreground">{title}:</span>{" "}
+        <span className="text-muted-foreground">{description}</span>
+      </span>
+    </li>
   );
 }
 
