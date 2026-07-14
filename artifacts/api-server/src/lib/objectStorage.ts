@@ -95,7 +95,7 @@ export class ObjectStorageService {
     return new Response(webStream, { headers });
   }
 
-  async getObjectEntityUploadURL(): Promise<string> {
+  async getObjectEntityUploadURL(contentType?: string): Promise<string> {
     const privateObjectDir = this.getPrivateObjectDir();
     if (!privateObjectDir) {
       throw new Error(
@@ -114,7 +114,7 @@ export class ObjectStorageService {
       action: 'write',
       expires: Date.now() + 900 * 1000,
       version: 'v4',
-      contentType: 'application/octet-stream',
+      contentType: contentType && contentType.length > 0 ? contentType : 'application/octet-stream',
     });
 
     return url;

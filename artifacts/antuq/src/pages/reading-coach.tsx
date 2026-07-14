@@ -412,17 +412,25 @@ export default function ReadingCoach() {
               )}
 
               {phase === "recording" && (
-                <motion.div variants={staggerItem}>
+                <motion.div variants={staggerItem} className="space-y-6">
                   <Card className="rounded-3xl border-border bg-white shadow-md overflow-hidden">
-                    <CardHeader>
-                      <CardTitle className="text-xl font-black flex items-center gap-2">
-                        <Mic className="w-6 h-6 text-red-500 animate-pulse" />
-                        جاري التسجيل...
-                      </CardTitle>
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl font-black flex items-center gap-2">
+                          <Mic className="w-6 h-6 text-red-500 animate-pulse" />
+                          جاري التسجيل...
+                        </CardTitle>
+                        <Badge variant="outline" className="rounded-full font-bold">مستوى {difficulty}</Badge>
+                      </div>
                     </CardHeader>
-                    <CardContent className="space-y-6 text-center">
-                      <div className="text-4xl font-black text-foreground tabular-nums">{recordingSeconds} ث</div>
-                      <p className="text-muted-foreground font-medium">اقرأ الجملة بصوت واضح ثم اضغط إيقاف.</p>
+                    <CardContent className="space-y-6">
+                      <div className="bg-[hsl(40,33%,98%)] rounded-2xl p-6 md:p-8 border border-border text-center">
+                        <p className="text-2xl md:text-3xl font-black text-foreground leading-loose">{sentence}</p>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-4xl font-black text-foreground tabular-nums">{recordingSeconds} ث</div>
+                        <p className="text-muted-foreground font-medium mt-1">اقرأ الجملة بصوت واضح ثم اضغط إيقاف.</p>
+                      </div>
                       <Button size="lg" variant="destructive" className="w-full h-14 rounded-xl text-lg font-bold" onClick={handleStopRecording}>
                         <Square className="w-5 h-5" />
                         إيقاف التسجيل
