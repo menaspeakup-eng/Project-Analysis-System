@@ -13,7 +13,8 @@ export interface TeacherReadingCoachAttempt {
   id: number;
   studentId: number;
   sentence: string;
-  audioObjectPath: string;
+  audioObjectPath?: string | null;
+  audioBase64?: string | null;
   transcription: string | null;
   analysis: ReadingCoachAnalysis;
   score: number;

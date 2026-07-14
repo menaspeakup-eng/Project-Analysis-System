@@ -11,7 +11,8 @@ import type { ReadingCoachAttemptStatus } from './readingCoachAttemptStatus';
 export interface ReadingCoachAttempt {
   id: number;
   sentence: string;
-  audioObjectPath: string;
+  audioObjectPath?: string | null;
+  audioBase64?: string | null;
   transcription: string | null;
   analysis: ReadingCoachAnalysis;
   score: number;

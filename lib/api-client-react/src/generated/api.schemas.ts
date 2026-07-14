@@ -1140,7 +1140,8 @@ export const ReadingCoachAttemptStatus = {
 export interface ReadingCoachAttempt {
   id: number;
   sentence: string;
-  audioObjectPath: string;
+  audioObjectPath?: string | null;
+  audioBase64?: string | null;
   transcription: string | null;
   analysis: ReadingCoachAnalysis;
   score: number;
@@ -1174,8 +1175,9 @@ export interface ReadingCoachSentence {
 
 export interface ReadingCoachSubmitAttemptBody {
   sentence: string;
-  audioObjectPath: string;
-  contentType: string;
+  audioObjectPath?: string | null;
+  audioBase64?: string | null;
+  contentType?: string | null;
 }
 
 export interface ReadingCoachAttemptResponse {
@@ -1186,7 +1188,8 @@ export interface TeacherReadingCoachAttempt {
   id: number;
   studentId: number;
   sentence: string;
-  audioObjectPath: string;
+  audioObjectPath?: string | null;
+  audioBase64?: string | null;
   transcription: string | null;
   analysis: ReadingCoachAnalysis;
   score: number;

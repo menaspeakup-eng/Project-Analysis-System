@@ -2002,7 +2002,8 @@ export const GetReadingCoachStatusResponse = zod.object({
   "latestAttempt": zod.object({
   "id": zod.number(),
   "sentence": zod.string(),
-  "audioObjectPath": zod.string(),
+  "audioObjectPath": zod.string().nullish(),
+  "audioBase64": zod.string().nullish(),
   "transcription": zod.string().nullable(),
   "analysis": zod.object({
   "accuracy": zod.number(),
@@ -2045,15 +2046,17 @@ export const GenerateReadingCoachSentenceResponse = zod.object({
  */
 export const SubmitReadingCoachAttemptBody = zod.object({
   "sentence": zod.string(),
-  "audioObjectPath": zod.string(),
-  "contentType": zod.string()
+  "audioObjectPath": zod.string().nullish(),
+  "audioBase64": zod.string().nullish(),
+  "contentType": zod.string().nullish()
 })
 
 export const SubmitReadingCoachAttemptResponse = zod.object({
   "attempt": zod.object({
   "id": zod.number(),
   "sentence": zod.string(),
-  "audioObjectPath": zod.string(),
+  "audioObjectPath": zod.string().nullish(),
+  "audioBase64": zod.string().nullish(),
   "transcription": zod.string().nullable(),
   "analysis": zod.object({
   "accuracy": zod.number(),
@@ -2093,7 +2096,8 @@ export const GetTeacherReadingCoachAttemptsResponse = zod.object({
   "id": zod.number(),
   "studentId": zod.number(),
   "sentence": zod.string(),
-  "audioObjectPath": zod.string(),
+  "audioObjectPath": zod.string().nullish(),
+  "audioBase64": zod.string().nullish(),
   "transcription": zod.string().nullable(),
   "analysis": zod.object({
   "accuracy": zod.number(),

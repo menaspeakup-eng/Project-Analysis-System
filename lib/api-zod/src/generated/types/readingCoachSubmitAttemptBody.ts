@@ -8,6 +8,7 @@
 
 export interface ReadingCoachSubmitAttemptBody {
   sentence: string;
-  audioObjectPath: string;
-  contentType: string;
+  audioObjectPath?: string | null;
+  audioBase64?: string | null;
+  contentType?: string | null;
 }

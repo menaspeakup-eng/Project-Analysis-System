@@ -41,13 +41,8 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const basePath = import.meta.env.BASE_URL.replace(/\/+$/, "");
-
-function getStorageObjectUrl(objectPath: string): string {
-  if (objectPath.startsWith("/")) {
-    return `${basePath}/api/storage${objectPath}`;
-  }
-  return objectPath;
+function getAudioDataUrl(base64: string, contentType: string): string {
+  return `data:${contentType || "audio/webm"};base64,${base64}`;
 }
 
 function formatDate(dateStr: string | Date): string {
@@ -215,10 +210,10 @@ export default function TeacherReadingCoach() {
                                 <p className="font-medium text-foreground">{attempt.transcription || "—"}</p>
                               </div>
 
-                              {attempt.audioObjectPath && (
+                              {attempt.audioBase64 && attempt.audioBase64.length > 0 && (
                                 <div>
                                   <p className="text-sm font-bold text-muted-foreground mb-1">التسجيل الصوتي</p>
-                                  <audio controls src={getStorageObjectUrl(attempt.audioObjectPath)} className="w-full" />
+                                  <audio controls src={getAudioDataUrl(attempt.audioBase64, "audio/webm")} className="w-full" />
                                 </div>
                               )}
 

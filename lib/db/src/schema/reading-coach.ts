@@ -36,10 +36,10 @@ export const selectReadingCoachSentenceSchema = createSelectSchema(
 export type ReadingCoachSentence = typeof readingCoachSentencesTable.$inferSelect;
 export type InsertReadingCoachSentence = typeof readingCoachSentencesTable.$inferInsert;
 
-// One daily reading-coach attempt per student. The audio file is stored in object
-// storage and referenced by objectPath. The transcription and AI analysis are
-// cached so the teacher review page can display them without re-running the
-// model.
+// One daily reading-coach attempt per student. The audio file is stored either as
+// a base64 string in the DB or in object storage. The transcription and AI
+// analysis are cached so the teacher review page can display them without
+// re-running the model.
 export const readingCoachAttemptsTable = pgTable(
   "reading_coach_attempts",
   {
@@ -48,7 +48,8 @@ export const readingCoachAttemptsTable = pgTable(
       .notNull()
       .references(() => studentsTable.id, { onDelete: "cascade" }),
     sentence: text("sentence").notNull(),
-    audioObjectPath: text("audio_object_path").notNull(),
+    audioObjectPath: text("audio_object_path"),
+    audioBase64: text("audio_base64"),
     transcription: text("transcription"),
     // AI analysis: { accuracy, missingWords, wrongWords, addedWords, fluency, tips, score, summary }
     analysis: jsonb("analysis").notNull().default({}),

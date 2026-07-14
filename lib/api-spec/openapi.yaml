@@ -3771,14 +3771,19 @@ components:
           type: integer
     ReadingCoachSubmitAttemptBody:
       type: object
-      required: [sentence, audioObjectPath, contentType]
+      required: [sentence]
       properties:
         sentence:
           type: string
         audioObjectPath:
           type: string
+          nullable: true
+        audioBase64:
+          type: string
+          nullable: true
         contentType:
           type: string
+          nullable: true
     ReadingCoachAttemptResponse:
       type: object
       required: [attempt]
@@ -3787,7 +3792,7 @@ components:
           $ref: "#/components/schemas/ReadingCoachAttempt"
     ReadingCoachAttempt:
       type: object
-      required: [id, sentence, audioObjectPath, transcription, analysis, score, maxScore, status, pointsAwarded, createdAt]
+      required: [id, sentence, transcription, analysis, score, maxScore, status, pointsAwarded, createdAt]
       properties:
         id:
           type: integer
@@ -3795,6 +3800,10 @@ components:
           type: string
         audioObjectPath:
           type: string
+          nullable: true
+        audioBase64:
+          type: string
+          nullable: true
         transcription:
           type: string
           nullable: true
@@ -3849,7 +3858,7 @@ components:
             $ref: "#/components/schemas/TeacherReadingCoachAttempt"
     TeacherReadingCoachAttempt:
       type: object
-      required: [id, studentId, sentence, audioObjectPath, transcription, analysis, score, maxScore, status, pointsAwarded, createdAt, student, class]
+      required: [id, studentId, sentence, transcription, analysis, score, maxScore, status, pointsAwarded, createdAt, student, class]
       properties:
         id:
           type: integer
@@ -3859,6 +3868,10 @@ components:
           type: string
         audioObjectPath:
           type: string
+          nullable: true
+        audioBase64:
+          type: string
+          nullable: true
         transcription:
           type: string
           nullable: true

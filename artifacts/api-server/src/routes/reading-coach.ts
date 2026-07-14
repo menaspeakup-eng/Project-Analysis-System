@@ -36,8 +36,11 @@ const GetSentenceBody = z.object({
 
 const SubmitAttemptBody = z.object({
   sentence: z.string().min(1).max(2000),
-  audioObjectPath: z.string().min(1),
-  contentType: z.string().min(1).max(120),
+  audioObjectPath: z.string().min(1).optional(),
+  audioBase64: z.string().min(1).optional(),
+  contentType: z.string().min(1).max(120).optional(),
+}).refine((data) => data.audioObjectPath || data.audioBase64, {
+  message: "يجب إرسال مسار الصوت أو محتواه",
 });
 
 const ReviewAttemptBody = z.object({
@@ -300,6 +303,8 @@ router.get("/reading-coach/status", async (req, res) => {
         ? {
             id: latestAttempt.id,
             sentence: latestAttempt.sentence,
+            audioObjectPath: latestAttempt.audioObjectPath,
+            audioBase64: latestAttempt.audioBase64,
             transcription: latestAttempt.transcription,
             analysis: latestAttempt.analysis,
             score: latestAttempt.score,
@@ -379,12 +384,23 @@ router.post("/reading-coach/attempt", async (req, res) => {
     return;
   }
 
-  const { sentence, audioObjectPath, contentType } = body.data;
+  const { sentence, audioObjectPath, audioBase64, contentType } = body.data;
 
   try {
-    // Download the audio from object storage and run it through Groq Whisper.
-    const { buffer } = await downloadAudioBuffer(audioObjectPath);
-    const transcription = await transcribeAudio(buffer, contentType);
+    let buffer: Buffer;
+    let actualContentType = contentType || "audio/webm";
+
+    if (audioBase64) {
+      buffer = Buffer.from(audioBase64, "base64");
+    } else if (audioObjectPath) {
+      const downloaded = await downloadAudioBuffer(audioObjectPath);
+      buffer = downloaded.buffer;
+      actualContentType = downloaded.contentType || actualContentType;
+    } else {
+      throw new Error("لا يوجد صوت مُرسل");
+    }
+
+    const transcription = await transcribeAudio(buffer, actualContentType);
     const analysis = await analyzeReading(sentence, transcription);
 
     const [attempt] = await db
@@ -392,7 +408,8 @@ router.post("/reading-coach/attempt", async (req, res) => {
       .values({
         studentId: identity.student.id,
         sentence,
-        audioObjectPath,
+        audioObjectPath: audioObjectPath || null,
+        audioBase64: audioBase64 || null,
         transcription,
         analysis: analysis as unknown as Record<string, unknown>,
         score: analysis.score,
@@ -413,6 +430,8 @@ router.post("/reading-coach/attempt", async (req, res) => {
       attempt: {
         id: attempt.id,
         sentence: attempt.sentence,
+        audioObjectPath: attempt.audioObjectPath,
+        audioBase64: attempt.audioBase64,
         transcription: attempt.transcription,
         analysis: attempt.analysis,
         score: attempt.score,

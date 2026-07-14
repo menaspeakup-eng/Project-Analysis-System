@@ -28,7 +28,6 @@ import {
   getGetReadingCoachStatusQueryKey,
   useGenerateReadingCoachSentence,
   useSubmitReadingCoachAttempt,
-  useRequestUploadUrl,
   type ReadingCoachAnalysis,
   type ApiError,
 } from "@workspace/api-client-react";
@@ -71,11 +70,22 @@ function formatDuration(totalSeconds: number): string {
   return parts.join(" و ");
 }
 
-function getStorageObjectUrl(objectPath: string): string {
-  if (objectPath.startsWith("/")) {
-    return `${import.meta.env.BASE_URL}api/storage${objectPath}`;
-  }
-  return objectPath;
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      // Strip the data:[<mediatype>][;base64], prefix to return raw base64.
+      const commaIndex = result.indexOf(",");
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+function getAudioDataUrl(base64: string, contentType: string): string {
+  return `data:${contentType};base64,${base64}`;
 }
 
 export default function ReadingCoach() {
@@ -85,7 +95,7 @@ export default function ReadingCoach() {
   const [sentence, setSentence] = useState("");
   const [difficulty, setDifficulty] = useState(1);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
-  const [audioObjectPath, setAudioObjectPath] = useState<string | null>(null);
+  const [audioBase64, setAudioBase64] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioContentType, setAudioContentType] = useState("audio/webm");
   const [analysis, setAnalysis] = useState<ReadingCoachAnalysis | null>(null);
@@ -103,7 +113,6 @@ export default function ReadingCoach() {
   });
   const { mutate: generateSentence, isPending: isGenerating } = useGenerateReadingCoachSentence();
   const { mutate: submitAttempt, isPending: isSubmitting } = useSubmitReadingCoachAttempt();
-  const { mutate: requestUploadUrl, isPending: isRequestingUrl } = useRequestUploadUrl();
 
   const [countdown, setCountdown] = useState(0);
 
@@ -188,7 +197,7 @@ export default function ReadingCoach() {
         const blob = new Blob(chunks, { type: mimeType });
         setAudioBlob(blob);
         setAudioContentType(mimeType);
-        uploadAudio(blob, mimeType);
+        submitAudioBlob(blob, mimeType);
       };
       mediaRecorderRef.current = recorder;
       recorder.start(200);
@@ -205,38 +214,20 @@ export default function ReadingCoach() {
     setPhase("uploading");
   };
 
-  const uploadAudio = async (blob: Blob, mimeType: string) => {
-    requestUploadUrl(
-      { data: { name: `reading-coach-${Date.now()}.webm`, size: blob.size, contentType: mimeType } },
-      {
-        onSuccess: async (res) => {
-          try {
-            const uploadRes = await fetch(res.uploadURL, {
-              method: "PUT",
-              headers: { "Content-Type": mimeType },
-              body: blob,
-            });
-            if (!uploadRes.ok) {
-              throw new Error("فشل رفع التسجيل");
-            }
-            setAudioObjectPath(res.objectPath);
-            submitForAnalysis(res.objectPath, mimeType);
-          } catch (err) {
-            toast({ title: "فشل رفع التسجيل", description: err instanceof Error ? err.message : "حاول مرة أخرى", variant: "destructive" });
-            setPhase("sentence");
-          }
-        },
-        onError: (err) => {
-          toast({ title: "فشل طلب رفع التسجيل", description: getApiErrorMessage(err) ?? "حاول مرة أخرى", variant: "destructive" });
-          setPhase("sentence");
-        },
-      },
-    );
+  const submitAudioBlob = async (blob: Blob, mimeType: string) => {
+    try {
+      const base64 = await blobToBase64(blob);
+      setAudioBase64(base64);
+      submitForAnalysis(base64, mimeType);
+    } catch (err) {
+      toast({ title: "فشل معالجة التسجيل", description: err instanceof Error ? err.message : "حاول مرة أخرى", variant: "destructive" });
+      setPhase("sentence");
+    }
   };
 
-  const submitForAnalysis = (objectPath: string, mimeType: string) => {
+  const submitForAnalysis = (base64: string, mimeType: string) => {
     submitAttempt(
-      { data: { sentence, audioObjectPath: objectPath, contentType: mimeType } },
+      { data: { sentence, audioBase64: base64, contentType: mimeType } },
       {
         onSuccess: (res) => {
           setAnalysis(res.attempt.analysis as unknown as ReadingCoachAnalysis);
@@ -244,6 +235,7 @@ export default function ReadingCoach() {
           setStatus(res.attempt.status as "pending" | "accepted" | "rejected");
           setPointsAwarded(res.attempt.pointsAwarded ?? null);
           setAttemptId(res.attempt.id);
+          setAudioBase64(res.attempt.audioBase64 || null);
           setPhase("result");
           queryClient.invalidateQueries({ queryKey: getGetReadingCoachStatusQueryKey() });
         },
@@ -258,7 +250,7 @@ export default function ReadingCoach() {
   const handleRetry = () => {
     cleanupRecording();
     setAudioBlob(null);
-    setAudioObjectPath(null);
+    setAudioBase64(null);
     setAnalysis(null);
     setScore(0);
     setStatus(null);
@@ -357,11 +349,11 @@ export default function ReadingCoach() {
                                 <Badge variant="outline" className="rounded-full font-bold">+{latestAttempt.pointsAwarded} نقطة</Badge>
                               )}
                             </div>
-                            {latestAttempt.audioObjectPath && (
+                            {latestAttempt.audioBase64 && latestAttempt.audioBase64.length > 0 && (
                               <audio
                                 ref={audioRef}
                                 controls
-                                src={getStorageObjectUrl(latestAttempt.audioObjectPath)}
+                                src={getAudioDataUrl(latestAttempt.audioBase64, audioContentType)}
                                 className="w-full mt-4"
                               />
                             )}
@@ -401,7 +393,6 @@ export default function ReadingCoach() {
                         size="lg"
                         className="w-full h-14 rounded-xl text-lg font-bold"
                         onClick={handleStartRecording}
-                        disabled={isRequestingUrl}
                       >
                         <Mic className="w-5 h-5" />
                         تسجيل القراءة
@@ -527,8 +518,8 @@ export default function ReadingCoach() {
                         )}
                       </div>
 
-                      {audioObjectPath && (
-                        <audio controls src={getStorageObjectUrl(audioObjectPath)} className="w-full" />
+                      {audioBase64 && audioBase64.length > 0 && (
+                        <audio controls src={getAudioDataUrl(audioBase64, audioContentType)} className="w-full" />
                       )}
                     </CardContent>
                   </Card>
