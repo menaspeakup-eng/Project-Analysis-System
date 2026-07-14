@@ -535,6 +535,42 @@ paths:
           description: Not signed in
         "403":
           description: Not a teacher or admin
+  /teacher/analytics:
+    get:
+      operationId: getTeacherAnalytics
+      tags: [teacher]
+      summary: Analytics and reports for the teacher's classes
+      description: Returns summary statistics, charts, and a per-student performance table for a selected class and date range.
+      parameters:
+        - $ref: "#/components/parameters/TeacherIdQuery"
+        - in: query
+          name: classId
+          schema:
+            type: integer
+          description: Optional class id to filter by. If omitted, all teacher classes are aggregated.
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          description: Start date (ISO). Defaults to 30 days ago.
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          description: End date (ISO). Defaults to today.
+      responses:
+        "200":
+          description: Analytics report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherAnalyticsReport"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or admin
   /teacher/students/{id}/claim:
     post:
       operationId: claimTeacherStudent
@@ -2291,6 +2327,153 @@ components:
       required:
         - id
         - classId
+    TeacherAnalyticsReport:
+      type: object
+      properties:
+        summary:
+          $ref: "#/components/schemas/TeacherAnalyticsSummary"
+        charts:
+          $ref: "#/components/schemas/TeacherAnalyticsCharts"
+        students:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherAnalyticsStudent"
+        period:
+          $ref: "#/components/schemas/DateRange"
+      required:
+        - summary
+        - charts
+        - students
+        - period
+    TeacherAnalyticsSummary:
+      type: object
+      properties:
+        totalStudents:
+          type: integer
+        activeStudents:
+          type: integer
+        avgPoints:
+          type: integer
+        avgScore:
+          type: integer
+        storiesCompleted:
+          type: integer
+        testsCompleted:
+          type: integer
+        successRate:
+          type: integer
+      required:
+        - totalStudents
+        - activeStudents
+        - avgPoints
+        - avgScore
+        - storiesCompleted
+        - testsCompleted
+        - successRate
+    TeacherAnalyticsCharts:
+      type: object
+      properties:
+        dailyActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/DailyActivityPoint"
+        studentPerformance:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentPerformancePoint"
+        levelDistribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/LevelDistributionPoint"
+      required:
+        - dailyActivity
+        - studentPerformance
+        - levelDistribution
+    DailyActivityPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        count:
+          type: integer
+      required:
+        - date
+        - count
+    StudentPerformancePoint:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        name:
+          type: string
+        score:
+          type: integer
+      required:
+        - studentId
+        - name
+        - score
+    LevelDistributionPoint:
+      type: object
+      properties:
+        level:
+          type: string
+        label:
+          type: string
+        count:
+          type: integer
+      required:
+        - level
+        - label
+        - count
+    TeacherAnalyticsStudent:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        imageUrl:
+          oneOf:
+            - type: string
+            - type: "null"
+        points:
+          type: integer
+        storiesCompleted:
+          type: integer
+        testsCompleted:
+          type: integer
+        avgScore:
+          type: integer
+        progress:
+          type: integer
+        level:
+          type: string
+        levelLabel:
+          type: string
+        note:
+          type: string
+      required:
+        - id
+        - name
+        - imageUrl
+        - points
+        - storiesCompleted
+        - testsCompleted
+        - avgScore
+        - progress
+        - level
+        - levelLabel
+        - note
+    DateRange:
+      type: object
+      properties:
+        from:
+          type: string
+        to:
+          type: string
+      required:
+        - from
+        - to
     GameType:
       type: string
       enum:

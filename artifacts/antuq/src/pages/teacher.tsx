@@ -45,11 +45,13 @@ import {
   MessageCircle,
   Sparkles,
   BookOpen,
+  BarChart3,
 } from "lucide-react";
 import type { TeacherClass, TeacherStudent } from "@workspace/api-client-react";
 import TeacherChallenges from "./teacher-challenges";
 import TeacherGames from "./teacher-games";
 import TeacherAiStories from "./teacher-ai-stories";
+import TeacherAnalytics from "./teacher-analytics";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 function getTeacherIdFromUrl(): number | null {
@@ -172,7 +174,7 @@ export default function Teacher() {
 
   const classes = classesData?.classes ?? [];
   const unclaimed = unclaimedData?.students ?? [];
-  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges" | "ai-stories" | "chat">("students");
+  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges" | "ai-stories" | "analytics" | "chat">("students");
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -264,6 +266,14 @@ export default function Teacher() {
             قصصي الذكية
           </Button>
           <Button
+            variant={activeTab === "analytics" ? "default" : "ghost"}
+            className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "analytics" ? "bg-[hsl(15,85%,55%)] text-white" : "text-muted-foreground"}`}
+            onClick={() => setActiveTab("analytics")}
+          >
+            <BarChart3 className="w-4 h-4 ml-2" />
+            التقارير
+          </Button>
+          <Button
             variant={activeTab === "chat" ? "default" : "ghost"}
             className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "chat" ? "bg-primary text-white" : "text-muted-foreground"}`}
             onClick={() => setActiveTab("chat")}
@@ -308,6 +318,8 @@ export default function Teacher() {
         {activeTab === "challenges" && <TeacherChallenges teacherIdParam={teacherIdParam} classes={classes} />}
 
         {activeTab === "ai-stories" && <TeacherAiStories />}
+
+        {activeTab === "analytics" && <TeacherAnalytics classes={classes} teacherIdParam={teacherIdParam} />}
 
         {activeTab === "chat" && (
           <section className="flex flex-col min-h-[70dvh] rounded-3xl border border-border bg-white overflow-hidden shadow-sm">

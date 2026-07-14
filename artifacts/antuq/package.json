@@ -45,13 +45,13 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "@types/three": "^0.185.1",
-    "@vitejs/plugin-react": "catalog:",
-    "@workspace/api-client-react": "workspace:*",
-    "@workspace/object-storage-web": "workspace:*",
     "@uppy/aws-s3": "^5.0.0",
     "@uppy/core": "^5.0.0",
     "@uppy/dashboard": "^5.0.0",
     "@uppy/react": "^5.0.0",
+    "@vitejs/plugin-react": "catalog:",
+    "@workspace/api-client-react": "workspace:*",
+    "@workspace/object-storage-web": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "^1.1.1",
@@ -82,6 +82,9 @@
     "@clerk/themes": "^2.4.57",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
-    "three": "^0.185.1"
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "three": "^0.185.1",
+    "xlsx": "^0.18.5"
   }
 }

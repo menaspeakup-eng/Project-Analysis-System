@@ -411,6 +411,65 @@ export interface TeacherStudentClass {
   classId: number | null;
 }
 
+export interface TeacherAnalyticsSummary {
+  totalStudents: number;
+  activeStudents: number;
+  avgPoints: number;
+  avgScore: number;
+  storiesCompleted: number;
+  testsCompleted: number;
+  successRate: number;
+}
+
+export interface DailyActivityPoint {
+  date: string;
+  count: number;
+}
+
+export interface StudentPerformancePoint {
+  studentId: number;
+  name: string;
+  score: number;
+}
+
+export interface LevelDistributionPoint {
+  level: string;
+  label: string;
+  count: number;
+}
+
+export interface TeacherAnalyticsCharts {
+  dailyActivity: DailyActivityPoint[];
+  studentPerformance: StudentPerformancePoint[];
+  levelDistribution: LevelDistributionPoint[];
+}
+
+export interface TeacherAnalyticsStudent {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+  points: number;
+  storiesCompleted: number;
+  testsCompleted: number;
+  avgScore: number;
+  progress: number;
+  level: string;
+  levelLabel: string;
+  note: string;
+}
+
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
+export interface TeacherAnalyticsReport {
+  summary: TeacherAnalyticsSummary;
+  charts: TeacherAnalyticsCharts;
+  students: TeacherAnalyticsStudent[];
+  period: DateRange;
+}
+
 export type GameType = typeof GameType[keyof typeof GameType];
 
 
@@ -1121,6 +1180,25 @@ export type GetTeacherUnclaimedParams = {
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */
 teacherId?: TeacherIdQueryParameter;
+};
+
+export type GetTeacherAnalyticsParams = {
+/**
+ * Optional teacher id (admin-only) to preview another teacher's dashboard.
+ */
+teacherId?: TeacherIdQueryParameter;
+/**
+ * Optional class id to filter by. If omitted, all teacher classes are aggregated.
+ */
+classId?: number;
+/**
+ * Start date (ISO). Defaults to 30 days ago.
+ */
+from?: string;
+/**
+ * End date (ISO). Defaults to today.
+ */
+to?: string;
 };
 
 export type ClaimTeacherStudentParams = {

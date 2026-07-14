@@ -61,6 +61,7 @@ import type {
   GenerateStoryBody,
   GenerateStoryResponse,
   GetLeaderboardParams,
+  GetTeacherAnalyticsParams,
   GetTeacherChallengeSubmissionsParams,
   GetTeacherChallengesParams,
   GetTeacherClassesParams,
@@ -96,6 +97,7 @@ import type {
   StudentProfile,
   SubmitChallengeBody,
   SubmitStoryQuizBody,
+  TeacherAnalyticsReport,
   TeacherChallenge,
   TeacherChallengeList,
   TeacherClassList,
@@ -1991,6 +1993,91 @@ export function useGetTeacherUnclaimed<TData = Awaited<ReturnType<typeof getTeac
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetTeacherUnclaimedQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetTeacherAnalyticsUrl = (params?: GetTeacherAnalyticsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/teacher/analytics?${stringifiedParams}` : `/api/teacher/analytics`
+}
+
+/**
+ * Returns summary statistics, charts, and a per-student performance table for a selected class and date range.
+ * @summary Analytics and reports for the teacher's classes
+ */
+export const getTeacherAnalytics = async (params?: GetTeacherAnalyticsParams, options?: RequestInit): Promise<TeacherAnalyticsReport> => {
+
+  return customFetch<TeacherAnalyticsReport>(getGetTeacherAnalyticsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTeacherAnalyticsQueryKey = (params?: GetTeacherAnalyticsParams,) => {
+    return [
+    `/api/teacher/analytics`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTeacherAnalyticsQueryOptions = <TData = Awaited<ReturnType<typeof getTeacherAnalytics>>, TError = ErrorType<void>>(params?: GetTeacherAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTeacherAnalyticsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeacherAnalytics>>> = ({ signal }) => getTeacherAnalytics(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeacherAnalytics>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTeacherAnalyticsQueryResult = NonNullable<Awaited<ReturnType<typeof getTeacherAnalytics>>>
+export type GetTeacherAnalyticsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Analytics and reports for the teacher's classes
+ */
+
+export function useGetTeacherAnalytics<TData = Awaited<ReturnType<typeof getTeacherAnalytics>>, TError = ErrorType<void>>(
+ params?: GetTeacherAnalyticsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherAnalytics>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTeacherAnalyticsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

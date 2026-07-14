@@ -757,6 +757,63 @@ export const GetTeacherUnclaimedResponse = zod.object({
 
 
 /**
+ * Returns summary statistics, charts, and a per-student performance table for a selected class and date range.
+ * @summary Analytics and reports for the teacher's classes
+ */
+export const GetTeacherAnalyticsQueryParams = zod.object({
+  "teacherId": zod.coerce.number().optional().describe('Optional teacher id (admin-only) to preview another teacher\'s dashboard.'),
+  "classId": zod.coerce.number().optional().describe('Optional class id to filter by. If omitted, all teacher classes are aggregated.'),
+  "from": zod.date().optional().describe('Start date (ISO). Defaults to 30 days ago.'),
+  "to": zod.date().optional().describe('End date (ISO). Defaults to today.')
+})
+
+export const GetTeacherAnalyticsResponse = zod.object({
+  "summary": zod.object({
+  "totalStudents": zod.number(),
+  "activeStudents": zod.number(),
+  "avgPoints": zod.number(),
+  "avgScore": zod.number(),
+  "storiesCompleted": zod.number(),
+  "testsCompleted": zod.number(),
+  "successRate": zod.number()
+}),
+  "charts": zod.object({
+  "dailyActivity": zod.array(zod.object({
+  "date": zod.string(),
+  "count": zod.number()
+})),
+  "studentPerformance": zod.array(zod.object({
+  "studentId": zod.number(),
+  "name": zod.string(),
+  "score": zod.number()
+})),
+  "levelDistribution": zod.array(zod.object({
+  "level": zod.string(),
+  "label": zod.string(),
+  "count": zod.number()
+}))
+}),
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "imageUrl": zod.union([zod.string(),zod.null()]),
+  "points": zod.number(),
+  "storiesCompleted": zod.number(),
+  "testsCompleted": zod.number(),
+  "avgScore": zod.number(),
+  "progress": zod.number(),
+  "level": zod.string(),
+  "levelLabel": zod.string(),
+  "note": zod.string()
+})),
+  "period": zod.object({
+  "from": zod.string(),
+  "to": zod.string()
+})
+})
+
+
+/**
  * @summary Add an unclaimed student to one of the teacher's classes
  */
 export const ClaimTeacherStudentParams = zod.object({
