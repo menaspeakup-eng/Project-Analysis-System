@@ -1117,6 +1117,118 @@ export interface LibraryReviewBody {
   status: LibraryReviewBodyStatus;
 }
 
+export interface ReadingCoachAnalysis {
+  accuracy: number;
+  missingWords: string[];
+  wrongWords: string[];
+  addedWords: string[];
+  fluency: number;
+  tips: string;
+  summary: string;
+  score: number;
+}
+
+export type ReadingCoachAttemptStatus = typeof ReadingCoachAttemptStatus[keyof typeof ReadingCoachAttemptStatus];
+
+
+export const ReadingCoachAttemptStatus = {
+  pending: 'pending',
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ReadingCoachAttempt {
+  id: number;
+  sentence: string;
+  audioObjectPath: string;
+  transcription: string | null;
+  analysis: ReadingCoachAnalysis;
+  score: number;
+  maxScore: number;
+  status: ReadingCoachAttemptStatus;
+  pointsAwarded: number | null;
+  createdAt: string;
+}
+
+export interface ReadingCoachStatus {
+  remaining: number;
+  used: number;
+  limit: number;
+  secondsUntilReset: number;
+  hasAttemptedToday: boolean;
+  latestAttempt: ReadingCoachAttempt | null;
+}
+
+export interface ReadingCoachSentenceBody {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  difficulty?: number;
+}
+
+export interface ReadingCoachSentence {
+  sentence: string;
+  difficulty: number;
+}
+
+export interface ReadingCoachSubmitAttemptBody {
+  sentence: string;
+  audioObjectPath: string;
+  contentType: string;
+}
+
+export interface ReadingCoachAttemptResponse {
+  attempt: ReadingCoachAttempt;
+}
+
+export interface TeacherReadingCoachAttempt {
+  id: number;
+  studentId: number;
+  sentence: string;
+  audioObjectPath: string;
+  transcription: string | null;
+  analysis: ReadingCoachAnalysis;
+  score: number;
+  maxScore: number;
+  status: string;
+  pointsAwarded: number | null;
+  createdAt: string;
+  student: StudentProfile;
+  class: TeacherClass | null;
+}
+
+export interface TeacherReadingCoachAttempts {
+  attempts: TeacherReadingCoachAttempt[];
+}
+
+export type ReadingCoachReviewBodyStatus = typeof ReadingCoachReviewBodyStatus[keyof typeof ReadingCoachReviewBodyStatus];
+
+
+export const ReadingCoachReviewBodyStatus = {
+  accepted: 'accepted',
+  rejected: 'rejected',
+} as const;
+
+export interface ReadingCoachReviewBody {
+  status: ReadingCoachReviewBodyStatus;
+  points?: number;
+  teacherFeedback?: string;
+}
+
+export interface ReadingCoachReviewResult {
+  id: number;
+  status: string;
+  pointsAwarded: number;
+  teacherFeedback: string | null;
+}
+
+export interface ReadingCoachAllowResponse {
+  allowed: boolean;
+  extraUses: number;
+  forDate: string;
+}
+
 /**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */

@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion, type Variants } from "framer-motion";
-import { BookOpen, Sparkles, ArrowRight, Wand2, Home } from "lucide-react";
+import { BookOpen, Sparkles, ArrowRight, Wand2, Home, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AIStatusIndicator } from "@/components/ai-status";
@@ -26,6 +26,15 @@ const tools = [
     icon: BookOpen,
     href: "/ai-story",
     color: "bg-[hsl(265,60%,92%)] text-[hsl(265,60%,45%)]",
+    available: true,
+  },
+  {
+    id: "reading-coach",
+    title: "🎙️ مدرب القراءة الذكي",
+    description: "تدرب على قراءة جملة عربية مشكولة يختارها لك الذكاء الاصطناعي، سجّل صوتك واحصل على تحليل فوري ونتيجة.",
+    icon: Mic,
+    href: "/reading-coach",
+    color: "bg-[hsl(15,85%,95%)] text-[hsl(15,85%,55%)]",
     available: true,
   },
 ];

@@ -26,6 +26,8 @@ tags:
     description: Object storage upload and serving endpoints
   - name: library
     description: Educational library content and reviews
+  - name: reading-coach
+    description: Smart reading coach practice and review
 paths:
   /healthz:
     get:
@@ -1593,6 +1595,109 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LibraryAnswer'
+  /reading-coach/status:
+    get:
+      operationId: getReadingCoachStatus
+      tags: [reading-coach]
+      summary: Get today's reading coach status
+      responses:
+        "200":
+          description: Status and remaining attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingCoachStatus"
+  /reading-coach/sentence:
+    post:
+      operationId: generateReadingCoachSentence
+      tags: [reading-coach]
+      summary: Generate a new daily reading sentence
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadingCoachSentenceBody"
+      responses:
+        "200":
+          description: Generated sentence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingCoachSentence"
+  /reading-coach/attempt:
+    post:
+      operationId: submitReadingCoachAttempt
+      tags: [reading-coach]
+      summary: Submit a recorded reading attempt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadingCoachSubmitAttemptBody"
+      responses:
+        "200":
+          description: Attempt with analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingCoachAttemptResponse"
+  /teacher/reading-coach/attempts:
+    get:
+      operationId: getTeacherReadingCoachAttempts
+      tags: [reading-coach, teacher]
+      summary: List reading coach attempts for review
+      responses:
+        "200":
+          description: List of attempts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherReadingCoachAttempts"
+  /teacher/reading-coach/attempts/{id}/review:
+    post:
+      operationId: reviewReadingCoachAttempt
+      tags: [reading-coach, teacher]
+      summary: Review a reading coach attempt
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReadingCoachReviewBody"
+      responses:
+        "200":
+          description: Review result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingCoachReviewResult"
+  /teacher/students/{id}/allow-reading-coach:
+    post:
+      operationId: allowStudentReadingCoach
+      tags: [reading-coach, teacher]
+      summary: Allow an extra reading coach attempt
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Allowance updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingCoachAllowResponse"
+
 components:
   parameters:
     TeacherIdQuery:
@@ -3632,3 +3737,182 @@ components:
         status:
           type: string
           enum: [accepted, rejected]
+    ReadingCoachStatus:
+      type: object
+      required: [remaining, used, limit, secondsUntilReset, hasAttemptedToday, latestAttempt]
+      properties:
+        remaining:
+          type: integer
+        used:
+          type: integer
+        limit:
+          type: integer
+        secondsUntilReset:
+          type: integer
+        hasAttemptedToday:
+          type: boolean
+        latestAttempt:
+          nullable: true
+          $ref: "#/components/schemas/ReadingCoachAttempt"
+    ReadingCoachSentenceBody:
+      type: object
+      properties:
+        difficulty:
+          type: integer
+          minimum: 1
+          maximum: 5
+    ReadingCoachSentence:
+      type: object
+      required: [sentence, difficulty]
+      properties:
+        sentence:
+          type: string
+        difficulty:
+          type: integer
+    ReadingCoachSubmitAttemptBody:
+      type: object
+      required: [sentence, audioObjectPath, contentType]
+      properties:
+        sentence:
+          type: string
+        audioObjectPath:
+          type: string
+        contentType:
+          type: string
+    ReadingCoachAttemptResponse:
+      type: object
+      required: [attempt]
+      properties:
+        attempt:
+          $ref: "#/components/schemas/ReadingCoachAttempt"
+    ReadingCoachAttempt:
+      type: object
+      required: [id, sentence, audioObjectPath, transcription, analysis, score, maxScore, status, pointsAwarded, createdAt]
+      properties:
+        id:
+          type: integer
+        sentence:
+          type: string
+        audioObjectPath:
+          type: string
+        transcription:
+          type: string
+          nullable: true
+        analysis:
+          $ref: "#/components/schemas/ReadingCoachAnalysis"
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        status:
+          type: string
+          enum: [pending, accepted, rejected]
+        pointsAwarded:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    ReadingCoachAnalysis:
+      type: object
+      required: [accuracy, missingWords, wrongWords, addedWords, fluency, tips, summary, score]
+      properties:
+        accuracy:
+          type: integer
+        missingWords:
+          type: array
+          items:
+            type: string
+        wrongWords:
+          type: array
+          items:
+            type: string
+        addedWords:
+          type: array
+          items:
+            type: string
+        fluency:
+          type: integer
+        tips:
+          type: string
+        summary:
+          type: string
+        score:
+          type: integer
+    TeacherReadingCoachAttempts:
+      type: object
+      required: [attempts]
+      properties:
+        attempts:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherReadingCoachAttempt"
+    TeacherReadingCoachAttempt:
+      type: object
+      required: [id, studentId, sentence, audioObjectPath, transcription, analysis, score, maxScore, status, pointsAwarded, createdAt, student, class]
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        sentence:
+          type: string
+        audioObjectPath:
+          type: string
+        transcription:
+          type: string
+          nullable: true
+        analysis:
+          $ref: "#/components/schemas/ReadingCoachAnalysis"
+        score:
+          type: integer
+        maxScore:
+          type: integer
+        status:
+          type: string
+        pointsAwarded:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        student:
+          $ref: "#/components/schemas/StudentProfile"
+        class:
+          oneOf:
+            - $ref: "#/components/schemas/TeacherClass"
+            - type: "null"
+    ReadingCoachReviewBody:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [accepted, rejected]
+        points:
+          type: integer
+        teacherFeedback:
+          type: string
+    ReadingCoachReviewResult:
+      type: object
+      required: [id, status, pointsAwarded, teacherFeedback]
+      properties:
+        id:
+          type: integer
+        status:
+          type: string
+        pointsAwarded:
+          type: integer
+        teacherFeedback:
+          type: string
+          nullable: true
+    ReadingCoachAllowResponse:
+      type: object
+      required: [allowed, extraUses, forDate]
+      properties:
+        allowed:
+          type: boolean
+        extraUses:
+          type: integer
+        forDate:
+          type: string

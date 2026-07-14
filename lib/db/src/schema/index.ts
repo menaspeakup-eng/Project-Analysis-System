@@ -5,3 +5,4 @@ export * from "./ai-stories";
 export * from "./activity-logs";
 export * from "./friends";
 export * from "./library";
+export * from "./reading-coach";

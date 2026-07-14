@@ -15,6 +15,7 @@ export const ACTIVITY_TYPES = [
   "level_up",
   "quiz_complete",
   "library_submission",
+  "reading_coach_complete",
   "friend_added",
   "friend_accepted",
   "settings_updated",

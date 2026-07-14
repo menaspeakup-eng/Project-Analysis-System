@@ -1990,3 +1990,203 @@ export const ReviewLibraryAnswerResponse = zod.object({
 })
 
 
+/**
+ * @summary Get today's reading coach status
+ */
+export const GetReadingCoachStatusResponse = zod.object({
+  "remaining": zod.number(),
+  "used": zod.number(),
+  "limit": zod.number(),
+  "secondsUntilReset": zod.number(),
+  "hasAttemptedToday": zod.boolean(),
+  "latestAttempt": zod.object({
+  "id": zod.number(),
+  "sentence": zod.string(),
+  "audioObjectPath": zod.string(),
+  "transcription": zod.string().nullable(),
+  "analysis": zod.object({
+  "accuracy": zod.number(),
+  "missingWords": zod.array(zod.string()),
+  "wrongWords": zod.array(zod.string()),
+  "addedWords": zod.array(zod.string()),
+  "fluency": zod.number(),
+  "tips": zod.string(),
+  "summary": zod.string(),
+  "score": zod.number()
+}),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "pointsAwarded": zod.number().nullable(),
+  "createdAt": zod.coerce.date()
+}).nullable()
+})
+
+
+/**
+ * @summary Generate a new daily reading sentence
+ */
+export const generateReadingCoachSentenceBodyDifficultyMax = 5;
+
+
+
+export const GenerateReadingCoachSentenceBody = zod.object({
+  "difficulty": zod.number().min(1).max(generateReadingCoachSentenceBodyDifficultyMax).optional()
+})
+
+export const GenerateReadingCoachSentenceResponse = zod.object({
+  "sentence": zod.string(),
+  "difficulty": zod.number()
+})
+
+
+/**
+ * @summary Submit a recorded reading attempt
+ */
+export const SubmitReadingCoachAttemptBody = zod.object({
+  "sentence": zod.string(),
+  "audioObjectPath": zod.string(),
+  "contentType": zod.string()
+})
+
+export const SubmitReadingCoachAttemptResponse = zod.object({
+  "attempt": zod.object({
+  "id": zod.number(),
+  "sentence": zod.string(),
+  "audioObjectPath": zod.string(),
+  "transcription": zod.string().nullable(),
+  "analysis": zod.object({
+  "accuracy": zod.number(),
+  "missingWords": zod.array(zod.string()),
+  "wrongWords": zod.array(zod.string()),
+  "addedWords": zod.array(zod.string()),
+  "fluency": zod.number(),
+  "tips": zod.string(),
+  "summary": zod.string(),
+  "score": zod.number()
+}),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "status": zod.enum(['pending', 'accepted', 'rejected']),
+  "pointsAwarded": zod.number().nullable(),
+  "createdAt": zod.coerce.date()
+})
+})
+
+
+/**
+ * @summary List reading coach attempts for review
+ */
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigNicknameDefault = ``;
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigNicknameMax = 30;
+
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigFrameDefault = `none`;
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigBadgesDefault = [];
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigNicknameDefault = ``;
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigNicknameMax = 30;
+
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigFrameDefault = `none`;
+export const getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigBadgesDefault = [];
+
+export const GetTeacherReadingCoachAttemptsResponse = zod.object({
+  "attempts": zod.array(zod.object({
+  "id": zod.number(),
+  "studentId": zod.number(),
+  "sentence": zod.string(),
+  "audioObjectPath": zod.string(),
+  "transcription": zod.string().nullable(),
+  "analysis": zod.object({
+  "accuracy": zod.number(),
+  "missingWords": zod.array(zod.string()),
+  "wrongWords": zod.array(zod.string()),
+  "addedWords": zod.array(zod.string()),
+  "fluency": zod.number(),
+  "tips": zod.string(),
+  "summary": zod.string(),
+  "score": zod.number()
+}),
+  "score": zod.number(),
+  "maxScore": zod.number(),
+  "status": zod.string(),
+  "pointsAwarded": zod.number().nullable(),
+  "createdAt": zod.coerce.date(),
+  "student": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string(),
+  "nickname": zod.string().max(getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigNicknameMax).default(getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getTeacherReadingCoachAttemptsResponseAttemptsItemStudentAvatarConfigBadgesDefault)
+}),
+  "classId": zod.union([zod.number(),zod.null()]),
+  "className": zod.union([zod.string(),zod.null()]),
+  "teacherName": zod.union([zod.string(),zod.null()]),
+  "teacherEmail": zod.union([zod.string(),zod.null()]),
+  "imageUrl": zod.union([zod.string(),zod.null()])
+}),
+  "class": zod.union([zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "teacherId": zod.union([zod.number(),zod.null()]),
+  "isChatEnabled": zod.boolean(),
+  "students": zod.array(zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "email": zod.union([zod.string(),zod.null()]).optional(),
+  "points": zod.number(),
+  "avatarConfig": zod.object({
+  "bgColor": zod.string(),
+  "accessories": zod.array(zod.string()),
+  "gender": zod.enum(['male', 'female']),
+  "pet": zod.string(),
+  "nickname": zod.string().max(getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigNicknameMax).default(getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigNicknameDefault),
+  "frame": zod.string().default(getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigFrameDefault),
+  "badges": zod.array(zod.string()).default(getTeacherReadingCoachAttemptsResponseAttemptsItemClassOneStudentsItemAvatarConfigBadgesDefault)
+})
+}))
+}),zod.null()])
+}))
+})
+
+
+/**
+ * @summary Review a reading coach attempt
+ */
+export const ReviewReadingCoachAttemptParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ReviewReadingCoachAttemptBody = zod.object({
+  "status": zod.enum(['accepted', 'rejected']),
+  "points": zod.number().optional(),
+  "teacherFeedback": zod.string().optional()
+})
+
+export const ReviewReadingCoachAttemptResponse = zod.object({
+  "id": zod.number(),
+  "status": zod.string(),
+  "pointsAwarded": zod.number(),
+  "teacherFeedback": zod.string().nullable()
+})
+
+
+/**
+ * @summary Allow an extra reading coach attempt
+ */
+export const AllowStudentReadingCoachParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AllowStudentReadingCoachResponse = zod.object({
+  "allowed": zod.boolean(),
+  "extraUses": zod.number(),
+  "forDate": zod.string()
+})
+
+

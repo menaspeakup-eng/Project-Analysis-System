@@ -14,6 +14,7 @@ import activityLogsRouter from "./activity-logs";
 import friendsRouter from "./friends";
 import storageRouter from "./storage";
 import libraryRouter from "./library";
+import readingCoachRouter from "./reading-coach";
 
 const router: IRouter = Router();
 
@@ -32,5 +33,6 @@ router.use(activityLogsRouter);
 router.use(friendsRouter);
 router.use(storageRouter);
 router.use(libraryRouter);
+router.use(readingCoachRouter);
 
 export default router;

@@ -28,6 +28,7 @@ import NotFound from "@/pages/not-found";
 import ChatPage from "@/pages/chat";
 import AIAssistant from "@/pages/ai-assistant";
 import AIStory from "@/pages/ai-story";
+import ReadingCoach from "@/pages/reading-coach";
 import Settings from "@/pages/settings";
 import Achievements from "@/pages/achievements";
 import Friends from "@/pages/friends";
@@ -213,6 +214,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/chat" component={ChatPage} />
             <Route path="/ai-assistant" component={AIAssistant} />
             <Route path="/ai-story" component={AIStory} />
+            <Route path="/reading-coach" component={ReadingCoach} />
             <Route path="/settings" component={Settings} />
             <Route path="/achievements" component={Achievements} />
             <Route path="/friends" component={Friends} />

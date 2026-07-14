@@ -84,6 +84,14 @@ import type {
   ListLibraryItemsParams,
   MoveStudentBody,
   NameCaptureBody,
+  ReadingCoachAllowResponse,
+  ReadingCoachAttemptResponse,
+  ReadingCoachReviewBody,
+  ReadingCoachReviewResult,
+  ReadingCoachSentence,
+  ReadingCoachSentenceBody,
+  ReadingCoachStatus,
+  ReadingCoachSubmitAttemptBody,
   RemoveTeacherStudentClassParams,
   ReviewStorySubmissionBody,
   ReviewSubmissionBody,
@@ -104,6 +112,7 @@ import type {
   TeacherGame,
   TeacherGameList,
   TeacherGameStats,
+  TeacherReadingCoachAttempts,
   TeacherStorySubmissionList,
   TeacherStudent,
   TeacherStudentClass,
@@ -5383,5 +5392,444 @@ export const useReviewLibraryAnswer = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getReviewLibraryAnswerMutationOptions(options));
+    }
+
+export const getGetReadingCoachStatusUrl = () => {
+
+
+
+
+  return `/api/reading-coach/status`
+}
+
+/**
+ * @summary Get today's reading coach status
+ */
+export const getReadingCoachStatus = async ( options?: RequestInit): Promise<ReadingCoachStatus> => {
+
+  return customFetch<ReadingCoachStatus>(getGetReadingCoachStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetReadingCoachStatusQueryKey = () => {
+    return [
+    `/api/reading-coach/status`
+    ] as const;
+    }
+
+
+export const getGetReadingCoachStatusQueryOptions = <TData = Awaited<ReturnType<typeof getReadingCoachStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReadingCoachStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetReadingCoachStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getReadingCoachStatus>>> = ({ signal }) => getReadingCoachStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getReadingCoachStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetReadingCoachStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getReadingCoachStatus>>>
+export type GetReadingCoachStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get today's reading coach status
+ */
+
+export function useGetReadingCoachStatus<TData = Awaited<ReturnType<typeof getReadingCoachStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getReadingCoachStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetReadingCoachStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGenerateReadingCoachSentenceUrl = () => {
+
+
+
+
+  return `/api/reading-coach/sentence`
+}
+
+/**
+ * @summary Generate a new daily reading sentence
+ */
+export const generateReadingCoachSentence = async (readingCoachSentenceBody?: ReadingCoachSentenceBody, options?: RequestInit): Promise<ReadingCoachSentence> => {
+
+  return customFetch<ReadingCoachSentence>(getGenerateReadingCoachSentenceUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(readingCoachSentenceBody)
+  }
+);}
+
+
+
+
+
+export const getGenerateReadingCoachSentenceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateReadingCoachSentence>>, TError,{data?: BodyType<ReadingCoachSentenceBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateReadingCoachSentence>>, TError,{data?: BodyType<ReadingCoachSentenceBody>}, TContext> => {
+
+const mutationKey = ['generateReadingCoachSentence'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateReadingCoachSentence>>, {data?: BodyType<ReadingCoachSentenceBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateReadingCoachSentence(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateReadingCoachSentenceMutationResult = NonNullable<Awaited<ReturnType<typeof generateReadingCoachSentence>>>
+    export type GenerateReadingCoachSentenceMutationBody = BodyType<ReadingCoachSentenceBody> | undefined
+    export type GenerateReadingCoachSentenceMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate a new daily reading sentence
+ */
+export const useGenerateReadingCoachSentence = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateReadingCoachSentence>>, TError,{data?: BodyType<ReadingCoachSentenceBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateReadingCoachSentence>>,
+        TError,
+        {data?: BodyType<ReadingCoachSentenceBody>},
+        TContext
+      > => {
+      return useMutation(getGenerateReadingCoachSentenceMutationOptions(options));
+    }
+
+export const getSubmitReadingCoachAttemptUrl = () => {
+
+
+
+
+  return `/api/reading-coach/attempt`
+}
+
+/**
+ * @summary Submit a recorded reading attempt
+ */
+export const submitReadingCoachAttempt = async (readingCoachSubmitAttemptBody: ReadingCoachSubmitAttemptBody, options?: RequestInit): Promise<ReadingCoachAttemptResponse> => {
+
+  return customFetch<ReadingCoachAttemptResponse>(getSubmitReadingCoachAttemptUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(readingCoachSubmitAttemptBody)
+  }
+);}
+
+
+
+
+
+export const getSubmitReadingCoachAttemptMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitReadingCoachAttempt>>, TError,{data: BodyType<ReadingCoachSubmitAttemptBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitReadingCoachAttempt>>, TError,{data: BodyType<ReadingCoachSubmitAttemptBody>}, TContext> => {
+
+const mutationKey = ['submitReadingCoachAttempt'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitReadingCoachAttempt>>, {data: BodyType<ReadingCoachSubmitAttemptBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  submitReadingCoachAttempt(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitReadingCoachAttemptMutationResult = NonNullable<Awaited<ReturnType<typeof submitReadingCoachAttempt>>>
+    export type SubmitReadingCoachAttemptMutationBody = BodyType<ReadingCoachSubmitAttemptBody>
+    export type SubmitReadingCoachAttemptMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Submit a recorded reading attempt
+ */
+export const useSubmitReadingCoachAttempt = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitReadingCoachAttempt>>, TError,{data: BodyType<ReadingCoachSubmitAttemptBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitReadingCoachAttempt>>,
+        TError,
+        {data: BodyType<ReadingCoachSubmitAttemptBody>},
+        TContext
+      > => {
+      return useMutation(getSubmitReadingCoachAttemptMutationOptions(options));
+    }
+
+export const getGetTeacherReadingCoachAttemptsUrl = () => {
+
+
+
+
+  return `/api/teacher/reading-coach/attempts`
+}
+
+/**
+ * @summary List reading coach attempts for review
+ */
+export const getTeacherReadingCoachAttempts = async ( options?: RequestInit): Promise<TeacherReadingCoachAttempts> => {
+
+  return customFetch<TeacherReadingCoachAttempts>(getGetTeacherReadingCoachAttemptsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTeacherReadingCoachAttemptsQueryKey = () => {
+    return [
+    `/api/teacher/reading-coach/attempts`
+    ] as const;
+    }
+
+
+export const getGetTeacherReadingCoachAttemptsQueryOptions = <TData = Awaited<ReturnType<typeof getTeacherReadingCoachAttempts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherReadingCoachAttempts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTeacherReadingCoachAttemptsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeacherReadingCoachAttempts>>> = ({ signal }) => getTeacherReadingCoachAttempts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeacherReadingCoachAttempts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTeacherReadingCoachAttemptsQueryResult = NonNullable<Awaited<ReturnType<typeof getTeacherReadingCoachAttempts>>>
+export type GetTeacherReadingCoachAttemptsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List reading coach attempts for review
+ */
+
+export function useGetTeacherReadingCoachAttempts<TData = Awaited<ReturnType<typeof getTeacherReadingCoachAttempts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherReadingCoachAttempts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTeacherReadingCoachAttemptsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getReviewReadingCoachAttemptUrl = (id: number,) => {
+
+
+
+
+  return `/api/teacher/reading-coach/attempts/${id}/review`
+}
+
+/**
+ * @summary Review a reading coach attempt
+ */
+export const reviewReadingCoachAttempt = async (id: number,
+    readingCoachReviewBody: ReadingCoachReviewBody, options?: RequestInit): Promise<ReadingCoachReviewResult> => {
+
+  return customFetch<ReadingCoachReviewResult>(getReviewReadingCoachAttemptUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(readingCoachReviewBody)
+  }
+);}
+
+
+
+
+
+export const getReviewReadingCoachAttemptMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewReadingCoachAttempt>>, TError,{id: number;data: BodyType<ReadingCoachReviewBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewReadingCoachAttempt>>, TError,{id: number;data: BodyType<ReadingCoachReviewBody>}, TContext> => {
+
+const mutationKey = ['reviewReadingCoachAttempt'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewReadingCoachAttempt>>, {id: number;data: BodyType<ReadingCoachReviewBody>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  reviewReadingCoachAttempt(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewReadingCoachAttemptMutationResult = NonNullable<Awaited<ReturnType<typeof reviewReadingCoachAttempt>>>
+    export type ReviewReadingCoachAttemptMutationBody = BodyType<ReadingCoachReviewBody>
+    export type ReviewReadingCoachAttemptMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Review a reading coach attempt
+ */
+export const useReviewReadingCoachAttempt = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewReadingCoachAttempt>>, TError,{id: number;data: BodyType<ReadingCoachReviewBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewReadingCoachAttempt>>,
+        TError,
+        {id: number;data: BodyType<ReadingCoachReviewBody>},
+        TContext
+      > => {
+      return useMutation(getReviewReadingCoachAttemptMutationOptions(options));
+    }
+
+export const getAllowStudentReadingCoachUrl = (id: number,) => {
+
+
+
+
+  return `/api/teacher/students/${id}/allow-reading-coach`
+}
+
+/**
+ * @summary Allow an extra reading coach attempt
+ */
+export const allowStudentReadingCoach = async (id: number, options?: RequestInit): Promise<ReadingCoachAllowResponse> => {
+
+  return customFetch<ReadingCoachAllowResponse>(getAllowStudentReadingCoachUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getAllowStudentReadingCoachMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof allowStudentReadingCoach>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof allowStudentReadingCoach>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['allowStudentReadingCoach'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof allowStudentReadingCoach>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  allowStudentReadingCoach(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AllowStudentReadingCoachMutationResult = NonNullable<Awaited<ReturnType<typeof allowStudentReadingCoach>>>
+
+    export type AllowStudentReadingCoachMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Allow an extra reading coach attempt
+ */
+export const useAllowStudentReadingCoach = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof allowStudentReadingCoach>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof allowStudentReadingCoach>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getAllowStudentReadingCoachMutationOptions(options));
     }
 
