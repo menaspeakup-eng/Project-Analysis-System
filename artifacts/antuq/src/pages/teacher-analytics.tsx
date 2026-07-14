@@ -56,6 +56,7 @@ import {
   Activity,
   HelpCircle,
   Info,
+  RefreshCw,
 } from "lucide-react";
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -130,7 +131,7 @@ export default function TeacherAnalytics({
     return p;
   }, [range, selectedClassId, teacherIdParam]);
 
-  const { data, isLoading } = useGetTeacherAnalytics(params, {
+  const { data, isLoading, refetch, isFetching } = useGetTeacherAnalytics(params, {
     query: { enabled: classes.length > 0 } as never,
   });
 
@@ -234,6 +235,17 @@ export default function TeacherAnalytics({
           <h2 className="font-black text-foreground text-lg">تحليل الطلاب والتقارير</h2>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl font-bold gap-2"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            title="تحديث البيانات"
+          >
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+            تحديث البيانات
+          </Button>
           <Select value={selectedClassId} onValueChange={setSelectedClassId}>
             <SelectTrigger className="w-[180px] rounded-xl font-bold">
               <SelectValue placeholder="اختر الصف" />

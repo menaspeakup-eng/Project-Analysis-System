@@ -205,7 +205,7 @@ function parseStoryText(raw: string): GeneratedStory {
         correctLetter = normalizeLetter(correctMatch[1]);
         continue;
       }
-      const optionMatch = line.match(/^([-\u0660-\u0669a-dA-D۰-۹])\s*[\.\-)]\s*(.+)$/);
+      const optionMatch = line.match(/^([-\u0660-\u0669a-dA-D۰-۹أبجده])\s*[\.\-)]\s*(.+)$/);
       if (optionMatch) {
         const letter = normalizeLetter(optionMatch[1]);
         const text = optionMatch[2]
