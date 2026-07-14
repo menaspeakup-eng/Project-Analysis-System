@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://antuq.app/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://antuq.app/about</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://antuq.app/features</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://antuq.app/schools</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://antuq.app/contact</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://antuq.app/faq</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://antuq.app/terms</loc>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://antuq.app/privacy</loc>
+    <priority>0.4</priority>
+  </url>
+</urlset>

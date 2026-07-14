@@ -48,6 +48,10 @@ export default function StaticPageLayout({
             <span className="font-bold text-muted-foreground">© {new Date().getFullYear()} انطق. منصة تعليمية.</span>
           </div>
           <div className="flex items-center gap-6 text-sm font-bold text-muted-foreground">
+            <Link href="/about" className="hover:text-primary transition-colors">عن المنصة</Link>
+            <Link href="/features" className="hover:text-primary transition-colors">المميزات</Link>
+            <Link href="/contact" className="hover:text-primary transition-colors">تواصل معنا</Link>
+            <Link href="/faq" className="hover:text-primary transition-colors">الأسئلة الشائعة</Link>
             <Link href="/terms" className="hover:text-primary transition-colors">شروط الاستخدام</Link>
             <Link href="/privacy" className="hover:text-primary transition-colors">سياسة الخصوصية</Link>
             <Link href="/schools" className="hover:text-primary transition-colors">للمدارس</Link>

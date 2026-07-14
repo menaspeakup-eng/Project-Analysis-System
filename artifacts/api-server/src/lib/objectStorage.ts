@@ -10,24 +10,10 @@ import {
   setObjectAclPolicy,
 } from './objectAcl';
 
-const REPLIT_SIDECAR_ENDPOINT = 'http://127.0.0.1:1106';
+const projectId = process.env.GOOGLE_CLOUD_PROJECT_ID || undefined;
 
 export const objectStorageClient = new Storage({
-  credentials: {
-    audience: 'replit',
-    subject_token_type: 'access_token',
-    token_url: `${REPLIT_SIDECAR_ENDPOINT}/token`,
-    type: 'external_account',
-    credential_source: {
-      url: `${REPLIT_SIDECAR_ENDPOINT}/credential`,
-      format: {
-        type: 'json',
-        subject_token_field_name: 'access_token',
-      },
-    },
-    universe_domain: 'googleapis.com',
-  },
-  projectId: '',
+  projectId,
 });
 
 export class ObjectNotFoundError extends Error {
@@ -53,8 +39,7 @@ export class ObjectStorageService {
     );
     if (paths.length === 0) {
       throw new Error(
-        "PUBLIC_OBJECT_SEARCH_PATHS not set. Create a bucket in 'Object Storage' " +
-          'tool and set PUBLIC_OBJECT_SEARCH_PATHS env var (comma-separated paths).',
+        'PUBLIC_OBJECT_SEARCH_PATHS not set. Set it to comma-separated bucket/directory paths (e.g. /my-bucket/assets).',
       );
     }
     return paths;
@@ -64,8 +49,7 @@ export class ObjectStorageService {
     const dir = process.env.PRIVATE_OBJECT_DIR || '';
     if (!dir) {
       throw new Error(
-        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
-          'tool and set PRIVATE_OBJECT_DIR env var.',
+        'PRIVATE_OBJECT_DIR not set. Set it to the bucket/directory for private uploads (e.g. /my-bucket/private).',
       );
     }
     return dir;
@@ -115,8 +99,7 @@ export class ObjectStorageService {
     const privateObjectDir = this.getPrivateObjectDir();
     if (!privateObjectDir) {
       throw new Error(
-        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
-          'tool and set PRIVATE_OBJECT_DIR env var.',
+        'PRIVATE_OBJECT_DIR not set. Set it to the bucket/directory for private uploads.',
       );
     }
 
@@ -124,13 +107,17 @@ export class ObjectStorageService {
     const fullPath = `${privateObjectDir}/uploads/${objectId}`;
 
     const { bucketName, objectName } = parseObjectPath(fullPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
 
-    return signObjectURL({
-      bucketName,
-      objectName,
-      method: 'PUT',
-      ttlSec: 900,
+    const [url] = await file.getSignedUrl({
+      action: 'write',
+      expires: Date.now() + 900 * 1000,
+      version: 'v4',
+      contentType: 'application/octet-stream',
     });
+
+    return url;
   }
 
   async getObjectEntityFile(objectPath: string): Promise<File> {
@@ -232,7 +219,12 @@ function parseObjectPath(path: string): {
   };
 }
 
-async function signObjectURL({
+/**
+ * Generate a signed URL for a private object using Google Cloud Storage's native
+ * signing. This works on Cloud Run, GCE, and GKE with the default service account
+ * (ADC) as long as the service account has permission to sign blobs.
+ */
+export async function signObjectURL({
   bucketName,
   objectName,
   method,
@@ -243,30 +235,17 @@ async function signObjectURL({
   method: 'GET' | 'PUT' | 'DELETE' | 'HEAD';
   ttlSec: number;
 }): Promise<string> {
-  const request = {
-    bucket_name: bucketName,
-    object_name: objectName,
-    method,
-    expires_at: new Date(Date.now() + ttlSec * 1000).toISOString(),
-  };
-  const response = await fetch(
-    `${REPLIT_SIDECAR_ENDPOINT}/object-storage/signed-object-url`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(30_000),
-    },
-  );
-  if (!response.ok) {
-    throw new Error(
-      `Failed to sign object URL, errorcode: ${response.status}, ` +
-        `make sure you're running on Replit`,
-    );
-  }
+  const bucket = objectStorageClient.bucket(bucketName);
+  const file = bucket.file(objectName);
 
-  const { signed_url: signedURL } = (await response.json()) as { signed_url: string };
-  return signedURL;
+  const action: 'read' | 'write' | 'delete' =
+    method === 'GET' || method === 'HEAD' ? 'read' : method === 'PUT' ? 'write' : 'delete';
+
+  const [url] = await file.getSignedUrl({
+    action,
+    expires: Date.now() + ttlSec * 1000,
+    version: 'v4',
+  });
+
+  return url;
 }

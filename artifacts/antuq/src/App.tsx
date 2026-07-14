@@ -15,6 +15,10 @@ import CharacterEdit from "@/pages/character";
 import Terms from "@/pages/terms";
 import Privacy from "@/pages/privacy";
 import Schools from "@/pages/schools";
+import About from "@/pages/about";
+import Features from "@/pages/features";
+import Contact from "@/pages/contact";
+import FAQ from "@/pages/faq";
 import Admin from "@/pages/admin";
 import Teacher from "@/pages/teacher";
 import Games from "@/pages/games";
@@ -220,6 +224,10 @@ function ClerkProviderWithRoutes() {
             <Route path="/terms" component={Terms} />
             <Route path="/privacy" component={Privacy} />
             <Route path="/schools" component={Schools} />
+            <Route path="/about" component={About} />
+            <Route path="/features" component={Features} />
+            <Route path="/contact" component={Contact} />
+            <Route path="/faq" component={FAQ} />
             <Route component={NotFound} />
           </Switch>
           <Toaster />
