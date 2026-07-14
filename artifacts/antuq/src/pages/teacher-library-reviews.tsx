@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "@clerk/react";
+import { useAuth } from "@workspace/replit-auth-web";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,16 +10,16 @@ import { Check, X, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TeacherLibraryReviews() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [, setLocation] = useLocation();
-  const { data, isLoading, refetch } = useListLibraryReviews({ query: { enabled: isLoaded && isSignedIn } as never });
+  const { data, isLoading, refetch } = useListLibraryReviews({ query: { enabled: isAuthLoading && isAuthenticated } as never });
   const review = useReviewLibraryAnswer();
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) setLocation("/");
-  }, [isLoaded, isSignedIn, setLocation]);
+    if (!isAuthLoading) return;
+    if (!isAuthenticated) setLocation("/");
+  }, [isAuthLoading, isAuthenticated, setLocation]);
 
   const handleReview = async (answerId: number, status: "accepted" | "rejected") => {
     try {
@@ -33,7 +33,7 @@ export default function TeacherLibraryReviews() {
     }
   };
 
-  if (!isLoaded || !isSignedIn) {
+  if (!isAuthLoading || !isAuthenticated) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />

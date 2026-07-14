@@ -78,7 +78,7 @@ router.get("/teacher/classes", async (req, res) => {
     isChatEnabled: cls.isChatEnabled,
     students: (studentsByClass.get(cls.id) || []).map((s) => ({
       id: s.id,
-      clerkUserId: s.clerkUserId,
+      replitUserId: s.replitUserId,
       name: s.name,
       email: s.email,
       points: s.points,
@@ -102,7 +102,7 @@ router.get("/teacher/unclaimed", async (req, res) => {
   res.json({
     students: unclaimed.map((s) => ({
       id: s.id,
-      clerkUserId: s.clerkUserId,
+      replitUserId: s.replitUserId,
       name: s.name,
       email: s.email,
       points: s.points,
@@ -153,7 +153,7 @@ router.post("/teacher/students/:id/claim", async (req, res) => {
 
   res.json({
     id: updated.id,
-    clerkUserId: updated.clerkUserId,
+    replitUserId: updated.replitUserId,
     name: updated.name,
     email: updated.email,
     points: updated.points,
@@ -203,7 +203,7 @@ router.patch("/teacher/students/:id", async (req, res) => {
 
   res.json({
     id: updated.id,
-    clerkUserId: updated.clerkUserId,
+    replitUserId: updated.replitUserId,
     name: updated.name,
     email: updated.email,
     points: updated.points,

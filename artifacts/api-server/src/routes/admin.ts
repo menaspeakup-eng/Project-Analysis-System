@@ -1,14 +1,14 @@
 import { Router, type IRouter } from "express";
-import { clerkClient } from "@clerk/express";
 import { z } from "zod";
-import { db, studentsTable, classesTable } from "@workspace/db";
-import { eq, isNull, asc } from "drizzle-orm";
+import { db, studentsTable, classesTable, usersTable } from "@workspace/db";
+import { eq, isNull, asc, or } from "drizzle-orm";
 import {
   resolveIdentity,
   requireIdentity,
   requireAdmin,
   normalizeEmail,
 } from "../lib/identity";
+import type { AdminUser, AdminUserRole } from "@workspace/api-zod/types";
 
 const router: IRouter = Router();
 
@@ -48,7 +48,7 @@ function formatAdminClass(
       .filter((s) => s.classId === cls.id)
       .map((s) => ({
         id: s.id,
-        clerkUserId: s.clerkUserId,
+        replitUserId: s.replitUserId,
         name: s.name,
         email: s.email,
         points: s.points,
@@ -66,27 +66,12 @@ async function getOrCreateStudentByEmail(email: string) {
 
   if (student) return student;
 
-  // Row doesn't exist yet — find the Clerk user by email and provision a row.
-  const clerkUsers = await clerkClient.users.getUserList({
-    emailAddress: [normalized],
-    limit: 1,
-  });
-  const clerkUser = clerkUsers.data?.[0];
-  if (!clerkUser) {
-    return null;
-  }
-
-  const name =
-    clerkUser.fullName ||
-    clerkUser.firstName ||
-    clerkUser.primaryEmailAddress?.emailAddress ||
-    "صديقنا البطل";
-
+  // Create a placeholder row. When the user signs in with the same email,
+  // the Replit Auth callback will link it by email and backfill replitUserId.
   const [created] = await db
     .insert(studentsTable)
     .values({
-      clerkUserId: clerkUser.id,
-      name,
+      name: normalized,
       email: normalized,
       role: "student",
       nameConfirmed: false,
@@ -95,97 +80,57 @@ async function getOrCreateStudentByEmail(email: string) {
   return created;
 }
 
-async function fetchAllClerkUsers() {
-  const users: {
-    id: string;
-    email: string;
-    name: string;
-    imageUrl?: string;
-  }[] = [];
-
-  let offset = 0;
-  const limit = 100;
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const page = await clerkClient.users.getUserList({
-      limit,
-      offset,
-      orderBy: "-created_at",
-    });
-    const rawUsers = Array.isArray(page) ? page : page.data;
-    if (!rawUsers || rawUsers.length === 0) break;
-
-    for (const u of rawUsers) {
-      const email = u.primaryEmailAddress?.emailAddress;
-      if (!email) continue;
-      users.push({
-        id: u.id,
-        email: normalizeEmail(email),
-        name: u.fullName || u.firstName || email,
-        imageUrl: u.imageUrl,
-      });
-    }
-
-    if (rawUsers.length < limit) break;
-    offset += limit;
-  }
-  return users;
-}
-
 router.get("/admin/users", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
   requireAdmin(identity);
 
-  const clerkUsers = await fetchAllClerkUsers();
+  const dbStudents = await db.query.studentsTable.findMany();
+  const dbUsers = await db.query.usersTable.findMany();
 
-  let dbStudents = await db.query.studentsTable.findMany();
-  const dbByClerkId = new Map(dbStudents.map((s) => [s.clerkUserId, s]));
-  const dbByEmail = new Map(dbStudents.map((s) => [normalizeEmail(s.email || ""), s]));
+  const studentsByReplitId = new Map(
+    dbStudents.filter((s) => s.replitUserId).map((s) => [s.replitUserId!, s]),
+  );
+  const studentsByEmail = new Map(
+    dbStudents.map((s) => [normalizeEmail(s.email || ""), s]),
+  );
 
-  const ensuredStudents: typeof dbStudents = [];
-  for (const clerkUser of clerkUsers) {
-    let student = dbByClerkId.get(clerkUser.id) || dbByEmail.get(clerkUser.email) || null;
-    if (!student) {
-      const [created] = await db
-        .insert(studentsTable)
-        .values({
-          clerkUserId: clerkUser.id,
-          name: clerkUser.name,
-          email: normalizeEmail(clerkUser.email),
-          role: "student",
-          nameConfirmed: false,
-        })
-        .returning();
-      student = created;
-      ensuredStudents.push(created);
-    }
-  }
-
-  if (ensuredStudents.length > 0) {
-    dbStudents = await db.query.studentsTable.findMany();
-  }
-  const finalByClerkId = new Map(dbStudents.map((s) => [s.clerkUserId, s]));
-  const finalByEmail = new Map(dbStudents.map((s) => [normalizeEmail(s.email || ""), s]));
-
-  const users = clerkUsers.map((clerkUser) => {
+  // Start with every signed-in Replit Auth user, enriched by their student row.
+  const users: AdminUser[] = dbUsers.map((u) => {
     const student =
-      finalByClerkId.get(clerkUser.id) ||
-      finalByEmail.get(clerkUser.email) ||
+      studentsByReplitId.get(u.id) ||
+      studentsByEmail.get(normalizeEmail(u.email || "")) ||
       null;
-
     return {
       studentId: student?.id ?? null,
-      clerkUserId: clerkUser.id,
-      email: clerkUser.email,
-      name: student?.name ?? clerkUser.name,
-      imageUrl: clerkUser.imageUrl,
-      role: student?.role ?? "student",
+      replitUserId: u.id,
+      email: normalizeEmail(u.email || ""),
+      name: student?.name ?? u.firstName ?? u.email ?? "",
+      imageUrl: student?.imageUrl ?? u.profileImageUrl ?? null,
+      role: (student?.role ?? "student") as AdminUserRole,
       nameConfirmed: student?.nameConfirmed ?? false,
       classId: student?.classId ?? null,
-      className: null, // filled below if known
+      className: null,
     };
   });
+
+  // Also include placeholder students that haven't signed in yet so admin can
+  // assign them to classes or promote them before first login.
+  for (const s of dbStudents) {
+    if (!s.replitUserId) {
+      users.push({
+        studentId: s.id,
+        replitUserId: null,
+        email: normalizeEmail(s.email || ""),
+        name: s.name,
+        imageUrl: s.imageUrl ?? null,
+        role: s.role as AdminUserRole,
+        nameConfirmed: s.nameConfirmed,
+        classId: s.classId ?? null,
+        className: null,
+      });
+    }
+  }
 
   const classes = await db.query.classesTable.findMany();
   const classById = new Map(classes.map((c) => [c.id, c]));
@@ -212,7 +157,6 @@ router.post("/admin/teachers", async (req, res) => {
 
   const newRole = body.isTeacher ? "teacher" : "student";
 
-  // When promoting to teacher, create a default class if they don't have one.
   let defaultClassId: number | null = null;
   if (body.isTeacher) {
     const existingClasses = await db.query.classesTable.findMany({
@@ -226,7 +170,6 @@ router.post("/admin/teachers", async (req, res) => {
       defaultClassId = cls.id;
     }
   } else {
-    // Demoting: detach this teacher from any classes they owned.
     await db
       .update(classesTable)
       .set({ teacherId: null })
@@ -249,10 +192,10 @@ router.post("/admin/teachers", async (req, res) => {
 
   res.json({
     studentId: updated.id,
-    clerkUserId: updated.clerkUserId,
+    replitUserId: updated.replitUserId,
     email: normalizeEmail(updated.email || ""),
     name: updated.name,
-    imageUrl: null,
+    imageUrl: updated.imageUrl ?? null,
     role: updated.role,
     nameConfirmed: updated.nameConfirmed,
     classId: updated.classId,
@@ -356,7 +299,6 @@ router.delete("/admin/classes/:id", async (req, res) => {
     return;
   }
 
-  // Detach all students currently in this class before deleting.
   await db
     .update(studentsTable)
     .set({ classId: null })

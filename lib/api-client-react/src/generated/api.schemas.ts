@@ -5,6 +5,44 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+export interface AuthUser {
+  id: string;
+  /** @nullable */
+  email: string | null;
+  /** @nullable */
+  firstName: string | null;
+  /** @nullable */
+  lastName: string | null;
+  /** @nullable */
+  profileImageUrl: string | null;
+}
+
+export interface AuthUserEnvelope {
+  user: AuthUser | null;
+}
+
+export interface MobileTokenExchangeRequest {
+  /** @minLength 1 */
+  code: string;
+  /** @minLength 1 */
+  code_verifier: string;
+  /** @minLength 1 */
+  redirect_uri: string;
+  /** @minLength 1 */
+  state: string;
+  /** @minLength 1 */
+  nonce?: string;
+}
+
+export interface MobileTokenExchangeSuccess {
+  token: string;
+}
+
+export const LogoutSuccessValue = {
+  success: true,
+} as const;
+export type LogoutSuccess = typeof LogoutSuccessValue;
+
 export interface HealthStatus {
   status: string;
 }
@@ -302,8 +340,8 @@ export const AdminUserRole = {
 } as const;
 
 export interface AdminUser {
-  studentId: number;
-  clerkUserId: string;
+  studentId: number | null;
+  replitUserId: string | null;
   email: string;
   name: string;
   imageUrl?: string | null;
@@ -328,7 +366,7 @@ export interface AdminToggleTeacherBody {
 
 export interface TeacherStudent {
   id: number;
-  clerkUserId: string;
+  replitUserId: string | null;
   name: string;
   email?: string | null;
   points: number;
@@ -1233,9 +1271,31 @@ export interface ReadingCoachAllowResponse {
 }
 
 /**
+ * Opaque session token — `Bearer <sid>`.
+ */
+export type AuthorizationSessionHeaderParameter = string;
+
+/**
  * Optional teacher id (admin-only) to preview another teacher's dashboard.
  */
 export type TeacherIdQueryParameter = number;
+
+export type BeginBrowserLoginParams = {
+/**
+ * Relative path to redirect to after login (must start with `/`). Defaults to `/`.
+ */
+returnTo?: string;
+};
+
+export type HandleBrowserLoginCallbackParams = {
+code?: string;
+state?: string;
+iss?: string;
+};
+
+export type LogoutBrowserSessionParams = {
+returnTo?: string;
+};
 
 export type DeleteStudentAccount200 = {
   deleted: boolean;

@@ -1,5 +1,4 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
 import { eq, and } from "drizzle-orm";
 import { db, studentsTable, avatarConfigSchema } from "@workspace/db";
 import { getOrCreateStudent } from "./student";
@@ -7,11 +6,11 @@ import { getOrCreateStudent } from "./student";
 const router: IRouter = Router();
 
 router.get("/friends/classmates", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) {
+  if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  const userId = req.user.id;
 
   const student = await getOrCreateStudent(userId);
   if (!student.classId) {

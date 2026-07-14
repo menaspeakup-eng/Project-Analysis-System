@@ -1,18 +1,17 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
 import { eq, desc, and } from "drizzle-orm";
 import { db, studentsTable, activityLogsTable } from "@workspace/db";
-import { requireAdmin } from "../lib/identity";
+import { resolveIdentity, requireIdentity, requireAdmin } from "../lib/identity";
 import { getOrCreateStudent } from "./student";
 
 const router: IRouter = Router();
 
 router.get("/activity-logs", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) {
+  if (!req.isAuthenticated()) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
+  const userId = req.user.id;
 
   const student = await getOrCreateStudent(userId);
   const logs = await db.query.activityLogsTable.findMany({
@@ -25,21 +24,9 @@ router.get("/activity-logs", async (req, res) => {
 });
 
 router.get("/admin/activity-logs/:studentId", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  const student = await getOrCreateStudent(userId);
-  requireAdmin({
-    userId,
-    email: student.email || "",
-    student,
-    isAdmin: student.email?.toLowerCase() === "menaspeakup@gmail.com" || student.role === "admin",
-    isTeacher: student.role === "teacher",
-    teacherClassIds: [],
-  });
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireAdmin(identity);
 
   const targetStudentId = Number(req.params.studentId);
   if (!Number.isFinite(targetStudentId)) {

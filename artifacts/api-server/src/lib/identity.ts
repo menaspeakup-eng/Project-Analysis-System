@@ -1,4 +1,3 @@
-import { getAuth, clerkClient } from "@clerk/express";
 import type { Request } from "express";
 import { db, studentsTable, classesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -28,59 +27,19 @@ export function isAdminEmail(email: string): boolean {
 }
 
 /**
- * Resolve the signed-in user's platform identity. Creates a `students` row on
- * first visit if needed, and backfills `email` on existing rows that predate
- * this field. This is the single source of truth for "who is this request" in
- * all staff-facing routes.
+ * Resolve the signed-in user's platform identity from the Replit Auth session.
+ * The auth callback already creates/updates the `students` row, so this just
+ * loads it by the Replit user id stored in the session cookie.
  */
 export async function resolveIdentity(req: Request): Promise<MaybeIdentity> {
-  const { userId } = getAuth(req);
-  if (!userId) return null;
+  if (!req.isAuthenticated()) return null;
 
-  const clerkUser = await clerkClient.users.getUser(userId);
-  const email = normalizeEmail(clerkUser.primaryEmailAddress?.emailAddress);
-  const imageUrl = clerkUser.imageUrl || null;
-  const clerkName =
-    clerkUser.fullName ||
-    clerkUser.firstName ||
-    email ||
-    "صديقنا البطل";
+  const userId = req.user.id;
+  const email = normalizeEmail(req.user.email);
 
-  let student = await db.query.studentsTable.findFirst({
-    where: eq(studentsTable.clerkUserId, userId),
+  const student = await db.query.studentsTable.findFirst({
+    where: eq(studentsTable.replitUserId, userId),
   });
-
-  if (!student) {
-    // First visit: create a row with the Google/Clerk name and image, but mark
-    // it as unconfirmed so the UI forces the user to type their real name once.
-    const [created] = await db
-      .insert(studentsTable)
-      .values({
-        clerkUserId: userId,
-        name: clerkName,
-        email: email || undefined,
-        imageUrl,
-        role: "student",
-        nameConfirmed: false,
-      })
-      .returning();
-    student = created;
-  } else {
-    // Backfill and keep email/image in sync with Clerk.
-    const updates: Partial<typeof studentsTable.$inferInsert> = {};
-    if (!student.email && email) updates.email = email;
-    if (student.email !== email && email) updates.email = email;
-    if (student.imageUrl !== imageUrl) updates.imageUrl = imageUrl;
-
-    if (Object.keys(updates).length > 0) {
-      const [updated] = await db
-        .update(studentsTable)
-        .set(updates)
-        .where(eq(studentsTable.id, student.id))
-        .returning();
-      student = updated;
-    }
-  }
 
   if (!student) return null;
 

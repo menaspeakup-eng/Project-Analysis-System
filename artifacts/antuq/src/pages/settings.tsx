@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, Link } from "wouter";
-import { useAuth, useUser, useClerk } from "@clerk/react";
+import { useAuth } from "@workspace/replit-auth-web";
 import { useTheme } from "next-themes";
 import {
   useGetStudentProfile,
@@ -33,17 +33,14 @@ import {
 } from "lucide-react";
 
 export default function Settings() {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
-  const clerk = useClerk();
-  const { signOut } = clerk;
+  const { isAuthenticated, user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
   const { data: profile, isLoading } = useGetStudentProfile({
-    query: { enabled: !!isSignedIn } as never,
+    query: { enabled: !!isAuthenticated } as never,
   });
   const { mutate: updateName, isPending: isUpdatingName } = useUpdateStudentName();
 
@@ -81,8 +78,8 @@ export default function Settings() {
     toast({ title: value ? "تم تفعيل الإشعارات" : "تم تعطيل الإشعارات" });
   };
 
-  const handleLogout = async () => {
-    await signOut({ redirectUrl: "/" });
+  const handleLogout = () => {
+    logout();
   };
 
   const handleDeleteAccount = async () => {
@@ -93,7 +90,7 @@ export default function Settings() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error || "فشل حذف الحساب");
       }
-      await signOut({ redirectUrl: "/" });
+      logout();
     } catch (err) {
       toast({
         title: "تعذر حذف الحساب",
@@ -137,15 +134,15 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary overflow-hidden">
-                {user?.imageUrl ? (
-                  <img src={user.imageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                {user?.profileImageUrl ? (
+                  <img src={user.profileImageUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
                   <User className="w-8 h-8" />
                 )}
               </div>
               <div>
                 <p className="font-bold text-foreground">{profile?.name}</p>
-                <p className="text-sm text-muted-foreground font-medium">{user?.primaryEmailAddress?.emailAddress}</p>
+                <p className="text-sm text-muted-foreground font-medium">{user?.email}</p>
               </div>
             </div>
 
@@ -163,12 +160,6 @@ export default function Settings() {
                 </Button>
               </div>
             </div>
-
-            <Button variant="outline" className="w-full h-12 rounded-xl font-bold" onClick={() => clerk.openUserProfile()}>
-              <Mail className="w-4 h-4 ml-2" />
-              تعديل البريد الإلكتروني وكلمة المرور
-              <ChevronLeft className="w-4 h-4 mr-auto" />
-            </Button>
 
             <Link href="/character">
               <Button variant="outline" className="w-full h-12 rounded-xl font-bold mt-2">

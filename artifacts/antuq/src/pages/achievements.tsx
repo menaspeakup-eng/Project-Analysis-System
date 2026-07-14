@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useAuth } from "@clerk/react";
+import { useAuth } from "@workspace/replit-auth-web";
 import { useGetActivityLogs } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,8 +46,8 @@ function formatDate(iso: string) {
 }
 
 export default function Achievements() {
-  const { isSignedIn } = useAuth();
-  const { data, isLoading } = useGetActivityLogs({ query: { enabled: !!isSignedIn } as never });
+  const { isAuthenticated } = useAuth();
+  const { data, isLoading } = useGetActivityLogs({ query: { enabled: !!isAuthenticated } as never });
   const logs = data?.logs ?? [];
 
   return (

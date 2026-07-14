@@ -9,7 +9,7 @@ import type { AvatarConfig } from './avatarConfig';
 
 export interface TeacherStudent {
   id: number;
-  clerkUserId: string;
+  replitUserId: string | null;
   name: string;
   email?: string | null;
   points: number;

@@ -1,5 +1,4 @@
 import { Router, type IRouter } from "express";
-import { getAuth } from "@clerk/express";
 import { db, studentsTable, avatarConfigSchema } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { GetLeaderboardResponse } from "@workspace/api-zod";
@@ -9,7 +8,7 @@ const router: IRouter = Router();
 const TOP_N = 10;
 
 router.get("/leaderboard", async (req, res) => {
-  const { userId } = getAuth(req);
+  const userId = req.isAuthenticated() ? req.user.id : null;
 
   const classIdParam = req.query.classId;
   let classId: number | undefined = undefined;
@@ -22,7 +21,7 @@ router.get("/leaderboard", async (req, res) => {
   // automatically scope the leaderboard to that student's class.
   if (classId === undefined && userId) {
     const student = await db.query.studentsTable.findFirst({
-      where: eq(studentsTable.clerkUserId, userId),
+      where: eq(studentsTable.replitUserId, userId),
     });
     if (student?.classId) {
       classId = student.classId;
@@ -34,14 +33,14 @@ router.get("/leaderboard", async (req, res) => {
     orderBy: [desc(studentsTable.points), studentsTable.id],
   });
 
-  const clerkUserId = userId ?? null;
+  const replitUserId = userId ?? null;
 
   const entries = ranked.map((student, index) => ({
     rank: index + 1,
     name: student.name,
     points: student.points,
     avatarConfig: avatarConfigSchema.parse(student.avatarConfig),
-    isMe: student.clerkUserId === clerkUserId,
+    isMe: student.replitUserId === replitUserId,
   }));
 
   const top = entries.slice(0, TOP_N);

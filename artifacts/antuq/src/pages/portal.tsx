@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth, useUser, useClerk } from "@clerk/react";
+import { useAuth } from "@workspace/replit-auth-web";
 import { useLocation, Link } from "wouter";
 import { useEffect } from "react";
 import {
@@ -154,9 +154,7 @@ function LeaderboardRow({
 }
 
 export default function Portal() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
@@ -164,17 +162,17 @@ export default function Portal() {
   const [avatarFailed, setAvatarFailed] = useState(false);
 
   const { data: profile, isLoading: isProfileLoading } = useGetStudentProfile({
-    query: { enabled: !!isSignedIn } as never,
+    query: { enabled: !!isAuthenticated } as never,
   });
   const { data: identity } = useGetIdentityMe({
-    query: { enabled: !!isSignedIn } as never,
+    query: { enabled: !!isAuthenticated } as never,
   });
 
   const { data: leaderboard, isLoading: isLeaderboardLoading } = useGetLeaderboard(
     { classId: profile?.classId ?? undefined },
-    { query: { enabled: !!isSignedIn } as never },
+    { query: { enabled: !!isAuthenticated } as never },
   );
-  const { data: activityData } = useGetActivityLogs({ query: { enabled: !!isSignedIn } as never });
+  const { data: activityData } = useGetActivityLogs({ query: { enabled: !!isAuthenticated } as never });
 
   // Google sometimes populates fullName without splitting it into first/last name,
   // so fall back through fullName before the generic placeholder.
@@ -183,7 +181,6 @@ export default function Portal() {
     : profile?.avatarConfig?.nickname?.trim() ||
       profile?.name ||
       user?.firstName ||
-      user?.fullName ||
       "صديقنا البطل";
 
   // Guests have no account, so there's nowhere to persist points yet — they always start at 0.
@@ -202,21 +199,21 @@ export default function Portal() {
   };
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn && !isGuest) {
+    if (!isLoading) return;
+    if (!isAuthenticated && !isGuest) {
       setLocation("/");
       return;
     }
     // Teachers and admins use the teacher dashboard, not the kid portal.
-    if (isSignedIn && identity && (identity.isTeacher || identity.isAdmin)) {
+    if (isAuthenticated && identity && (identity.isTeacher || identity.isAdmin)) {
       setLocation("/teacher");
     }
-  }, [isLoaded, isSignedIn, isGuest, identity, setLocation]);
+  }, [isLoading, isAuthenticated, isGuest, identity, setLocation]);
 
   if (
-    !isLoaded ||
-    (!isSignedIn && !isGuest) ||
-    (isSignedIn && (isProfileLoading || !identity))
+    !isLoading ||
+    (!isAuthenticated && !isGuest) ||
+    (isAuthenticated && (isProfileLoading || !identity))
   ) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
@@ -230,7 +227,7 @@ export default function Portal() {
       localStorage.removeItem("antuq-guest");
       setLocation("/");
     } else {
-      await signOut({ redirectUrl: "/" });
+      logout();
     }
   };
 
@@ -240,9 +237,9 @@ export default function Portal() {
       <header className="w-full p-4 md:px-8 flex justify-between items-center bg-white/80 backdrop-blur-md border-b border-border z-10 sticky top-0">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary overflow-hidden shrink-0">
-            {isSignedIn && user?.imageUrl && !avatarFailed ? (
+            {isAuthenticated && user?.profileImageUrl && !avatarFailed ? (
               <img
-                src={user.imageUrl}
+                src={user.profileImageUrl}
                 alt={displayName}
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"

@@ -386,7 +386,7 @@ router.get("/student/challenges", async (req, res) => {
   const { userId } = identity;
 
   const student = await db.query.studentsTable.findFirst({
-    where: eq(studentsTable.clerkUserId, userId),
+    where: eq(studentsTable.replitUserId, userId),
   });
   if (!student) {
     res.status(404).json({ error: "لم يتم العثور على الطالب" });
@@ -448,7 +448,7 @@ router.get("/student/challenges/:id", async (req, res) => {
   const { userId } = identity;
 
   const student = await db.query.studentsTable.findFirst({
-    where: eq(studentsTable.clerkUserId, userId),
+    where: eq(studentsTable.replitUserId, userId),
   });
   if (!student || !student.classId) {
     res.status(404).json({ error: "لم يُخصص لك صف بعد — تواصل مع معلمك." });
@@ -506,7 +506,7 @@ router.post("/student/challenges/:id/submit", async (req, res) => {
   const { userId } = identity;
 
   const student = await db.query.studentsTable.findFirst({
-    where: eq(studentsTable.clerkUserId, userId),
+    where: eq(studentsTable.replitUserId, userId),
   });
   if (!student || !student.classId) {
     res.status(404).json({ error: "لم يُخصص لك صف بعد — تواصل مع معلمك." });
