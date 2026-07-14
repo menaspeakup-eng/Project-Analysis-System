@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/react";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGetIdentityMe, useUpdateStudentName } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ export default function OnboardingName() {
     query: { enabled: !!isSignedIn } as never,
   });
 
+  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const { mutate: updateName, isPending: isSaving } = useUpdateStudentName();
 
   useEffect(() => {
@@ -47,12 +50,18 @@ export default function OnboardingName() {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed || isSaving) return;
+    setError(null);
 
     updateName(
       { data: { name: trimmed } },
       {
         onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["/api/identity/me"] });
           routeToDashboard(identity ?? { isAdmin: false, isTeacher: false });
+        },
+        onError: (err) => {
+          const message = err instanceof Error ? err.message : "حدث خطأ غير متوقع";
+          setError(message || "تعذر حفظ الاسم، حاول مرة أخرى.");
         },
       },
     );
@@ -89,6 +98,12 @@ export default function OnboardingName() {
               dir="auto"
             />
           </div>
+
+          {error && (
+            <p className="text-sm text-destructive font-bold text-center bg-destructive/10 rounded-xl p-3">
+              {error}
+            </p>
+          )}
 
           <Button
             type="submit"
