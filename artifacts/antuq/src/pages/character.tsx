@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth } from "@clerk/react";
 import { useLocation } from "wouter";
 import {
   useGetStudentProfile,
@@ -24,12 +24,12 @@ import {
 } from "@/lib/avatarPresets";
 
 export default function CharacterEdit() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [, setLocation] = useLocation();
   const isGuest = localStorage.getItem("antuq-guest") === "true";
 
   const { data: profile, isLoading: isProfileLoading } = useGetStudentProfile({
-    query: { enabled: !!isAuthenticated } as never,
+    query: { enabled: !!isSignedIn } as never,
   });
 
   const [bgColor, setBgColor] = useState("orange");
@@ -62,12 +62,12 @@ export default function CharacterEdit() {
   const { mutate: updateAvatar, isPending: isSaving } = useUpdateStudentAvatar();
 
   useEffect(() => {
-    if (isLoading && !isAuthenticated && !isGuest) {
+    if (isLoaded && !isSignedIn && !isGuest) {
       setLocation("/");
     }
-  }, [isLoading, isAuthenticated, isGuest, setLocation]);
+  }, [isLoaded, isSignedIn, isGuest, setLocation]);
 
-  if (!isLoading || (!isAuthenticated && !isGuest) || (isAuthenticated && isProfileLoading)) {
+  if (!isLoaded || (!isSignedIn && !isGuest) || (isSignedIn && isProfileLoading)) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>

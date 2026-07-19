@@ -1,4 +1,5 @@
 import { Readable } from 'stream';
+import { getAuth } from '@clerk/express';
 import {
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
@@ -25,11 +26,11 @@ const objectStorageService = new ObjectStorageService();
 router.post(
   '/storage/uploads/request-url',
   async (req: Request, res: Response) => {
-    if (!req.isAuthenticated()) {
+    const { userId } = getAuth(req);
+    if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
       return;
     }
-    const userId = req.user.id;
 
     const parsed = RequestUploadUrlBody.safeParse(req.body);
     if (!parsed.success) {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth } from "@clerk/react";
 import { useLocation, Link } from "wouter";
 import { BookOpen, Headphones, Paperclip, ArrowRight, Star, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,17 +14,17 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function LibraryList() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [location, setLocation] = useLocation();
   const type = location.split("/").pop() || "read";
-  const { data, isLoading } = useListClassLibraryItems({ type }, { query: { enabled: isAuthLoading && isAuthenticated } as never });
+  const { data, isLoading } = useListClassLibraryItems({ type }, { query: { enabled: isLoaded && isSignedIn } as never });
 
   useEffect(() => {
-    if (!isAuthLoading) return;
-    if (!isAuthenticated) setLocation("/");
-  }, [isAuthLoading, isAuthenticated, setLocation]);
+    if (!isLoaded) return;
+    if (!isSignedIn) setLocation("/");
+  }, [isLoaded, isSignedIn, setLocation]);
 
-  if (!isAuthLoading || !isAuthenticated) {
+  if (!isLoaded || !isSignedIn) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />

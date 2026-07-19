@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth, useClerk, useUser } from "@clerk/react";
 import { useLocation, Link } from "wouter";
 import { useEffect } from "react";
 import {
@@ -158,18 +158,20 @@ function StudentActivityLog({ studentId }: { studentId: number }) {
 }
 
 export default function Admin() {
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
 
   const { data: identity, isLoading: isIdentityLoading } = useGetIdentityMe({
-    query: { enabled: !!isAuthenticated } as never,
+    query: { enabled: !!isSignedIn } as never,
   });
   const { data: usersData, isLoading: isUsersLoading } = useGetAdminUsers({
-    query: { enabled: !!isAuthenticated } as never,
+    query: { enabled: !!isSignedIn } as never,
   });
   const { data: classesData, isLoading: isClassesLoading } = useGetAdminClasses({
-    query: { enabled: !!isAuthenticated } as never,
+    query: { enabled: !!isSignedIn } as never,
   });
 
   const { mutate: toggleTeacher } = useToggleAdminTeacher();
@@ -187,17 +189,17 @@ export default function Admin() {
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!isLoading) return;
-    if (!isAuthenticated) {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
       setLocation("/");
       return;
     }
     if (identity && !identity.isAdmin) {
       setLocation("/portal");
     }
-  }, [isLoading, isAuthenticated, identity, setLocation]);
+  }, [isLoaded, isSignedIn, identity, setLocation]);
 
-  if (!isLoading || !isAuthenticated || isIdentityLoading || !identity) {
+  if (!isLoaded || !isSignedIn || isIdentityLoading || !identity) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
@@ -278,7 +280,7 @@ export default function Admin() {
     );
   };
 
-  const handleLogout = () => logout();
+  const handleLogout = () => signOut({ redirectUrl: "/" });
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -299,7 +301,7 @@ export default function Admin() {
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden sm:inline text-sm font-bold text-muted-foreground">
-            {user?.email}
+            {user?.primaryEmailAddress?.emailAddress}
           </span>
           <Button
             variant="ghost"
@@ -356,7 +358,7 @@ export default function Admin() {
                       </TableHeader>
                       <TableBody>
                         {users.map((u) => (
-                          <TableRow key={u.replitUserId}>
+                          <TableRow key={u.clerkUserId}>
                             <TableCell className="font-bold">{u.name}</TableCell>
                             <TableCell className="text-muted-foreground text-sm">{u.email}</TableCell>
                             <TableCell>
@@ -587,7 +589,7 @@ function ClassCard({
               <SelectContent className="rounded-xl">
                 <SelectItem value="none">بدون معلم</SelectItem>
                 {teachers.map((t) => (
-                  <SelectItem key={t.replitUserId} value={t.studentId?.toString() ?? ""} disabled={t.studentId == null}>
+                  <SelectItem key={t.clerkUserId} value={t.studentId?.toString() ?? ""} disabled={t.studentId == null}>
                     {t.name} ({t.email})
                   </SelectItem>
                 ))}

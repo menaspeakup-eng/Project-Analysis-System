@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth } from "@clerk/react";
 import { useLocation, Link } from "wouter";
 import { BookOpen, Headphones, Paperclip, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,15 +30,15 @@ const sections = [
 ];
 
 export default function Library() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading) return;
-    if (!isAuthenticated) setLocation("/");
-  }, [isLoading, isAuthenticated, setLocation]);
+    if (!isLoaded) return;
+    if (!isSignedIn) setLocation("/");
+  }, [isLoaded, isSignedIn, setLocation]);
 
-  if (!isLoading || !isAuthenticated) {
+  if (!isLoaded || !isSignedIn) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />

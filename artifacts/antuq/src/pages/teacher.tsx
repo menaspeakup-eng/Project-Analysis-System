@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth, useClerk, useUser } from "@clerk/react";
 import { useLocation } from "wouter";
 import {
   useGetIdentityMe,
@@ -64,13 +64,15 @@ function getTeacherIdFromUrl(): number | null {
 }
 
 export default function Teacher() {
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const previewTeacherId = getTeacherIdFromUrl();
 
   const { data: identity, isLoading: isIdentityLoading } = useGetIdentityMe({
-    query: { enabled: !!isAuthenticated } as never,
+    query: { enabled: !!isSignedIn } as never,
   });
 
   const canPreview = identity?.isAdmin && previewTeacherId != null;
@@ -78,11 +80,11 @@ export default function Teacher() {
 
   const { data: classesData, isLoading: isClassesLoading } = useGetTeacherClasses(
     teacherIdParam ? { teacherId: teacherIdParam } : undefined,
-    { query: { enabled: !!isAuthenticated } as never },
+    { query: { enabled: !!isSignedIn } as never },
   );
   const { data: unclaimedData, isLoading: isUnclaimedLoading } = useGetTeacherUnclaimed(
     teacherIdParam ? { teacherId: teacherIdParam } : undefined,
-    { query: { enabled: !!isAuthenticated } as never },
+    { query: { enabled: !!isSignedIn } as never },
   );
 
   const { mutate: claimStudent } = useClaimTeacherStudent();
@@ -97,17 +99,17 @@ export default function Teacher() {
   const [selectedClass, setSelectedClass] = useState<TeacherClass | null>(null);
 
   useEffect(() => {
-    if (!isLoading) return;
-    if (!isAuthenticated) {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
       setLocation("/");
       return;
     }
     if (identity && !identity.isTeacher && !identity.isAdmin) {
       setLocation("/portal");
     }
-  }, [isLoading, isAuthenticated, identity, setLocation]);
+  }, [isLoaded, isSignedIn, identity, setLocation]);
 
-  if (!isLoading || !isAuthenticated || isIdentityLoading || !identity) {
+  if (!isLoaded || !isSignedIn || isIdentityLoading || !identity) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
@@ -218,12 +220,12 @@ export default function Teacher() {
             </Badge>
           )}
           <span className="hidden sm:inline text-sm font-bold text-muted-foreground">
-            {user?.email}
+            {user?.primaryEmailAddress?.emailAddress}
           </span>
           <Button
             variant="ghost"
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl"
-            onClick={() => logout()}
+            onClick={() => signOut({ redirectUrl: "/" })}
           >
             <LogOut className="w-5 h-5 ml-2" />
             <span className="font-bold hidden sm:inline">خروج</span>

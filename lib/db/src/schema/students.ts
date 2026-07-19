@@ -63,10 +63,7 @@ export type AvatarConfig = z.infer<typeof avatarConfigSchema>;
 // runtime and is never stored as a `role` value here.
 export const studentsTable = pgTable("students", {
   id: serial("id").primaryKey(),
-  // Clerk id is being phased out in favor of Replit Auth; kept nullable for
-  // legacy rows and to avoid blocking the migration while users sign in again.
-  clerkUserId: text("clerk_user_id").unique(),
-  replitUserId: text("replit_user_id").unique(),
+  clerkUserId: text("clerk_user_id").notNull().unique(),
   name: text("name").notNull(),
   // Nullable because rows created before this field existed may not have
   // backfilled it yet — see identity.ts's self-healing fetch-on-read.

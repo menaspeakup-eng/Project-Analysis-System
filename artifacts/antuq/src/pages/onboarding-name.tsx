@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth } from "@clerk/react";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetIdentityMe, useUpdateStudentName } from "@workspace/api-client-react";
@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Sparkles, ArrowLeft } from "lucide-react";
 
 export default function OnboardingName() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [, setLocation] = useLocation();
   const [name, setName] = useState("");
 
   const { data: identity, isLoading: isIdentityLoading } = useGetIdentityMe({
-    query: { enabled: !!isAuthenticated } as never,
+    query: { enabled: !!isSignedIn } as never,
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -22,15 +22,15 @@ export default function OnboardingName() {
   const { mutate: updateName, isPending: isSaving } = useUpdateStudentName();
 
   useEffect(() => {
-    if (!isLoading) return;
-    if (!isAuthenticated) {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
       setLocation("/");
       return;
     }
     if (identity?.nameConfirmed) {
       routeToDashboard(identity);
     }
-  }, [isLoading, isAuthenticated, identity, setLocation]);
+  }, [isLoaded, isSignedIn, identity, setLocation]);
 
   function routeToDashboard(identity: { isAdmin: boolean; isTeacher: boolean }) {
     // Admins and teachers both land on the teacher dashboard by default.
@@ -38,7 +38,7 @@ export default function OnboardingName() {
     else setLocation("/portal");
   }
 
-  if (!isLoading || !isAuthenticated || isIdentityLoading) {
+  if (!isLoaded || !isSignedIn || isIdentityLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>

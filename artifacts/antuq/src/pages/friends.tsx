@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth } from "@clerk/react";
 import { useGetClassmates } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar3D } from "@/components/Avatar3D";
@@ -56,8 +56,8 @@ function ClassmateCard({ student }: { student: Classmate }) {
 }
 
 export default function Friends() {
-  const { isAuthenticated } = useAuth();
-  const { data: classmatesData, isLoading: isClassmatesLoading } = useGetClassmates({ query: { enabled: !!isAuthenticated } as never });
+  const { isSignedIn } = useAuth();
+  const { data: classmatesData, isLoading: isClassmatesLoading } = useGetClassmates({ query: { enabled: !!isSignedIn } as never });
   const classmates = classmatesData?.classmates ?? [];
 
   return (

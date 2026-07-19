@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth } from "@clerk/react";
 import { useLocation, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,11 +11,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function LibraryItem() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [, setLocation] = useLocation();
   const params = useParams();
   const id = Number(params.id);
-  const { data, isLoading } = useGetLibraryItem(id, { query: { enabled: isAuthLoading && isAuthenticated && Number.isFinite(id) } as never });
+  const { data, isLoading } = useGetLibraryItem(id, { query: { enabled: isLoaded && isSignedIn && Number.isFinite(id) } as never });
   const submitMutation = useCreateLibrarySubmission();
   const queryClient = useQueryClient();
   const [mcqAnswers, setMcqAnswers] = useState<Record<number, string>>({});
@@ -24,11 +24,11 @@ export default function LibraryItem() {
   const [started, setStarted] = useState(false);
 
   useEffect(() => {
-    if (!isAuthLoading) return;
-    if (!isAuthenticated) setLocation("/");
-  }, [isAuthLoading, isAuthenticated, setLocation]);
+    if (!isLoaded) return;
+    if (!isSignedIn) setLocation("/");
+  }, [isLoaded, isSignedIn, setLocation]);
 
-  if (!isAuthLoading || !isAuthenticated) {
+  if (!isLoaded || !isSignedIn) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />

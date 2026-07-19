@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/generated/api.ts",
-    "./types": "./src/generated/types/index.ts"
+    ".": "./src/generated/api.ts"
   },
   "dependencies": {
     "zod": "catalog:"

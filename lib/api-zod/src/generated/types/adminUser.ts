@@ -8,8 +8,8 @@
 import type { AdminUserRole } from './adminUserRole';
 
 export interface AdminUser {
-  studentId: number | null;
-  replitUserId: string | null;
+  studentId: number;
+  clerkUserId: string;
   email: string;
   name: string;
   imageUrl?: string | null;

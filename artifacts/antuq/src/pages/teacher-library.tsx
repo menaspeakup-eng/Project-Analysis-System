@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@workspace/replit-auth-web";
+import { useAuth } from "@clerk/react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,12 +64,12 @@ const emptyItem = {
 };
 
 export default function TeacherLibrary() {
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const { data: classesData } = useGetTeacherClasses(undefined, { query: { enabled: isAuthLoading && isAuthenticated } as never });
+  const { data: classesData } = useGetTeacherClasses(undefined, { query: { enabled: isLoaded && isSignedIn } as never });
   const [activeType, setActiveType] = useState("read");
-  const { data, isLoading, refetch } = useListLibraryItems({ type: activeType }, { query: { enabled: isAuthLoading && isAuthenticated } as never });
+  const { data, isLoading, refetch } = useListLibraryItems({ type: activeType }, { query: { enabled: isLoaded && isSignedIn } as never });
   const upsert = useUpsertLibraryItem();
   const remove = useDeleteLibraryItem();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -80,9 +80,9 @@ export default function TeacherLibrary() {
   const contentUpload = useUpload({ onSuccess: (res) => setForm((f) => ({ ...f, contentObjectPath: res.objectPath })) });
 
   useEffect(() => {
-    if (!isAuthLoading) return;
-    if (!isAuthenticated) setLocation("/");
-  }, [isAuthLoading, isAuthenticated, setLocation]);
+    if (!isLoaded) return;
+    if (!isSignedIn) setLocation("/");
+  }, [isLoaded, isSignedIn, setLocation]);
 
   const classes = classesData?.classes ?? [];
 

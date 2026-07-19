@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { getAuth, clerkClient } from "@clerk/express";
 import { z } from "zod";
 import {
   db,
@@ -23,17 +24,27 @@ const UpdateStudentNameBody = z.object({
 
 export async function getOrCreateStudent(userId: string) {
   const existing = await db.query.studentsTable.findFirst({
-    where: eq(studentsTable.replitUserId, userId),
+    where: eq(studentsTable.clerkUserId, userId),
   });
   if (existing) return existing;
 
-  // Fallback: the auth callback normally creates the row, but if a route is
-  // called before that happens, provision a minimal row from the session id.
+  // First visit for this Clerk account — JIT-provision a student row.
+  const clerkUser = await clerkClient.users.getUser(userId);
+  const name =
+    clerkUser.fullName ||
+    clerkUser.firstName ||
+    clerkUser.primaryEmailAddress?.emailAddress ||
+    "صديقنا البطل";
+  const email = clerkUser.primaryEmailAddress?.emailAddress || null;
+  const imageUrl = clerkUser.imageUrl || null;
+
   const [created] = await db
     .insert(studentsTable)
     .values({
-      replitUserId: userId,
-      name: "صديقنا البطل",
+      clerkUserId: userId,
+      name,
+      email,
+      imageUrl,
       role: "student",
       nameConfirmed: false,
       points: 0,
@@ -79,11 +90,11 @@ async function enrichStudentProfile(student: typeof studentsTable.$inferSelect) 
 }
 
 router.get("/student/me", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  const { userId } = getAuth(req);
+  if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const userId = req.user.id;
 
   const student = await getOrCreateStudent(userId);
   const profile = await enrichStudentProfile(student);
@@ -92,11 +103,11 @@ router.get("/student/me", async (req, res) => {
 });
 
 router.patch("/student/me", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  const { userId } = getAuth(req);
+  if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const userId = req.user.id;
 
   const body = UpdateStudentNameBody.parse(req.body);
   const student = await getOrCreateStudent(userId);
@@ -119,23 +130,31 @@ router.patch("/student/me", async (req, res) => {
 });
 
 router.delete("/student/me", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  const { userId } = getAuth(req);
+  if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const userId = req.user.id;
 
   const student = await getOrCreateStudent(userId);
+  try {
+    await clerkClient.users.deleteUser(userId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "فشل حذف حساب المستخدم";
+    res.status(500).json({ error: message });
+    return;
+  }
+
   await db.delete(studentsTable).where(eq(studentsTable.id, student.id));
   res.json({ deleted: true });
 });
 
 router.patch("/student/avatar", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  const { userId } = getAuth(req);
+  if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const userId = req.user.id;
 
   const body = UpdateStudentAvatarBody.parse(req.body);
   const student = await getOrCreateStudent(userId);

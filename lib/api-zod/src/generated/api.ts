@@ -9,97 +9,6 @@ import * as zod from 'zod';
 
 
 /**
- * @summary Get the currently authenticated user
- */
-export const GetCurrentAuthUserHeader = zod.object({
-  "Authorization": zod.string().optional().describe('Opaque session token — `Bearer <sid>`.')
-})
-
-export const GetCurrentAuthUserResponse = zod.object({
-  "user": zod.union([zod.object({
-  "id": zod.string(),
-  "email": zod.string().nullable(),
-  "firstName": zod.string().nullable(),
-  "lastName": zod.string().nullable(),
-  "profileImageUrl": zod.string().nullable()
-}),zod.null()])
-})
-
-
-/**
- * @summary Start the browser OIDC login flow
- */
-export const BeginBrowserLoginQueryParams = zod.object({
-  "returnTo": zod.coerce.string().optional().describe('Relative path to redirect to after login (must start with `\/`). Defaults to `\/`.')
-})
-
-export const BeginBrowserLoginResponse = zod.void()
-
-
-/**
- * @summary Complete the browser OIDC login flow
- */
-export const HandleBrowserLoginCallbackQueryParams = zod.object({
-  "code": zod.coerce.string().optional(),
-  "state": zod.coerce.string().optional(),
-  "iss": zod.coerce.string().optional()
-})
-
-export const HandleBrowserLoginCallbackResponse = zod.void()
-
-
-/**
- * @summary Clear the session and begin OIDC logout
- */
-export const logoutBrowserSessionQueryReturnToDefault = `/`;
-
-export const LogoutBrowserSessionQueryParams = zod.object({
-  "returnTo": zod.coerce.string().default(logoutBrowserSessionQueryReturnToDefault)
-})
-
-export const LogoutBrowserSessionHeader = zod.object({
-  "Authorization": zod.string().optional().describe('Opaque session token — `Bearer <sid>`.')
-})
-
-export const LogoutBrowserSessionResponse = zod.void()
-
-
-/**
- * @summary Exchange a mobile OIDC code for a session token
- */
-
-
-
-
-
-
-
-export const ExchangeMobileAuthorizationCodeBody = zod.object({
-  "code": zod.string().min(1),
-  "code_verifier": zod.string().min(1),
-  "redirect_uri": zod.string().min(1),
-  "state": zod.string().min(1),
-  "nonce": zod.string().min(1).optional()
-})
-
-export const ExchangeMobileAuthorizationCodeResponse = zod.object({
-  "token": zod.string()
-})
-
-
-/**
- * @summary Delete a mobile session token
- */
-export const LogoutMobileSessionHeader = zod.object({
-  "Authorization": zod.string().optional().describe('Opaque session token — `Bearer <sid>`.')
-})
-
-export const LogoutMobileSessionResponse = zod.object({
-  "success": zod.boolean()
-})
-
-
-/**
  * Returns server health status
  * @summary Health check
  */
@@ -579,8 +488,8 @@ export const GetLeaderboardResponse = zod.object({
  */
 export const GetAdminUsersResponse = zod.object({
   "users": zod.array(zod.object({
-  "studentId": zod.union([zod.number(),zod.null()]),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "studentId": zod.number(),
+  "clerkUserId": zod.string(),
   "email": zod.string(),
   "name": zod.string(),
   "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
@@ -605,8 +514,8 @@ export const ToggleAdminTeacherBody = zod.object({
 })
 
 export const ToggleAdminTeacherResponse = zod.object({
-  "studentId": zod.union([zod.number(),zod.null()]),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "studentId": zod.number(),
+  "clerkUserId": zod.string(),
   "email": zod.string(),
   "name": zod.string(),
   "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
@@ -636,7 +545,7 @@ export const GetAdminClassesResponse = zod.object({
   "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
@@ -681,7 +590,7 @@ export const CreateAdminClassResponse = zod.object({
   "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
@@ -730,7 +639,7 @@ export const UpdateAdminClassResponse = zod.object({
   "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
@@ -796,7 +705,7 @@ export const GetTeacherClassesResponse = zod.object({
   "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
@@ -830,7 +739,7 @@ export const getTeacherUnclaimedResponseStudentsItemAvatarConfigBadgesDefault = 
 export const GetTeacherUnclaimedResponse = zod.object({
   "students": zod.array(zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
@@ -927,7 +836,7 @@ export const claimTeacherStudentResponseAvatarConfigBadgesDefault = [];
 
 export const ClaimTeacherStudentResponse = zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
@@ -971,7 +880,7 @@ export const updateTeacherStudentResponseAvatarConfigBadgesDefault = [];
 
 export const UpdateTeacherStudentResponse = zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
@@ -2231,7 +2140,7 @@ export const GetTeacherReadingCoachAttemptsResponse = zod.object({
   "isChatEnabled": zod.boolean(),
   "students": zod.array(zod.object({
   "id": zod.number(),
-  "replitUserId": zod.union([zod.string(),zod.null()]),
+  "clerkUserId": zod.string(),
   "name": zod.string(),
   "email": zod.union([zod.string(),zod.null()]).optional(),
   "points": zod.number(),
