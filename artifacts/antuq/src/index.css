@@ -185,6 +185,11 @@
   }
 }
 
+@utility font-reading {
+  font-family: 'Scheherazade New', 'Amiri', 'Tajawal', serif;
+  line-height: 1.9;
+}
+
 @layer utilities {
   input[type='search']::-webkit-search-cancel-button {
     @apply hidden;

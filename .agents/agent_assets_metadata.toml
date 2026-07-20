@@ -114,3 +114,9 @@ id = "rQPQZVrT5KhTHTTjTVMph"
 uri = "file://screenshots/character-lazy-avatar.jpg"
 type = "image"
 title = "تعديل الشخصية - تحميل متأخر"
+
+[[outputs]]
+id = "lVqWlynpY5e1Z5eXBETA4"
+uri = "file://screenshots/reading-coach-font.jpg"
+type = "image"
+title = "مدرب القراءة - الخط بعد التحسين"

@@ -202,12 +202,12 @@ export default function TeacherReadingCoach() {
 
                               <div className="bg-[hsl(40,33%,98%)] rounded-2xl p-4 border border-border">
                                 <p className="text-sm font-bold text-muted-foreground mb-1">الجملة</p>
-                                <p className="font-black text-foreground text-lg">{attempt.sentence}</p>
+                                <p className="font-black text-foreground text-lg font-reading">{attempt.sentence}</p>
                               </div>
 
                               <div className="bg-[hsl(40,33%,98%)] rounded-2xl p-4 border border-border">
                                 <p className="text-sm font-bold text-muted-foreground mb-1">ما سمعه الذكاء الاصطناعي</p>
-                                <p className="font-medium text-foreground">{attempt.transcription || "—"}</p>
+                                <p className="font-medium text-foreground font-reading">{attempt.transcription || "—"}</p>
                               </div>
 
                               {attempt.audioBase64 && attempt.audioBase64.length > 0 && (

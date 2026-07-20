@@ -339,7 +339,7 @@ export default function ReadingCoach() {
                         {!canStartToday && statusData?.hasAttemptedToday && latestAttempt && (
                           <div className="rounded-2xl bg-[hsl(40,33%,98%)] p-5 border border-border text-right">
                             <h3 className="font-black text-lg mb-2">محاولتك اليوم</h3>
-                            <p className="text-muted-foreground font-medium mb-2">{latestAttempt.sentence}</p>
+                            <p className="text-muted-foreground font-medium mb-2 font-reading">{latestAttempt.sentence}</p>
                             <div className="flex items-center gap-3 flex-wrap">
                               <Badge className="rounded-full font-bold">النتيجة: {latestAttempt.score}%</Badge>
                               <Badge variant={latestAttempt.status === "accepted" ? "default" : latestAttempt.status === "rejected" ? "destructive" : "outline"} className="rounded-full font-bold">
@@ -386,7 +386,7 @@ export default function ReadingCoach() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="bg-[hsl(40,33%,98%)] rounded-2xl p-6 md:p-8 border border-border text-center">
-                        <p className="text-2xl md:text-3xl font-black text-foreground leading-loose">{sentence}</p>
+                        <p className="text-2xl md:text-3xl font-black text-foreground font-reading leading-loose">{sentence}</p>
                       </div>
 
                       <Button
@@ -416,7 +416,7 @@ export default function ReadingCoach() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="bg-[hsl(40,33%,98%)] rounded-2xl p-6 md:p-8 border border-border text-center">
-                        <p className="text-2xl md:text-3xl font-black text-foreground leading-loose">{sentence}</p>
+                        <p className="text-2xl md:text-3xl font-black text-foreground font-reading leading-loose">{sentence}</p>
                       </div>
                       <div className="text-center">
                         <div className="text-4xl font-black text-foreground tabular-nums">{recordingSeconds} ث</div>
@@ -482,11 +482,11 @@ export default function ReadingCoach() {
                       <div className="bg-[hsl(40,33%,98%)] rounded-2xl p-5 border border-border space-y-3">
                         <div>
                           <p className="text-sm font-bold text-muted-foreground mb-1">الجملة الأصلية</p>
-                          <p className="font-black text-foreground">{sentence}</p>
+                          <p className="font-black text-foreground font-reading">{sentence}</p>
                         </div>
                         <div>
                           <p className="text-sm font-bold text-muted-foreground mb-1">ما سمعه الذكاء الاصطناعي</p>
-                          <p className="font-medium text-foreground">{latestAttempt?.transcription || "—"}</p>
+                          <p className="font-medium text-foreground font-reading">{latestAttempt?.transcription || "—"}</p>
                         </div>
                       </div>
 
