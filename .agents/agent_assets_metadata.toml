@@ -66,3 +66,9 @@ id = "ApEEBgBFNC4eHStuDiBuR"
 uri = "file://screenshots/teacher-admin-sidebar.jpg"
 type = "image"
 title = "قائمة المعلم - رابط لوحة المسؤول"
+
+[[outputs]]
+id = "yT0aAEI0fOwQAjgTzUD5J"
+uri = "file://screenshots/home-rebranded-iqra.jpg"
+type = "image"
+title = "الصفحة الرئيسية بعد التعديل - إقرا"

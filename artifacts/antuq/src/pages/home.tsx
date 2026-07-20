@@ -23,7 +23,7 @@ export default function Home() {
       {/* Header */}
       <header className="absolute top-0 w-full p-4 md:px-8 lg:px-12 flex justify-between items-center z-50">
         <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="انطق" className="h-10 md:h-12 w-auto" />
+          <img src="/logo.svg" alt="إقرا" className="h-10 md:h-12 w-auto" />
         </div>
         <div className="flex items-center gap-3">
           <Button className="font-bold bg-primary hover:bg-primary/90 text-white rounded-xl px-6 h-11" asChild>
@@ -40,7 +40,7 @@ export default function Home() {
             <span>المنصة الأولى لتعليم القراءة بالذكاء الاصطناعي</span>
           </div>
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-foreground leading-[1.15] md:leading-[1.15]">
-            اقرأ • انطق • <span className="text-primary relative inline-block">
+            اقرأ • تعلّم • <span className="text-primary relative inline-block">
               تعلّم
               <svg className="absolute -bottom-2 left-0 w-full h-4 text-secondary/50 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round"/></svg>
             </span>
@@ -105,7 +105,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-4xl md:text-5xl font-black text-foreground">
-              كيف يتعلم طلبةك مع <span className="text-primary">انطق</span>؟
+              كيف يتعلم طلبةك مع <span className="text-primary">إقرا</span>؟
             </h2>
             <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
               نجمع بين أحدث تقنيات الذكاء الاصطناعي وأساليب التعلم باللعب لنقدم تجربة لا تُنسى.
@@ -216,7 +216,7 @@ export default function Home() {
             مستعدون للبدء؟
           </h2>
           <p className="text-xl md:text-2xl font-medium text-white/90 mb-10 max-w-2xl mx-auto">
-            انضموا إلى آلاف الطلبة الذين يستمتعون بتعلم القراءة العربية يومياً مع منصة انطق.
+            انضموا إلى آلاف الطلبة الذين يستمتعون بتعلم القراءة العربية يومياً مع منصة إقرا.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/10 p-4 rounded-3xl backdrop-blur-sm border border-white/20 max-w-fit mx-auto">
@@ -236,8 +236,8 @@ export default function Home() {
       <footer className="bg-white py-12 border-t border-border">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-right">
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="انطق" className="h-8 grayscale hover:grayscale-0 transition-all opacity-50 hover:opacity-100" />
-            <span className="font-bold text-muted-foreground">© {new Date().getFullYear()} انطق. منصة تعليمية.</span>
+            <img src="/logo.svg" alt="إقرا" className="h-8 grayscale hover:grayscale-0 transition-all opacity-50 hover:opacity-100" />
+            <span className="font-bold text-muted-foreground">© {new Date().getFullYear()} إقرا. منصة تعليمية.</span>
           </div>
           <div className="flex items-center gap-6 text-sm font-bold text-muted-foreground">
             <Link href="/terms" className="hover:text-primary transition-colors">شروط الاستخدام</Link>

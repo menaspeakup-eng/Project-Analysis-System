@@ -182,7 +182,7 @@ function ClerkProviderWithRoutes() {
       localization={{
         signIn: {
           start: {
-            title: "مرحباً بك في انطق",
+            title: "مرحباً بك في إقرا",
             subtitle: "سجّل دخولك للمتابعة — سيتم إنشاء حسابك تلقائياً في أول مرة",
           },
         },

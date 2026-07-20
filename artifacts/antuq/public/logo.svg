@@ -3,7 +3,7 @@
   <circle cx="70" cy="70" r="10" fill="#FFF" />
   <circle cx="110" cy="70" r="10" fill="#FFF" />
   <path d="M80 85q10 10 20 0" stroke="#FFF" stroke-width="4" stroke-linecap="round" />
-  <text x="160" y="85" font-family="Tajawal, sans-serif" font-weight="900" font-size="64" fill="#13364A">انطق</text>
+  <text x="160" y="85" font-family="Tajawal, sans-serif" font-weight="900" font-size="64" fill="#13364A">إقرا</text>
   <circle cx="330" cy="50" r="6" fill="#F4B400" />
   <circle cx="350" cy="40" r="4" fill="#00ACC1" />
 </svg>

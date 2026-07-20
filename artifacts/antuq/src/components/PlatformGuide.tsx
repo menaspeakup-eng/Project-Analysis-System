@@ -181,7 +181,7 @@ export default function PlatformGuide() {
             دليل استخدام المنصة
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-foreground">
-            تعرّف على <span className="text-primary">انطق</span> خطوة بخطوة
+            تعرّف على <span className="text-primary">إقرا</span> خطوة بخطوة
           </h2>
           <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
             شرح بسيط لكل جزء من المنصة لمساعدة المعلم والطالب على استخدامها بسهولة، مع ملاحظات توضيحية في كل مكان.

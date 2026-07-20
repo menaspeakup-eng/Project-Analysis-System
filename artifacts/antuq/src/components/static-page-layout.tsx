@@ -17,7 +17,7 @@ export default function StaticPageLayout({
       {/* Header */}
       <header className="w-full p-4 md:px-8 lg:px-12 flex justify-between items-center bg-white border-b border-border">
         <Link href="/" className="flex items-center gap-2">
-          <img src="/logo.svg" alt="انطق" className="h-10 w-auto" />
+          <img src="/logo.svg" alt="إقرا" className="h-10 w-auto" />
         </Link>
         <Button variant="ghost" className="font-bold text-foreground hover:text-primary rounded-xl" asChild>
           <Link href="/">
@@ -44,8 +44,8 @@ export default function StaticPageLayout({
       <footer className="bg-white py-10 border-t border-border">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-right">
           <div className="flex items-center gap-2">
-            <img src="/logo.svg" alt="انطق" className="h-8 grayscale opacity-50" />
-            <span className="font-bold text-muted-foreground">© {new Date().getFullYear()} انطق. منصة تعليمية.</span>
+            <img src="/logo.svg" alt="إقرا" className="h-8 grayscale opacity-50" />
+            <span className="font-bold text-muted-foreground">© {new Date().getFullYear()} إقرا. منصة تعليمية.</span>
           </div>
           <div className="flex items-center gap-6 text-sm font-bold text-muted-foreground">
             <Link href="/about" className="hover:text-primary transition-colors">عن المنصة</Link>
