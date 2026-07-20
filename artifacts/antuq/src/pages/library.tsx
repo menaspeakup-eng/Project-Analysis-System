@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const sections = [
   {
     key: "read",
-    title: "قراءة القصص",
+    title: "القصص المكتوبة",
     description: "اقرأ قصصاً عربية جميلة مع أسئلة فهم",
     icon: BookOpen,
     color: "bg-primary/15 text-primary",

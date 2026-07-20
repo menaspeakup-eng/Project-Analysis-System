@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useListClassLibraryItems } from "@workspace/api-client-react";
 
 const typeLabels: Record<string, string> = {
-  read: "قراءة القصص",
+  read: "القصص المكتوبة",
   audio: "القصص المسموعة",
   attachment: "الملحقات التعليمية",
 };
