@@ -10,7 +10,14 @@ import {
   aiStoryDailyAllowancesTable,
   studentsTable,
   classesTable,
+  LIBRARY_QUESTION_TYPES,
+  LIBRARY_QUESTION_LEVELS,
 } from "@workspace/db";
+import {
+  buildQuestionPrompt,
+  parseGeneratedQuestions,
+  type GeneratedQuestion,
+} from "./ai-questions";
 
 const router: IRouter = Router();
 
@@ -61,6 +68,13 @@ const QuizAnswersBody = z.object({
   ),
 });
 
+const GenerateStoryQuizBody = z.object({
+  sessionId: z.number().int().positive(),
+  count: z.number().int().min(1).max(20).default(5),
+  level: z.enum(LIBRARY_QUESTION_LEVELS),
+  type: z.enum(LIBRARY_QUESTION_TYPES),
+});
+
 const ReviewQuestionBody = z.object({
   questionIndex: z.number().int().min(0),
   status: z.enum(["accepted", "rejected"]),
@@ -78,7 +92,7 @@ type GeneratedStory = {
   title: string;
   story: string;
   newWords: { word: string; meaning: string }[];
-  questions: { question: string; options: string[]; correctAnswer: string }[];
+  questions: GeneratedQuestion[];
   reflectionQuestion: string;
   lesson: string;
   readingInfo: {
@@ -148,7 +162,7 @@ async function requireDailyStoryAllowance(studentId: number) {
 
 function buildPrompt(studentName: string, storyType: StoryType): string {
   const typeLabel = STORY_TYPE_LABELS[storyType];
-  return `اكتب قصة عربية فصحى قصيرة (300–400 كلمة) مشكولة بالتشكيل الكامل (الفتحة والضمة والكسرة والسكون والتنوين والشدة والمد)، بطلها: ${studentName}، ونوعها: ${typeLabel}.\n\nالشروط:\n- لغة سهلة، جمل قصيرة، بدون عامية أو رموز تعبيرية.\n- بدون رعب أو رومانسية أو عنف.\n- حوار بسيط، ودرس أخلاقي في النهاية.\n\nأعد النتيجة بالتنسيق التالي فقط، بدون مقدمة أو شرح أو أقواس حول العنوان:\n\n# عنوان القصة\n[العنوان مشكول في سطر واحد]\n\n# القصة\n[القصة مشكولة بفقرات]\n\n# الكلمات الجديدة\n1. كلمة: معناها\n2. كلمة: معناها\n3. كلمة: معناها\n4. كلمة: معناها\n5. كلمة: معناها\n\n# أسئلة الفهم\nاكتب بالضبط 5 أسئلة اختيار من متعدد، كل سؤال بـ 4 خيارات (أ، ب، ج، د)، وذكر الإجابة الصحيحة بحرف واحد.\n\n1. السؤال؟\n   أ) خيار\n   ب) خيار\n   ج) خيار\n   د) خيار\n   الإجابة الصحيحة: ب\n\n2. السؤال؟ ...\n\n...\n\n5. السؤال؟ ...\n\n# سؤال للتفكير\n[سؤال مفتوح]\n\n# الدرس المستفاد\n[درس في سطر]\n\n# معلومات القراءة\n- مستوى الصعوبة: 1-5\n- عدد الكلمات: عدد\n- الزمن المتوقع للقراءة: دقائق`;
+  return `اكتب قصة عربية فصحى قصيرة (300–400 كلمة) مشكولة بالتشكيل الكامل (الفتحة والضمة والكسرة والسكون والتنوين والشدة والمد)، بطلها: ${studentName}، ونوعها: ${typeLabel}.\n\nالشروط:\n- لغة سهلة، جمل قصيرة، بدون عامية أو رموز تعبيرية.\n- بدون رعب أو رومانسية أو عنف.\n- حوار بسيط، ودرس أخلاقي في النهاية.\n\nأعد النتيجة بالتنسيق التالي فقط، بدون مقدمة أو شرح أو أقواس حول العنوان:\n\n# عنوان القصة\n[العنوان مشكول في سطر واحد]\n\n# القصة\n[القصة مشكولة بفقرات]\n\n# الكلمات الجديدة\n1. كلمة: معناها\n2. كلمة: معناها\n3. كلمة: معناها\n4. كلمة: معناها\n5. كلمة: معناها\n\n# سؤال للتفكير\n[سؤال مفتوح]\n\n# الدرس المستفاد\n[درس في سطر]\n\n# معلومات القراءة\n- مستوى الصعوبة: 1-5\n- عدد الكلمات: عدد\n- الزمن المتوقع للقراءة: دقائق`;
 }
 
 function parseStoryText(raw: string): GeneratedStory {
@@ -165,7 +179,6 @@ function parseStoryText(raw: string): GeneratedStory {
   const title = sections.get("عنوان القصة") || "قصتي الذكية";
   const story = sections.get("القصة") || "";
   const newWordsRaw = sections.get("الكلمات الجديدة") || "";
-  const questionsRaw = sections.get("أسئلة الفهم") || "";
   const reflectionQuestion = sections.get("سؤال تفكير") || "";
   const lesson = sections.get("الدرس المستفاد") || "";
   const readingInfoRaw =
@@ -182,43 +195,6 @@ function parseStoryText(raw: string): GeneratedStory {
       newWords.push({ word: w.trim().replace(/^[-\d\.]\s*/, ""), meaning: m.join("-").trim() });
     }
     if (newWords.length >= 5) break;
-  }
-
-  const questions: GeneratedStory["questions"] = [];
-  const questionBlocks = questionsRaw
-    .split(/\n(?=\d+[\.\-]\s+|S\d|س\d|Question)/)
-    .filter((b) => b.trim());
-  for (const block of questionBlocks) {
-    const lines = block
-      .split("\n")
-      .map((l) => l.trim())
-      .filter(Boolean);
-    if (lines.length < 2) continue;
-    const firstLine = lines[0] || "";
-    const questionMatch = firstLine.match(/^(?:\d+[\.\-]\s*)?(.+?(?:\?|؟))/);
-    const question = questionMatch ? questionMatch[1] : firstLine;
-    const options: { letter: string; text: string }[] = [];
-    let correctLetter = "";
-    for (const line of lines.slice(1)) {
-      const correctMatch = line.match(/(?:الإجابة الصحيحة|الإجابة)[\s:]\s*([أبجدABCDabcd])/);
-      if (correctMatch) {
-        correctLetter = normalizeLetter(correctMatch[1]);
-        continue;
-      }
-      const optionMatch = line.match(/^([-\u0660-\u0669a-dA-D۰-۹أبجده])\s*[\.\-)]\s*(.+)$/);
-      if (optionMatch) {
-        const letter = normalizeLetter(optionMatch[1]);
-        const text = optionMatch[2]
-          .replace(/\s*\(?(?:الإجابة الصحيحة|صحيح|correct)\)?/i, "")
-          .trim();
-        options.push({ letter, text });
-      }
-    }
-    if (options.length >= 2) {
-      const correctAnswer = options.find((o) => o.letter === correctLetter)?.text ?? options[0].text;
-      questions.push({ question, options: options.slice(0, 4).map((o) => o.text), correctAnswer });
-    }
-    if (questions.length >= 5) break;
   }
 
   let difficulty = 1;
@@ -238,7 +214,7 @@ function parseStoryText(raw: string): GeneratedStory {
     title,
     story,
     newWords: newWords.length >= 5 ? newWords : [],
-    questions: questions.length >= 1 ? questions : [],
+    questions: [],
     reflectionQuestion,
     lesson,
     readingInfo: { difficulty, wordCount, estimatedTime },
@@ -366,6 +342,94 @@ router.post("/stories/generate", async (req, res) => {
   }
 });
 
+router.post("/stories/quiz/generate", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+
+  const body = GenerateStoryQuizBody.safeParse(req.body);
+  if (!body.success) {
+    res.status(400).json({ error: "بيانات غير صحيحة", details: body.error.flatten() });
+    return;
+  }
+
+  const { sessionId, count, level, type } = body.data;
+
+  const session = await db.query.aiStorySessionsTable.findFirst({
+    where: eq(aiStorySessionsTable.id, sessionId),
+  });
+
+  if (!session) {
+    res.status(404).json({ error: "القصة غير موجودة" });
+    return;
+  }
+
+  if (session.studentId !== identity.student.id) {
+    res.status(403).json({ error: "لا يمكنك إنشاء اختبار لقصة طالب آخر" });
+    return;
+  }
+
+  const apiKey = process.env["OPENAI_API_KEY"];
+  if (!apiKey) {
+    res.status(500).json({ error: "OPENAI_API_KEY غير مضبوط" });
+    return;
+  }
+
+  const prompt = buildQuestionPrompt(
+    { title: session.title, bodyText: session.story, description: "" },
+    count,
+    level,
+    type,
+  );
+  const url = `${OPENAI_BASE_URL.replace(/\/+$/, "")}/chat/completions`;
+
+  try {
+    const openaiRes = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.5,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!openaiRes.ok) {
+      const json = (await openaiRes.json().catch(() => ({}))) as { error?: { message?: string; code?: string } };
+      res.status(502).json({ error: getOpenAIErrorMessage(json) });
+      return;
+    }
+
+    const json = (await openaiRes.json()) as {
+      choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+      error?: { message?: string; code?: string };
+    };
+
+    const rawText = json.choices?.[0]?.message?.content ?? "";
+    if (!rawText) {
+      res.status(502).json({ error: "لم يعيد الذكاء الاصطناعي أسئلة. حاول مرة أخرى." });
+      return;
+    }
+
+    const questions = parseGeneratedQuestions(rawText);
+    const content = session.generatedContent as unknown as GeneratedStory;
+    const updatedContent: GeneratedStory = { ...content, questions };
+
+    await db
+      .update(aiStorySessionsTable)
+      .set({ generatedContent: updatedContent as unknown as Record<string, unknown> })
+      .where(eq(aiStorySessionsTable.id, sessionId));
+
+    res.json({ questions, sessionId, itemTitle: session.title });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "خطأ غير معروف";
+    res.status(500).json({ error: message });
+  }
+});
+
 router.post("/stories/quiz/submit", async (req, res) => {
   const identity = await resolveIdentity(req);
   requireIdentity(identity);
@@ -398,15 +462,21 @@ router.post("/stories/quiz/submit", async (req, res) => {
   const content = session.generatedContent as unknown as GeneratedStory;
   const questions = content.questions ?? [];
 
+  const autoGradedTypes = new Set(["mcq", "true_false", "fill_blank", "classification", "ordering"]);
+
   const answers = body.answers.map((a) => {
     const question = questions[a.questionIndex];
-    const isCorrect = Boolean(question && a.selectedAnswer === question.correctAnswer);
+    const type = question?.type ?? "mcq";
+    const isAutoGraded = autoGradedTypes.has(type);
+    const isCorrect = isAutoGraded && Boolean(question && a.selectedAnswer === question.correctAnswer);
     return {
       questionIndex: a.questionIndex,
       question: question?.question || "",
       selectedAnswer: a.selectedAnswer,
       correctAnswer: question?.correctAnswer || "",
       isCorrect,
+      status: isAutoGraded ? (isCorrect ? "accepted" : "rejected") : "pending",
+      points: isCorrect ? (question?.points ?? 10) : 0,
     };
   });
 

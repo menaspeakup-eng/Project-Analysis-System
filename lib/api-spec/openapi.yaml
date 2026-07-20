@@ -1165,6 +1165,34 @@ paths:
                 $ref: "#/components/schemas/StoryUsageStatus"
         "401":
           description: Not signed in
+  /stories/quiz/generate:
+    post:
+      operationId: generateStoryQuiz
+      tags: [story]
+      summary: Generate quiz questions for a story session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateStoryQuizBody"
+      responses:
+        "200":
+          description: Generated quiz questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateStoryQuizResponse"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Not the story owner
+        "404":
+          description: Story session not found
+        "500":
+          description: AI generation failed
   /stories/quiz/submit:
     post:
       operationId: submitStoryQuiz
@@ -3157,19 +3185,28 @@ components:
     StoryQuestion:
       type: object
       properties:
+        type:
+          type: string
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
         question:
           type: string
         options:
           type: array
           items:
             type: string
-          maxItems: 4
         correctAnswer:
           type: string
+          nullable: true
+        points:
+          type: integer
       required:
+        - type
         - question
         - options
-        - correctAnswer
+        - points
     StoryReadingInfo:
       type: object
       properties:
@@ -3263,6 +3300,35 @@ components:
       required:
         - questionIndex
         - selectedAnswer
+    GenerateStoryQuizBody:
+      type: object
+      required: [sessionId, level, type]
+      properties:
+        sessionId:
+          type: integer
+        count:
+          type: integer
+          minimum: 1
+          maximum: 20
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
+        type:
+          type: string
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+    GenerateStoryQuizResponse:
+      type: object
+      required: [questions, sessionId]
+      properties:
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoryQuestion"
+        sessionId:
+          type: integer
+        itemTitle:
+          type: string
+          nullable: true
     StoryQuizSubmission:
       type: object
       properties:

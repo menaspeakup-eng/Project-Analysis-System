@@ -59,6 +59,8 @@ import type {
   GameItemsList,
   GameList,
   GenerateStoryBody,
+  GenerateStoryQuizBody,
+  GenerateStoryQuizResponse,
   GenerateStoryResponse,
   GenerateTeacherAiQuestionsBody,
   GeneratedAiQuestionsResponse,
@@ -3967,6 +3969,77 @@ export function useGetStoriesUsage<TData = Awaited<ReturnType<typeof getStoriesU
 
 
 
+
+export const getGenerateStoryQuizUrl = () => {
+
+
+
+
+  return `/api/stories/quiz/generate`
+}
+
+/**
+ * @summary Generate quiz questions for a story session
+ */
+export const generateStoryQuiz = async (generateStoryQuizBody: GenerateStoryQuizBody, options?: RequestInit): Promise<GenerateStoryQuizResponse> => {
+
+  return customFetch<GenerateStoryQuizResponse>(getGenerateStoryQuizUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(generateStoryQuizBody)
+  }
+);}
+
+
+
+
+
+export const getGenerateStoryQuizMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateStoryQuiz>>, TError,{data: BodyType<GenerateStoryQuizBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateStoryQuiz>>, TError,{data: BodyType<GenerateStoryQuizBody>}, TContext> => {
+
+const mutationKey = ['generateStoryQuiz'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateStoryQuiz>>, {data: BodyType<GenerateStoryQuizBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateStoryQuiz(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateStoryQuizMutationResult = NonNullable<Awaited<ReturnType<typeof generateStoryQuiz>>>
+    export type GenerateStoryQuizMutationBody = BodyType<GenerateStoryQuizBody>
+    export type GenerateStoryQuizMutationError = ErrorType<void>
+
+    /**
+ * @summary Generate quiz questions for a story session
+ */
+export const useGenerateStoryQuiz = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateStoryQuiz>>, TError,{data: BodyType<GenerateStoryQuizBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateStoryQuiz>>,
+        TError,
+        {data: BodyType<GenerateStoryQuizBody>},
+        TContext
+      > => {
+      return useMutation(getGenerateStoryQuizMutationOptions(options));
+    }
 
 export const getSubmitStoryQuizUrl = () => {
 

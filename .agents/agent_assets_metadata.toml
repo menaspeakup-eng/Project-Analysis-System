@@ -30,3 +30,9 @@ id = "ss5MsW3xxoXpR2CLGWxDQ"
 uri = "file://screenshots/teacher-ai-questions.jpg"
 type = "image"
 title = "صفحة مولد الأسئلة الذكية"
+
+[[outputs]]
+id = "z7BxBk6RLhsJhWpNMJzNs"
+uri = "file://screenshots/ai-story-quiz-config.jpg"
+type = "image"
+title = "صفحة القصة الذكية مع إعداد الاختبار"

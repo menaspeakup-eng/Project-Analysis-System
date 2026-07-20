@@ -1405,8 +1405,6 @@ export const GenerateStoryBody = zod.object({
   "storyType": zod.enum(['adventure', 'space', 'mystery', 'robots-ai', 'fantasy', 'ocean', 'world-exploration', 'challenge-success', 'school', 'nature'])
 })
 
-export const generateStoryResponseResultQuestionsItemOptionsMax = 4;
-
 export const generateStoryResponseResultReadingInfoDifficultyMax = 5;
 
 export const generateStoryResponseResultReadingInfoWordCountMin = 0;
@@ -1422,9 +1420,12 @@ export const GenerateStoryResponse = zod.object({
   "meaning": zod.string()
 })),
   "questions": zod.array(zod.object({
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']).optional(),
   "question": zod.string(),
-  "options": zod.array(zod.string()).max(generateStoryResponseResultQuestionsItemOptionsMax),
-  "correctAnswer": zod.string()
+  "options": zod.array(zod.string()),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number()
 })),
   "reflectionQuestion": zod.string(),
   "lesson": zod.string(),
@@ -1446,6 +1447,34 @@ export const GetStoriesUsageResponse = zod.object({
   "limit": zod.number(),
   "extra": zod.number(),
   "remaining": zod.number()
+})
+
+
+/**
+ * @summary Generate quiz questions for a story session
+ */
+export const generateStoryQuizBodyCountMax = 20;
+
+
+
+export const GenerateStoryQuizBody = zod.object({
+  "sessionId": zod.number(),
+  "count": zod.number().min(1).max(generateStoryQuizBodyCountMax).optional(),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])
+})
+
+export const GenerateStoryQuizResponse = zod.object({
+  "questions": zod.array(zod.object({
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']).optional(),
+  "question": zod.string(),
+  "options": zod.array(zod.string()),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number()
+})),
+  "sessionId": zod.number(),
+  "itemTitle": zod.string().nullish()
 })
 
 

@@ -756,11 +756,42 @@ export interface StoryNewWord {
   meaning: string;
 }
 
+export type StoryQuestionType = typeof StoryQuestionType[keyof typeof StoryQuestionType];
+
+
+export const StoryQuestionType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export type StoryQuestionLevel = typeof StoryQuestionLevel[keyof typeof StoryQuestionLevel];
+
+
+export const StoryQuestionLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
 export interface StoryQuestion {
+  type: StoryQuestionType;
+  level?: StoryQuestionLevel;
   question: string;
-  /** @maxItems 4 */
   options: string[];
-  correctAnswer: string;
+  correctAnswer?: string | null;
+  points: number;
 }
 
 export interface StoryReadingInfo {
@@ -804,6 +835,52 @@ export interface StoryQuizAnswer {
 export interface SubmitStoryQuizBody {
   sessionId: number;
   answers: StoryQuizAnswer[];
+}
+
+export type GenerateStoryQuizBodyLevel = typeof GenerateStoryQuizBodyLevel[keyof typeof GenerateStoryQuizBodyLevel];
+
+
+export const GenerateStoryQuizBodyLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
+export type GenerateStoryQuizBodyType = typeof GenerateStoryQuizBodyType[keyof typeof GenerateStoryQuizBodyType];
+
+
+export const GenerateStoryQuizBodyType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export interface GenerateStoryQuizBody {
+  sessionId: number;
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  count?: number;
+  level: GenerateStoryQuizBodyLevel;
+  type: GenerateStoryQuizBodyType;
+}
+
+export interface GenerateStoryQuizResponse {
+  questions: StoryQuestion[];
+  sessionId: number;
+  itemTitle?: string | null;
 }
 
 export type StoryQuizAnswerResultStatus = typeof StoryQuizAnswerResultStatus[keyof typeof StoryQuizAnswerResultStatus] | null;

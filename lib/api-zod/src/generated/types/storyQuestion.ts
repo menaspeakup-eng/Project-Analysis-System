@@ -5,10 +5,14 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StoryQuestionLevel } from './storyQuestionLevel';
+import type { StoryQuestionType } from './storyQuestionType';
 
 export interface StoryQuestion {
+  type: StoryQuestionType;
+  level?: StoryQuestionLevel;
   question: string;
-  /** @maxItems 4 */
   options: string[];
-  correctAnswer: string;
+  correctAnswer?: string | null;
+  points: number;
 }

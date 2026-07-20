@@ -16,7 +16,7 @@ const router: IRouter = Router();
 const OPENAI_BASE_URL = process.env["OPENAI_BASE_URL"] || "https://openrouter.ai/api/v1";
 const OPENAI_MODEL = process.env["OPENAI_MODEL"] || "openai/gpt-4o-mini";
 
-const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
+export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   mcq: "اختيار من متعدد",
   text: "سؤال مفتوح",
   true_false: "صح أو خطأ",
@@ -30,7 +30,7 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   justification: "تعليل الإجابة",
 };
 
-const QUESTION_LEVEL_LABELS: Record<QuestionLevel, string> = {
+export const QUESTION_LEVEL_LABELS: Record<QuestionLevel, string> = {
   easy: "سهل",
   medium: "متوسط",
   advanced: "متقدم",
@@ -64,7 +64,7 @@ const SaveQuestionsBody = z.object({
   ),
 });
 
-type GeneratedQuestion = {
+export type GeneratedQuestion = {
   type: QuestionType;
   level?: QuestionLevel;
   question: string;
@@ -79,7 +79,7 @@ function getOpenAIErrorMessage(json: { error?: { message?: string; code?: string
   return `${message}${code}`;
 }
 
-function buildQuestionPrompt(
+export function buildQuestionPrompt(
   item: { title: string; bodyText: string | null; description: string },
   count: number,
   level: QuestionLevel,
@@ -121,7 +121,7 @@ ${text || "لا يوجد نص للدرس، فأنشئ أسئلة عامة منا
 {"questions": [{"type": "${type}", "level": "${level}", "question": "...", "options": [...], "correctAnswer": "...", "points": 5}]}`;
 }
 
-function parseGeneratedQuestions(rawText: string): GeneratedQuestion[] {
+export function parseGeneratedQuestions(rawText: string): GeneratedQuestion[] {
   const cleaned = rawText
     .replace(/^[\s\S]*?(\{[\s\S]*\})[\s\S]*$/, "$1")
     .trim();
