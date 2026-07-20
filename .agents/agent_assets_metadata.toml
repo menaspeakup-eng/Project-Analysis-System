@@ -48,3 +48,9 @@ id = "bfBiOSNme0rDchj-M6sog"
 uri = "file://screenshots/teacher-ai-stories-multi-type.jpg"
 type = "image"
 title = "صفحة المعلم - اختيار أكثر من نوع سؤال"
+
+[[outputs]]
+id = "V3h1-E64gdLB2Vw77-77Q"
+uri = "file://screenshots/home-platform-guide.jpg"
+type = "image"
+title = "الصفحة الرئيسية - دليل استخدام المنصة"

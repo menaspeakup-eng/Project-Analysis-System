@@ -1,9 +1,14 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Mic, Star, Brain, Heart, GraduationCap, ShieldCheck, Play, ArrowLeft, School } from "lucide-react";
+import {
+  Mic, Star, Brain, Heart, GraduationCap, ShieldCheck, Play, ArrowLeft, School,
+  BookOpen, UserPlus, Users, Gamepad2, FileQuestion, ClipboardList, LineChart,
+  FileText, CheckCircle2, Coins, Sparkles, LogIn, ClipboardCheck, Trophy, Target,
+} from "lucide-react";
 import heroKids from "@assets/generated_images/hero-kids.webp";
 import gamePreview from "@assets/generated_images/game-preview.webp";
 import avatarMascot from "@assets/generated_images/avatar-mascot.webp";
+import PlatformGuide from "@/components/PlatformGuide";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -146,6 +151,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <PlatformGuide />
 
       {/* Show & Tell Section */}
       <section className="py-24 bg-background overflow-hidden relative">
