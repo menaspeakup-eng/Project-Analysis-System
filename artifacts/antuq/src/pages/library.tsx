@@ -53,7 +53,7 @@ export default function Library() {
           <Button variant="ghost" className="rounded-xl font-bold" onClick={() => setLocation("/portal")}>
             ← العودة
           </Button>
-          <h1 className="text-2xl md:text-3xl font-black text-foreground">مكتبة القراءة</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-foreground">المكتبة التعليمية</h1>
         </div>
 
         <p className="text-muted-foreground font-medium">

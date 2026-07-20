@@ -78,3 +78,15 @@ id = "DpB7mn-tovJExv0t7U2hH"
 uri = "file://screenshots/home-reverted-intiq.jpg"
 type = "image"
 title = "الصفحة الرئيسية - إنطق"
+
+[[outputs]]
+id = "-t3y2wf8MNfJiOaPpRx3Z"
+uri = "file://screenshots/library-educational.jpg"
+type = "image"
+title = "صفحة المكتبة - المكتبة التعليمية"
+
+[[outputs]]
+id = "UnPhD9V-ReHZVKxqTCfdR"
+uri = "file://screenshots/portal-educational-library.jpg"
+type = "image"
+title = "البوابة - قسم المكتبة التعليمية"
