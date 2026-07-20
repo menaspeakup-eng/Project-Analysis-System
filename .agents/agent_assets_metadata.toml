@@ -96,3 +96,21 @@ id = "A90PuoN1vpE2azvj_a7xd"
 uri = "file://screenshots/home-tagline-fixed.jpg"
 type = "image"
 title = "الصفحة الرئيسية - الشعار بعد التصحيح"
+
+[[outputs]]
+id = "7cmomDc36e6p0b1RKUsUa"
+uri = "file://screenshots/portal-sections-header.jpg"
+type = "image"
+title = "صفحة البوابة - أقسام المنصة"
+
+[[outputs]]
+id = "PuvjK74vzRyPDED0_lKUq"
+uri = "file://screenshots/portal-lazy-avatar.jpg"
+type = "image"
+title = "البوابة - الشخصية تظهر بعد تحميل الصفحة"
+
+[[outputs]]
+id = "rQPQZVrT5KhTHTTjTVMph"
+uri = "file://screenshots/character-lazy-avatar.jpg"
+type = "image"
+title = "تعديل الشخصية - تحميل متأخر"

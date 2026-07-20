@@ -1,4 +1,4 @@
-import { Component, Suspense, useMemo, type ReactNode } from "react";
+import { Component, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, OrbitControls, Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -262,6 +262,23 @@ export function Avatar3D({
     />
   );
 
+  // Defer 3D model loading until the page has finished its critical content.
+  // This keeps the UI responsive and lets the character appear as the final
+  // piece of the page instead of blocking the initial render.
+  const [show3D, setShow3D] = useState(false);
+  useEffect(() => {
+    const handle = window.requestIdleCallback
+      ? window.requestIdleCallback(() => setShow3D(true), { timeout: 2000 })
+      : window.setTimeout(() => setShow3D(true), 800);
+    return () => {
+      if (typeof handle === "number" && window.cancelIdleCallback) {
+        window.cancelIdleCallback(handle);
+      } else {
+        window.clearTimeout(handle as number);
+      }
+    };
+  }, []);
+
   if (!isWebGLAvailable()) {
     return fallback;
   }
@@ -272,33 +289,37 @@ export function Avatar3D({
         className={`overflow-hidden ${className}`}
         style={{ backgroundImage: `linear-gradient(to bottom, ${preset.from}, ${preset.to})` }}
       >
-        <Suspense fallback={<CanvasFallback />}>
-          <Canvas
-            camera={{
-              position: frontView
-                ? [0, 0.15, pet !== "none" ? 3.2 : 2.8]
-                : [0, 0.15, pet !== "none" ? 3.6 : 3.1],
-              fov: 32,
-            }}
-            gl={{ antialias: true, alpha: true }}
-            dpr={[1, 1.5]}
-            onCreated={({ gl }) => {
-              gl.domElement.addEventListener(
-                "webglcontextlost",
-                (event) => event.preventDefault(),
-                false,
-              );
-            }}
-          >
-            <Scene
-              gender={gender}
-              accessory={accessory}
-              pet={pet}
-              interactive={interactive && !frontView}
-              autoRotate={autoRotate && !frontView}
-            />
-          </Canvas>
-        </Suspense>
+        {show3D ? (
+          <Suspense fallback={fallback}>
+            <Canvas
+              camera={{
+                position: frontView
+                  ? [0, 0.15, pet !== "none" ? 3.2 : 2.8]
+                  : [0, 0.15, pet !== "none" ? 3.6 : 3.1],
+                fov: 32,
+              }}
+              gl={{ antialias: true, alpha: true }}
+              dpr={[1, 1.5]}
+              onCreated={({ gl }) => {
+                gl.domElement.addEventListener(
+                  "webglcontextlost",
+                  (event) => event.preventDefault(),
+                  false,
+                );
+              }}
+            >
+              <Scene
+                gender={gender}
+                accessory={accessory}
+                pet={pet}
+                interactive={interactive && !frontView}
+                autoRotate={autoRotate && !frontView}
+              />
+            </Canvas>
+          </Suspense>
+        ) : (
+          fallback
+        )}
       </div>
     </Avatar3DErrorBoundary>
   );

@@ -27,6 +27,7 @@ import {
   Award,
   GraduationCap,
   Gamepad2,
+  LayoutGrid,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar3D } from "@/components/Avatar3D";
@@ -435,7 +436,10 @@ export default function Portal() {
 
         {/* Shortcuts grid */}
         <section>
-          <h3 className="font-black text-foreground text-lg mb-4">المكتبة التعليمية</h3>
+          <h3 className="font-black text-foreground text-2xl mb-6 flex items-center gap-2">
+            <LayoutGrid className="w-6 h-6 text-primary" />
+            أقسام المنصة
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <ComingSoonCard icon={BookOpen} label="المكتبة التعليمية" colorClass="bg-primary/15 text-primary" href="/library" />
             <ComingSoonCard icon={Play} label="الألعاب التعليمية" colorClass="bg-accent/15 text-accent" href="/games" />
