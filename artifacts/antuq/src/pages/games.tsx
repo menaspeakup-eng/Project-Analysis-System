@@ -13,6 +13,9 @@ const GAME_TYPE_LABELS: Record<GameType, string> = {
   "choose-sentence": "اختر الجملة الصحيحة",
   "complete-sentence": "أكمل الجملة",
   "arrange-sentences": "ترتيب الجمل",
+  "grammar-multiple-choice": "اختر الإجابة النحوية الصحيحة",
+  "grammar-fill-blank": "أكمل الفراغ النحوي",
+  "grammar-classify": "صنّف الكلمات النحوية",
 };
 
 const GAME_TYPE_IMAGES: Record<GameType, string> = {
@@ -22,6 +25,9 @@ const GAME_TYPE_IMAGES: Record<GameType, string> = {
   "choose-sentence": "https://cdn-icons-png.flaticon.com/512/2913/2913360.png",
   "complete-sentence": "https://cdn-icons-png.flaticon.com/512/3659/3659898.png",
   "arrange-sentences": "https://cdn-icons-png.flaticon.com/512/2922/2922506.png",
+  "grammar-multiple-choice": "https://cdn-icons-png.flaticon.com/512/2913/2913360.png",
+  "grammar-fill-blank": "https://cdn-icons-png.flaticon.com/512/3659/3659898.png",
+  "grammar-classify": "https://cdn-icons-png.flaticon.com/512/2922/2922506.png",
 };
 
 export default function Games() {

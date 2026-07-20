@@ -54,6 +54,7 @@ import TeacherGames from "./teacher-games";
 import TeacherAiStories from "./teacher-ai-stories";
 import TeacherAnalytics from "./teacher-analytics";
 import TeacherReadingCoach from "./teacher-reading-coach";
+import TeacherAIGenerator from "./teacher-ai-questions";
 import { ChatPanel } from "@/components/chat/chat-panel";
 
 function getTeacherIdFromUrl(): number | null {
@@ -176,7 +177,7 @@ export default function Teacher() {
 
   const classes = classesData?.classes ?? [];
   const unclaimed = unclaimedData?.students ?? [];
-  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges" | "ai-stories" | "reading-coach" | "analytics" | "chat">("students");
+  const [activeTab, setActiveTab] = useState<"students" | "games" | "challenges" | "ai-stories" | "reading-coach" | "ai-questions" | "analytics" | "chat">("students");
 
   return (
     <div className="min-h-[100dvh] bg-background flex flex-col">
@@ -241,7 +242,7 @@ export default function Teacher() {
             onClick={() => setActiveTab("students")}
           >
             <GraduationCap className="w-4 h-4 ml-2" />
-            الطلاب
+            الطلبة
           </Button>
           <Button
             variant={activeTab === "games" ? "default" : "ghost"}
@@ -274,6 +275,14 @@ export default function Teacher() {
           >
             <Mic className="w-4 h-4 ml-2" />
             تدريب القراءة
+          </Button>
+          <Button
+            variant={activeTab === "ai-questions" ? "default" : "ghost"}
+            className={`rounded-xl font-bold h-11 flex-1 sm:flex-none ${activeTab === "ai-questions" ? "bg-[hsl(265,60%,45%)] text-white" : "text-muted-foreground"}`}
+            onClick={() => setActiveTab("ai-questions")}
+          >
+            <Sparkles className="w-4 h-4 ml-2" />
+            أسئلة ذكية
           </Button>
           <Button
             variant={activeTab === "analytics" ? "default" : "ghost"}
@@ -332,6 +341,8 @@ export default function Teacher() {
         {activeTab === "reading-coach" && <TeacherReadingCoach />}
 
         {activeTab === "analytics" && <TeacherAnalytics classes={classes} teacherIdParam={teacherIdParam} />}
+
+        {activeTab === "ai-questions" && <TeacherAIGenerator />}
 
         {activeTab === "chat" && (
           <section className="flex flex-col min-h-[70dvh] rounded-3xl border border-border bg-white overflow-hidden shadow-sm">
@@ -393,7 +404,7 @@ function ClassCard({
             <Users className="w-5 h-5" />
           </div>
           <span>
-            {count === 0 ? "لا يوجد طلاب" : `${count} ${count === 1 ? "طالب" : "طلاب"}`}
+            {count === 0 ? "لا يوجد طلبة" : `${count} ${count === 1 ? "طالب" : "طلبة"}`}
           </span>
         </div>
         <Button
@@ -401,7 +412,7 @@ function ClassCard({
           onClick={onOpen}
         >
           <Users className="w-4 h-4 ml-2" />
-          عرض الطلاب
+          عرض الطلبة
         </Button>
       </CardContent>
     </Card>
@@ -463,7 +474,7 @@ function ClassStudentsDialog({
         <DialogHeader className="text-right">
           <DialogTitle className="text-xl font-black flex items-center gap-2">
             <GraduationCap className="w-6 h-6 text-primary" />
-            طلاب {cls.name}
+            طلبة {cls.name}
           </DialogTitle>
         </DialogHeader>
 
@@ -472,11 +483,11 @@ function ClassStudentsDialog({
           <section className="space-y-3">
             <h3 className="font-bold text-foreground flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
-              طلاب الصف
+              طلبة الصف
             </h3>
             {cls.students.length === 0 ? (
               <p className="text-muted-foreground font-medium text-sm py-4 text-center bg-muted/30 rounded-2xl">
-                لا يوجد طلاب في هذا الصف بعد.
+                لا يوجد طلبة في هذا الصف بعد.
               </p>
             ) : (
               <div className="overflow-x-auto rounded-2xl border border-border">
@@ -627,7 +638,7 @@ function ClassStudentsDialog({
           <section className="space-y-3 border-t border-border pt-4">
             <h3 className="font-bold text-foreground flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-primary" />
-              إضافة طلاب للصف
+              إضافة طلبة للصف
             </h3>
             {isUnclaimedLoading ? (
               <div className="h-16 flex items-center justify-center">
@@ -635,7 +646,7 @@ function ClassStudentsDialog({
               </div>
             ) : unclaimed.length === 0 ? (
               <p className="text-muted-foreground font-medium text-sm py-4 text-center bg-muted/30 rounded-2xl">
-                لا يوجد طلاب غير مرتبطين حالياً.
+                لا يوجد طلبة غير مرتبطين حالياً.
               </p>
             ) : (
               <div className="overflow-x-auto rounded-2xl border border-border">

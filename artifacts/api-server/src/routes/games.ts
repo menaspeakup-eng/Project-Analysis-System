@@ -10,7 +10,7 @@ import {
   GAME_TYPES,
   type GameType,
 } from "@workspace/db";
-import { eq, and, sql, desc, inArray, count, avg } from "drizzle-orm";
+import { eq, and, sql, desc, inArray, count, avg, countDistinct } from "drizzle-orm";
 import {
   resolveIdentity,
   requireIdentity,
@@ -31,6 +31,7 @@ const UpdateGameBody = z.object({
   pointsReward: z.number().int().min(0).max(1000).optional(),
   isActive: z.boolean().optional(),
   classId: z.number().int().optional(),
+  grammarTopic: z.enum(["nominal-sentence", "verbal-sentence", "inna-and-sisters", "kana-and-sisters", "mudaaf-ilayh", "harf-jarr", "present-tense-verb", "transitive-intransitive-verb", "base-augmented-verb", "faail", "mafuul-bih", "mafuul-mutlaq", "mafuul-liajlih", "mafuul-fihi", "al-asmaaul-khamsah"]).optional(),
 });
 
 const CompleteGameBody = z.object({
@@ -47,6 +48,7 @@ const CreateGameBody = z.object({
   imageUrl: z.string().max(5_000_000).optional().or(z.literal("")),
   pointsReward: z.number().int().min(0).max(1000).optional(),
   classId: z.number().int(),
+  grammarTopic: z.enum(["nominal-sentence", "verbal-sentence", "inna-and-sisters", "kana-and-sisters", "mudaaf-ilayh", "harf-jarr", "present-tense-verb", "transitive-intransitive-verb", "base-augmented-verb", "faail", "mafuul-bih", "mafuul-mutlaq", "mafuul-liajlih", "mafuul-fihi", "al-asmaaul-khamsah"]).optional(),
 });
 
 function parseIntParam(value: string): number | null {
@@ -83,6 +85,20 @@ const payloadValidators: Record<GameType, z.ZodTypeAny> = {
   }),
   "arrange-sentences": z.object({
     sentence: z.string().min(1).max(500),
+  }),
+  "grammar-multiple-choice": z.object({
+    question: z.string().min(1).max(500),
+    correctAnswer: z.string().min(1).max(500),
+    wrongAnswers: z.array(z.string().min(1).max(500)).length(3),
+  }),
+  "grammar-fill-blank": z.object({
+    sentence: z.string().min(1).max(500),
+    hiddenWord: z.string().min(1).max(100),
+    wrongWords: z.array(z.string().min(1).max(100)).length(3),
+  }),
+  "grammar-classify": z.object({
+    items: z.array(z.object({ text: z.string().min(1).max(200), category: z.string().min(1).max(100) })).min(1).max(50),
+    categories: z.array(z.string().min(1).max(100)).min(2).max(4),
   }),
 };
 
@@ -197,6 +213,7 @@ router.get("/games", async (req, res) => {
       slug: g.slug,
       name: g.name,
       type: g.type,
+      grammarTopic: g.grammarTopic,
       description: g.description,
       imageUrl: g.imageUrl,
       pointsReward: g.pointsReward,
@@ -240,6 +257,7 @@ router.get("/games/:id", async (req, res) => {
     slug: data.game.slug,
     name: data.game.name,
     type: data.game.type,
+    grammarTopic: data.game.grammarTopic,
     description: data.game.description,
     imageUrl: data.game.imageUrl,
     pointsReward: data.game.pointsReward,
@@ -355,23 +373,31 @@ router.get("/teacher/games", async (req, res) => {
 
   const gameIds = games.map((g) => g.id);
 
-  const sessions = await db.query.studentGameSessionsTable.findMany({
-    where: gameIds.length ? inArray(studentGameSessionsTable.gameId, gameIds) : undefined,
-  });
+  const statsRows = gameIds.length
+    ? await db
+        .select({
+          gameId: studentGameSessionsTable.gameId,
+          plays: count(),
+          uniqueStudents: countDistinct(studentGameSessionsTable.studentId),
+          avgMistakes: avg(studentGameSessionsTable.mistakes),
+          avgDuration: avg(studentGameSessionsTable.durationMs),
+        })
+        .from(studentGameSessionsTable)
+        .where(inArray(studentGameSessionsTable.gameId, gameIds))
+        .groupBy(studentGameSessionsTable.gameId)
+    : [];
 
   const statsByGame = new Map<
     number,
     { plays: number; uniqueStudents: number; avgMistakes: number; avgDuration: number }
   >();
-  for (const s of sessions) {
-    const existing = statsByGame.get(s.gameId) || {
-      plays: 0,
-      uniqueStudents: 0,
-      avgMistakes: 0,
-      avgDuration: 0,
-    };
-    existing.plays++;
-    statsByGame.set(s.gameId, existing);
+  for (const row of statsRows) {
+    statsByGame.set(row.gameId, {
+      plays: Number(row.plays),
+      uniqueStudents: Number(row.uniqueStudents),
+      avgMistakes: row.avgMistakes ? Number(row.avgMistakes) : 0,
+      avgDuration: row.avgDuration ? Number(row.avgDuration) : 0,
+    });
   }
 
   const result = games.map((g) => ({
@@ -379,6 +405,7 @@ router.get("/teacher/games", async (req, res) => {
     slug: g.slug,
     name: g.name,
     type: g.type,
+    grammarTopic: g.grammarTopic,
     description: g.description,
     imageUrl: g.imageUrl,
     pointsReward: g.pointsReward,
@@ -437,6 +464,7 @@ router.post("/teacher/games", async (req, res) => {
     slug: game.slug,
     name: game.name,
     type: game.type,
+    grammarTopic: game.grammarTopic,
     description: game.description,
     imageUrl: game.imageUrl,
     pointsReward: game.pointsReward,
@@ -500,6 +528,7 @@ router.put("/teacher/games/:id", async (req, res) => {
     slug: updated.slug,
     name: updated.name,
     type: updated.type,
+    grammarTopic: updated.grammarTopic,
     description: updated.description,
     imageUrl: updated.imageUrl,
     pointsReward: updated.pointsReward,

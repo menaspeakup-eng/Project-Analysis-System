@@ -5,11 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { LibraryQuestionInputLevel } from './libraryQuestionInputLevel';
 import type { LibraryQuestionInputType } from './libraryQuestionInputType';
 
 export interface LibraryQuestionInput {
   id?: number;
   type: LibraryQuestionInputType;
+  level?: LibraryQuestionInputLevel;
   question: string;
   options?: string[];
   correctAnswer?: string | null;

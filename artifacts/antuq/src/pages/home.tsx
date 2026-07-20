@@ -1,9 +1,9 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Mic, Star, Brain, Heart, GraduationCap, ShieldCheck, Play, ArrowLeft } from "lucide-react";
-import heroKids from "@assets/generated_images/hero-kids.png";
-import gamePreview from "@assets/generated_images/game-preview.jpg";
-import avatarMascot from "@assets/generated_images/avatar-mascot.png";
+import { Mic, Star, Brain, Heart, GraduationCap, ShieldCheck, Play, ArrowLeft, School } from "lucide-react";
+import heroKids from "@assets/generated_images/hero-kids.webp";
+import gamePreview from "@assets/generated_images/game-preview.webp";
+import avatarMascot from "@assets/generated_images/avatar-mascot.webp";
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -40,8 +40,18 @@ export default function Home() {
               <svg className="absolute -bottom-2 left-0 w-full h-4 text-secondary/50 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round"/></svg>
             </span>
           </h1>
+          <div className="flex flex-col items-center lg:items-start gap-2">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 text-primary font-bold text-sm md:text-base border border-primary/10 shadow-sm">
+              <GraduationCap className="w-4 h-4" />
+              <span>المنصة تحت إشراف الأستاذة هداء الناصري</span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/5 text-accent font-bold text-sm md:text-base border border-accent/10 shadow-sm">
+              <School className="w-4 h-4" />
+              <span>المنصة تابعة لمدرسة خضراء عبري (٥-٨)</span>
+            </div>
+          </div>
           <p className="text-xl md:text-2xl text-muted-foreground font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
-            رحلة ممتعة للطلاب لاكتشاف عالم اللغة العربية، مع مدرب نطق ذكي، ألعاب تفاعلية، ومكافآت تصنع أبطالاً.
+            رحلة ممتعة للطلبة لاكتشاف عالم اللغة العربية، مع مدرب نطق ذكي، ألعاب تفاعلية، ومكافآت تصنع أبطالاً.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
@@ -59,7 +69,7 @@ export default function Home() {
           <div className="pt-8 flex items-center justify-center lg:justify-start gap-6 opacity-70">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-accent" />
-              <span className="text-sm font-bold">آمن للطلاب</span>
+              <span className="text-sm font-bold">آمن للطلبة</span>
             </div>
             <div className="flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-accent" />
@@ -72,7 +82,7 @@ export default function Home() {
           <div className="relative w-full aspect-square md:aspect-[4/3] lg:aspect-square">
             <div className="absolute inset-0 bg-gradient-to-tr from-secondary/30 via-primary/10 to-accent/20 rounded-[3rem] rotate-3 scale-105 -z-10"></div>
             <div className="absolute inset-0 bg-white rounded-[3rem] shadow-2xl border-4 border-white overflow-hidden flex items-center justify-center">
-              <img src={heroKids} alt="طلاب يتعلمون بسعادة" className="w-full h-full object-cover object-center" />
+              <img src={heroKids} alt="طلبة يتعلمون بسعادة" className="w-full h-full object-cover object-center" />
             </div>
             {/* Floating badges */}
             <div className="absolute -left-6 top-1/4 bg-white p-4 rounded-2xl shadow-xl border border-border animate-bounce text-secondary" style={{animationDuration: '3s'}}>
@@ -90,7 +100,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-4xl md:text-5xl font-black text-foreground">
-              كيف يتعلم طلابك مع <span className="text-primary">انطق</span>؟
+              كيف يتعلم طلبةك مع <span className="text-primary">انطق</span>؟
             </h2>
             <p className="text-xl text-muted-foreground font-medium max-w-2xl mx-auto">
               نجمع بين أحدث تقنيات الذكاء الاصطناعي وأساليب التعلم باللعب لنقدم تجربة لا تُنسى.
@@ -129,7 +139,7 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold mb-4 text-foreground">مكافآت ونقاط</h3>
               <p className="text-muted-foreground leading-relaxed text-lg font-medium">
-                يحصل طلابك على نقاط ونجوم مع كل إنجاز، ليقوم بتخصيص شخصيته الافتراضية (الأفاتار) وفتح عوالم جديدة.
+                يحصل طلبةك على نقاط ونجوم مع كل إنجاز، ليقوم بتخصيص شخصيته الافتراضية (الأفاتار) وفتح عوالم جديدة.
               </p>
               <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-secondary/10 rounded-full blur-2xl"></div>
             </div>
@@ -159,7 +169,7 @@ export default function Home() {
                     <Brain className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold mb-2 text-foreground">مصمم لعمر 5 سنوات فما فوق</h4>
+                    <h4 className="text-xl font-bold mb-2 text-foreground">مصمم لعمر ١٠ سنوات فما فوق</h4>
                     <p className="text-muted-foreground text-lg font-medium">واجهة خالية من التشتيت، تعتمد على التوجيه الصوتي والرموز البصرية.</p>
                   </div>
                 </li>
@@ -199,7 +209,7 @@ export default function Home() {
             مستعدون للبدء؟
           </h2>
           <p className="text-xl md:text-2xl font-medium text-white/90 mb-10 max-w-2xl mx-auto">
-            انضموا إلى آلاف الطلاب الذين يستمتعون بتعلم القراءة العربية يومياً مع منصة انطق.
+            انضموا إلى آلاف الطلبة الذين يستمتعون بتعلم القراءة العربية يومياً مع منصة انطق.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white/10 p-4 rounded-3xl backdrop-blur-sm border border-white/20 max-w-fit mx-auto">

@@ -304,5 +304,5 @@ export function Avatar3D({
   );
 }
 
-useGLTF.preload(boyUrl);
-useGLTF.preload(girlUrl);
+// Models are loaded on-demand by the pages that render the avatar; preloading
+// the base character files would download ~24 MB on every app startup.

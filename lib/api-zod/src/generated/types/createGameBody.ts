@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GameType } from './gameType';
+import type { GrammarTopic } from './grammarTopic';
 
 export interface CreateGameBody {
   /**
@@ -19,6 +20,7 @@ export interface CreateGameBody {
      */
   name: string;
   type: GameType;
+  grammarTopic?: GrammarTopic | null;
   /** @maxLength 1000 */
   description?: string;
   /** @maxLength 5000000 */

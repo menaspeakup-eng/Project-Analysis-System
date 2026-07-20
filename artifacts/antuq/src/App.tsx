@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { ClerkProvider, SignIn, Show, useClerk, useAuth } from '@clerk/react';
+import { Suspense, lazy, useEffect, useRef } from "react";
+import { ClerkProvider, SignIn, useClerk, useAuth } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
@@ -8,36 +8,39 @@ import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ThemeProvider } from 'next-themes';
+import { Loader2 } from "lucide-react";
 
-import Home from "@/pages/home";
-import Portal from "@/pages/portal";
-import CharacterEdit from "@/pages/character";
-import Terms from "@/pages/terms";
-import Privacy from "@/pages/privacy";
-import Schools from "@/pages/schools";
-import About from "@/pages/about";
-import Features from "@/pages/features";
-import Contact from "@/pages/contact";
-import FAQ from "@/pages/faq";
-import Admin from "@/pages/admin";
-import Teacher from "@/pages/teacher";
-import Games from "@/pages/games";
-import GamePlay from "@/pages/game-play";
-import OnboardingName from "@/pages/onboarding-name";
-import NotFound from "@/pages/not-found";
-import ChatPage from "@/pages/chat";
-import AIAssistant from "@/pages/ai-assistant";
-import AIStory from "@/pages/ai-story";
-import ReadingCoach from "@/pages/reading-coach";
-import Settings from "@/pages/settings";
-import Achievements from "@/pages/achievements";
-import Friends from "@/pages/friends";
-import Library from "@/pages/library";
-import LibraryList from "@/pages/library-list";
-import LibraryItem from "@/pages/library-item";
-import TeacherLibrary from "@/pages/teacher-library";
-import TeacherLibraryReviews from "@/pages/teacher-library-reviews";
 import { useGetIdentityMe } from "@workspace/api-client-react";
+
+const Home = lazy(() => import("@/pages/home"));
+const Portal = lazy(() => import("@/pages/portal"));
+const CharacterEdit = lazy(() => import("@/pages/character"));
+const Terms = lazy(() => import("@/pages/terms"));
+const Privacy = lazy(() => import("@/pages/privacy"));
+const Schools = lazy(() => import("@/pages/schools"));
+const About = lazy(() => import("@/pages/about"));
+const Features = lazy(() => import("@/pages/features"));
+const Contact = lazy(() => import("@/pages/contact"));
+const FAQ = lazy(() => import("@/pages/faq"));
+const Admin = lazy(() => import("@/pages/admin"));
+const Teacher = lazy(() => import("@/pages/teacher"));
+const Games = lazy(() => import("@/pages/games"));
+const GamePlay = lazy(() => import("@/pages/game-play"));
+const OnboardingName = lazy(() => import("@/pages/onboarding-name"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+const ChatPage = lazy(() => import("@/pages/chat"));
+const AIAssistant = lazy(() => import("@/pages/ai-assistant"));
+const AIStory = lazy(() => import("@/pages/ai-story"));
+const ReadingCoach = lazy(() => import("@/pages/reading-coach"));
+const Settings = lazy(() => import("@/pages/settings"));
+const Achievements = lazy(() => import("@/pages/achievements"));
+const Friends = lazy(() => import("@/pages/friends"));
+const Library = lazy(() => import("@/pages/library"));
+const LibraryList = lazy(() => import("@/pages/library-list"));
+const LibraryItem = lazy(() => import("@/pages/library-item"));
+const TeacherLibrary = lazy(() => import("@/pages/teacher-library"));
+const TeacherLibraryReviews = lazy(() => import("@/pages/teacher-library-reviews"));
+const TeacherAIGenerator = lazy(() => import("@/pages/teacher-ai-questions"));
 
 const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
@@ -88,17 +91,15 @@ const clerkAppearance = {
     socialButtonsBlockButtonText: "font-semibold text-[hsl(200,40%,15%)]",
     formFieldLabel: "text-sm font-bold text-[hsl(200,40%,15%)]",
     footerActionLink: "text-[hsl(15,85%,55%)] font-bold hover:text-[hsl(15,85%,45%)]",
-    footerActionText: "text-[hsl(180,20%,45%)]",
+    footerActionText: "text-[hsl(180,20%,45%)] font-medium bg-white",
     dividerText: "text-[hsl(180,20%,45%)] font-medium bg-white",
     identityPreviewEditButton: "text-[hsl(15,85%,55%)]",
     formFieldSuccessText: "text-[hsl(180,60%,45%)]",
-    alertText: "text-[hsl(350,80%,55%)]",
     logoBox: "h-16 mb-4 flex items-center justify-center",
     logoImage: "h-full w-auto",
     socialButtonsBlockButton: "border border-[hsl(40,20%,90%)] hover:bg-[hsl(40,33%,98%)] rounded-xl h-12 transition-colors",
     formButtonPrimary: "bg-[hsl(15,85%,55%)] hover:bg-[hsl(15,85%,45%)] text-white font-bold rounded-xl h-12 text-lg shadow-sm transition-all",
     formFieldInput: "bg-[hsl(40,33%,98%)] border border-[hsl(40,20%,90%)] rounded-xl h-12 text-[hsl(200,40%,15%)] focus:ring-2 focus:ring-[hsl(15,85%,55%)] px-4",
-    // Single sign-in flow only — no separate sign-up page, so the "create an account" footer link is hidden.
     footerAction: "hidden",
     dividerLine: "bg-[hsl(40,20%,90%)]",
     alert: "bg-[hsl(350,80%,95%)] border border-[hsl(350,80%,55%)] text-[hsl(350,80%,55%)]",
@@ -107,6 +108,14 @@ const clerkAppearance = {
     main: "gap-6",
   },
 };
+
+function PageLoader() {
+  return (
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background" dir="rtl">
+      <Loader2 className="w-10 h-10 animate-spin text-primary" />
+    </div>
+  );
+}
 
 function RoleRedirect() {
   const { isSignedIn, isLoaded } = useAuth();
@@ -117,17 +126,9 @@ function RoleRedirect() {
 
   if (!isLoaded || (isSignedIn && isLoading)) return null;
 
-  // Guests continue straight to the kid portal without signing in.
   if (isGuest) return <Redirect to="/portal" />;
-
-  // Anonymous visitors see the landing page.
   if (!isSignedIn) return <Home />;
-
-  // First-time sign-in must confirm their name before seeing any dashboard.
   if (!identity?.nameConfirmed) return <Redirect to="/onboarding-name" />;
-
-  // Admins and teachers share the teacher dashboard by default; admins get an
-  // in-app button to switch to the admin dashboard. Students go to the kid portal.
   if (identity.isAdmin || identity.isTeacher) return <Redirect to="/teacher" />;
   return <Redirect to="/portal" />;
 }
@@ -135,15 +136,11 @@ function RoleRedirect() {
 function SignInPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 py-12 relative overflow-hidden">
-      {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-accent/10 rounded-full blur-3xl"></div>
       </div>
-      
       <div className="relative z-10 w-full max-w-[440px]">
-        {/* Single sign-in flow: Google auto-creates a new account on first use,
-            so signUpUrl points back to this same page instead of a separate sign-up screen. */}
         <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-in`} />
       </div>
     </div>
@@ -201,37 +198,40 @@ function ClerkProviderWithRoutes() {
       <QueryClientProvider client={queryClient}>
         <ClerkQueryClientCacheInvalidator />
         <TooltipProvider>
-          <Switch>
-            <Route path="/" component={RoleRedirect} />
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/onboarding-name" component={OnboardingName} />
-            <Route path="/portal" component={Portal} />
-            <Route path="/character" component={CharacterEdit} />
-            <Route path="/admin" component={Admin} />
-            <Route path="/teacher" component={Teacher} />
-            <Route path="/games" component={Games} />
-            <Route path="/games/:id" component={GamePlay} />
-            <Route path="/chat" component={ChatPage} />
-            <Route path="/ai-assistant" component={AIAssistant} />
-            <Route path="/ai-story" component={AIStory} />
-            <Route path="/reading-coach" component={ReadingCoach} />
-            <Route path="/settings" component={Settings} />
-            <Route path="/achievements" component={Achievements} />
-            <Route path="/friends" component={Friends} />
-            <Route path="/library" component={Library} />
-            <Route path="/library/:type" component={LibraryList} />
-            <Route path="/library-item/:id" component={LibraryItem} />
-            <Route path="/teacher/library" component={TeacherLibrary} />
-            <Route path="/teacher/library/reviews" component={TeacherLibraryReviews} />
-            <Route path="/terms" component={Terms} />
-            <Route path="/privacy" component={Privacy} />
-            <Route path="/schools" component={Schools} />
-            <Route path="/about" component={About} />
-            <Route path="/features" component={Features} />
-            <Route path="/contact" component={Contact} />
-            <Route path="/faq" component={FAQ} />
-            <Route component={NotFound} />
-          </Switch>
+          <Suspense fallback={<PageLoader />}>
+            <Switch>
+              <Route path="/" component={RoleRedirect} />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/onboarding-name" component={OnboardingName} />
+              <Route path="/portal" component={Portal} />
+              <Route path="/character" component={CharacterEdit} />
+              <Route path="/admin" component={Admin} />
+              <Route path="/teacher" component={Teacher} />
+              <Route path="/games" component={Games} />
+              <Route path="/games/:id" component={GamePlay} />
+              <Route path="/chat" component={ChatPage} />
+              <Route path="/ai-assistant" component={AIAssistant} />
+              <Route path="/ai-story" component={AIStory} />
+              <Route path="/reading-coach" component={ReadingCoach} />
+              <Route path="/settings" component={Settings} />
+              <Route path="/achievements" component={Achievements} />
+              <Route path="/friends" component={Friends} />
+              <Route path="/library" component={Library} />
+              <Route path="/library/:type" component={LibraryList} />
+              <Route path="/library-item/:id" component={LibraryItem} />
+              <Route path="/teacher/library" component={TeacherLibrary} />
+              <Route path="/teacher/library/reviews" component={TeacherLibraryReviews} />
+              <Route path="/teacher/ai-questions" component={TeacherAIGenerator} />
+              <Route path="/terms" component={Terms} />
+              <Route path="/privacy" component={Privacy} />
+              <Route path="/schools" component={Schools} />
+              <Route path="/about" component={About} />
+              <Route path="/features" component={Features} />
+              <Route path="/contact" component={Contact} />
+              <Route path="/faq" component={FAQ} />
+              <Route component={NotFound} />
+            </Switch>
+          </Suspense>
           <Toaster />
         </TooltipProvider>
       </QueryClientProvider>

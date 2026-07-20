@@ -261,7 +261,7 @@ export default function Admin() {
   };
 
   const handleDeleteClass = (id: number, name: string) => {
-    if (!window.confirm(`هل أنت متأكد من حذف الصف "${name}"؟ سيُحذف الصف ويُفصل الطلاب المرتبطون به.`)) {
+    if (!window.confirm(`هل أنت متأكد من حذف الصف "${name}"؟ سيُحذف الصف ويُفصل الطلبة المرتبطون به.`)) {
       return;
     }
     deleteClass({ id }, { onSuccess: invalidate });
@@ -621,7 +621,7 @@ function ClassCard({
       <CardContent>
         {cls.students.length === 0 ? (
           <p className="text-muted-foreground font-medium text-sm py-4 text-center">
-            لا يوجد طلاب في هذا الصف بعد.
+            لا يوجد طلبة في هذا الصف بعد.
           </p>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-border">

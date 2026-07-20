@@ -7,12 +7,14 @@
  */
 import type { GameDetailItemsItem } from './gameDetailItemsItem';
 import type { GameType } from './gameType';
+import type { GrammarTopic } from './grammarTopic';
 
 export interface GameDetail {
   id: number;
   slug: string;
   name: string;
   type: GameType;
+  grammarTopic?: GrammarTopic | null;
   description?: string | null;
   imageUrl?: string | null;
   pointsReward: number;

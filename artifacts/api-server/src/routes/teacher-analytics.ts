@@ -9,7 +9,7 @@ import {
   librarySubmissionsTable,
   studentGameSessionsTable,
 } from "@workspace/db";
-import { eq, inArray, and, gte, lte, asc } from "drizzle-orm";
+import { eq, inArray, and, gte, lte, asc, desc } from "drizzle-orm";
 import {
   resolveIdentity,
   requireIdentity,
@@ -110,8 +110,11 @@ router.get("/teacher/analytics", async (req, res) => {
 
   const students = await db.query.studentsTable.findMany({
     where: inArray(studentsTable.classId, classIds),
+    limit: 1000,
   });
   const studentIds = students.map((s) => s.id);
+
+  const analyticsLimit = 5000;
 
   const activityInPeriod = studentIds.length
     ? await db.query.activityLogsTable.findMany({
@@ -120,6 +123,8 @@ router.get("/teacher/analytics", async (req, res) => {
           gte(activityLogsTable.createdAt, from),
           lte(activityLogsTable.createdAt, to),
         ),
+        orderBy: [desc(activityLogsTable.createdAt)],
+        limit: analyticsLimit,
       })
     : [];
 
@@ -130,6 +135,8 @@ router.get("/teacher/analytics", async (req, res) => {
           gte(aiStoryQuizSubmissionsTable.createdAt, from),
           lte(aiStoryQuizSubmissionsTable.createdAt, to),
         ),
+        orderBy: [desc(aiStoryQuizSubmissionsTable.createdAt)],
+        limit: analyticsLimit,
       })
     : [];
 
@@ -140,6 +147,8 @@ router.get("/teacher/analytics", async (req, res) => {
           gte(librarySubmissionsTable.createdAt, from),
           lte(librarySubmissionsTable.createdAt, to),
         ),
+        orderBy: [desc(librarySubmissionsTable.createdAt)],
+        limit: analyticsLimit,
       })
     : [];
 
@@ -150,6 +159,8 @@ router.get("/teacher/analytics", async (req, res) => {
           gte(studentGameSessionsTable.completedAt, from),
           lte(studentGameSessionsTable.completedAt, to),
         ),
+        orderBy: [desc(studentGameSessionsTable.completedAt)],
+        limit: analyticsLimit,
       })
     : [];
 

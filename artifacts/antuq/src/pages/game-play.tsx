@@ -15,6 +15,9 @@ const gameComponents: Record<GameType, () => Promise<{ default: React.ComponentT
   "choose-sentence": () => import("@/games/choose-sentence"),
   "complete-sentence": () => import("@/games/complete-sentence"),
   "arrange-sentences": () => import("@/games/arrange-sentences"),
+  "grammar-multiple-choice": () => import("@/games/grammar-multiple-choice"),
+  "grammar-fill-blank": () => import("@/games/grammar-fill-blank"),
+  "grammar-classify": () => import("@/games/grammar-classify"),
 };
 
 export default function GamePlay() {

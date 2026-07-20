@@ -129,7 +129,7 @@ async function generateSentence(studentId: number, points: number): Promise<{ se
   const recent = await fetchRecentSentences(studentId, 30);
   const avoidList = recent.length > 0 ? recent.slice(0, 50).join("\n- ") : "لا يوجد";
 
-  const prompt = `اكتب جملة عربية فصحى واحدة مناسبة للطلاب، مشكولة بالتشكيل الكامل، لمستوى صعوبة ${difficulty} من 5.
+  const prompt = `اكتب جملة عربية فصحى واحدة مناسبة للطلبة، مشكولة بالتشكيل الكامل، لمستوى صعوبة ${difficulty} من 5.
 
 متطلبات:
 - الجملة طويلة نسبياً (15–35 كلمة بحسب المستوى) ولا تحتوي على أرقام أو رموز.

@@ -19,9 +19,32 @@ export const GAME_TYPES = [
   "choose-sentence",
   "complete-sentence",
   "arrange-sentences",
+  "grammar-multiple-choice",
+  "grammar-fill-blank",
+  "grammar-classify",
 ] as const;
 
 export type GameType = (typeof GAME_TYPES)[number];
+
+export const GRAMMAR_TOPICS = [
+  "nominal-sentence",
+  "verbal-sentence",
+  "inna-and-sisters",
+  "kana-and-sisters",
+  "mudaaf-ilayh",
+  "harf-jarr",
+  "present-tense-verb",
+  "transitive-intransitive-verb",
+  "base-augmented-verb",
+  "faail",
+  "mafuul-bih",
+  "mafuul-mutlaq",
+  "mafuul-liajlih",
+  "mafuul-fihi",
+  "al-asmaaul-khamsah",
+] as const;
+
+export type GrammarTopic = (typeof GRAMMAR_TOPICS)[number];
 
 export const gamesTable = pgTable("games", {
   id: serial("id").primaryKey(),
@@ -29,6 +52,7 @@ export const gamesTable = pgTable("games", {
   classId: integer("class_id").notNull().references(() => classesTable.id),
   name: text("name").notNull(),
   type: text("type", { enum: GAME_TYPES }).notNull().default("match-sentence-picture"),
+  grammarTopic: text("grammar_topic", { enum: GRAMMAR_TOPICS }),
   description: text("description"),
   imageUrl: text("image_url"),
   pointsReward: integer("points_reward").notNull().default(15),
@@ -120,6 +144,23 @@ export const ArrangeSentencesPayloadSchema = z.object({
   sentence: z.string().min(1).max(500),
 });
 
+export const GrammarMultipleChoicePayloadSchema = z.object({
+  question: z.string().min(1).max(500),
+  correctAnswer: z.string().min(1).max(500),
+  wrongAnswers: z.array(z.string().min(1).max(500)).length(3),
+});
+
+export const GrammarFillBlankPayloadSchema = z.object({
+  sentence: z.string().min(1).max(500),
+  hiddenWord: z.string().min(1).max(100),
+  wrongWords: z.array(z.string().min(1).max(100)).length(3),
+});
+
+export const GrammarClassifyPayloadSchema = z.object({
+  items: z.array(z.object({ text: z.string().min(1).max(200), category: z.string().min(1).max(100) })).min(1).max(50),
+  categories: z.array(z.string().min(1).max(100)).min(2).max(4),
+});
+
 export const GamePayloadSchema = z.union([
   MatchSentencePicturePayloadSchema,
   ArrangeSentencePayloadSchema,
@@ -127,6 +168,9 @@ export const GamePayloadSchema = z.union([
   ChooseSentencePayloadSchema,
   CompleteSentencePayloadSchema,
   ArrangeSentencesPayloadSchema,
+  GrammarMultipleChoicePayloadSchema,
+  GrammarFillBlankPayloadSchema,
+  GrammarClassifyPayloadSchema,
 ]);
 
 export type MatchSentencePicturePayload = z.infer<typeof MatchSentencePicturePayloadSchema>;
@@ -135,4 +179,7 @@ export type ChoosePicturePayload = z.infer<typeof ChoosePicturePayloadSchema>;
 export type ChooseSentencePayload = z.infer<typeof ChooseSentencePayloadSchema>;
 export type CompleteSentencePayload = z.infer<typeof CompleteSentencePayloadSchema>;
 export type ArrangeSentencesPayload = z.infer<typeof ArrangeSentencesPayloadSchema>;
+export type GrammarMultipleChoicePayload = z.infer<typeof GrammarMultipleChoicePayloadSchema>;
+export type GrammarFillBlankPayload = z.infer<typeof GrammarFillBlankPayloadSchema>;
+export type GrammarClassifyPayload = z.infer<typeof GrammarClassifyPayloadSchema>;
 export type GamePayload = z.infer<typeof GamePayloadSchema>;

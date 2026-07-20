@@ -480,6 +480,30 @@ export const GameType = {
   'choose-sentence': 'choose-sentence',
   'complete-sentence': 'complete-sentence',
   'arrange-sentences': 'arrange-sentences',
+  'grammar-multiple-choice': 'grammar-multiple-choice',
+  'grammar-fill-blank': 'grammar-fill-blank',
+  'grammar-classify': 'grammar-classify',
+} as const;
+
+export type GrammarTopic = typeof GrammarTopic[keyof typeof GrammarTopic];
+
+
+export const GrammarTopic = {
+  'nominal-sentence': 'nominal-sentence',
+  'verbal-sentence': 'verbal-sentence',
+  'inna-and-sisters': 'inna-and-sisters',
+  'kana-and-sisters': 'kana-and-sisters',
+  'mudaaf-ilayh': 'mudaaf-ilayh',
+  'harf-jarr': 'harf-jarr',
+  'present-tense-verb': 'present-tense-verb',
+  'transitive-intransitive-verb': 'transitive-intransitive-verb',
+  'base-augmented-verb': 'base-augmented-verb',
+  faail: 'faail',
+  'mafuul-bih': 'mafuul-bih',
+  'mafuul-mutlaq': 'mafuul-mutlaq',
+  'mafuul-liajlih': 'mafuul-liajlih',
+  'mafuul-fihi': 'mafuul-fihi',
+  'al-asmaaul-khamsah': 'al-asmaaul-khamsah',
 } as const;
 
 export interface Game {
@@ -487,6 +511,7 @@ export interface Game {
   slug: string;
   name: string;
   type: GameType;
+  grammarTopic?: GrammarTopic | null;
   description?: string | null;
   imageUrl?: string | null;
   pointsReward: number;
@@ -507,6 +532,7 @@ export interface GameDetail {
   slug: string;
   name: string;
   type: GameType;
+  grammarTopic?: GrammarTopic | null;
   description?: string | null;
   imageUrl?: string | null;
   pointsReward: number;
@@ -560,6 +586,7 @@ export interface CreateGameBody {
      */
   name: string;
   type: GameType;
+  grammarTopic?: GrammarTopic | null;
   /** @maxLength 1000 */
   description?: string;
   /** @maxLength 5000000 */
@@ -589,6 +616,7 @@ export interface UpdateGameBody {
   pointsReward?: number;
   isActive?: boolean;
   classId?: number;
+  grammarTopic?: GrammarTopic | null;
 }
 
 export type GameItemPayload = { [key: string]: unknown };
@@ -970,10 +998,40 @@ export interface UploadUrlResponse {
   metadata?: UploadUrlRequest;
 }
 
+export type LibraryQuestionType = typeof LibraryQuestionType[keyof typeof LibraryQuestionType];
+
+
+export const LibraryQuestionType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export type LibraryQuestionLevel = typeof LibraryQuestionLevel[keyof typeof LibraryQuestionLevel];
+
+
+export const LibraryQuestionLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
 export interface LibraryQuestion {
   id: number;
   libraryItemId: number;
-  type: string;
+  type: LibraryQuestionType;
+  level: LibraryQuestionLevel;
   question: string;
   options: string[];
   correctAnswer?: string | null;
@@ -1051,11 +1109,33 @@ export type LibraryQuestionInputType = typeof LibraryQuestionInputType[keyof typ
 export const LibraryQuestionInputType = {
   mcq: 'mcq',
   text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export type LibraryQuestionInputLevel = typeof LibraryQuestionInputLevel[keyof typeof LibraryQuestionInputLevel];
+
+
+export const LibraryQuestionInputLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
 } as const;
 
 export interface LibraryQuestionInput {
   id?: number;
   type: LibraryQuestionInputType;
+  level?: LibraryQuestionInputLevel;
   question: string;
   options?: string[];
   correctAnswer?: string | null;
@@ -1230,6 +1310,137 @@ export interface ReadingCoachAllowResponse {
   allowed: boolean;
   extraUses: number;
   forDate: string;
+}
+
+export type GenerateTeacherAiQuestionsBodyLevel = typeof GenerateTeacherAiQuestionsBodyLevel[keyof typeof GenerateTeacherAiQuestionsBodyLevel];
+
+
+export const GenerateTeacherAiQuestionsBodyLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
+export type GenerateTeacherAiQuestionsBodyType = typeof GenerateTeacherAiQuestionsBodyType[keyof typeof GenerateTeacherAiQuestionsBodyType];
+
+
+export const GenerateTeacherAiQuestionsBodyType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export interface GenerateTeacherAiQuestionsBody {
+  libraryItemId: number;
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  count: number;
+  level: GenerateTeacherAiQuestionsBodyLevel;
+  type: GenerateTeacherAiQuestionsBodyType;
+}
+
+export type GeneratedAiQuestionType = typeof GeneratedAiQuestionType[keyof typeof GeneratedAiQuestionType];
+
+
+export const GeneratedAiQuestionType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export type GeneratedAiQuestionLevel = typeof GeneratedAiQuestionLevel[keyof typeof GeneratedAiQuestionLevel];
+
+
+export const GeneratedAiQuestionLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
+export interface GeneratedAiQuestion {
+  type: GeneratedAiQuestionType;
+  level: GeneratedAiQuestionLevel;
+  question: string;
+  options: string[];
+  correctAnswer?: string | null;
+  points: number;
+}
+
+export interface GeneratedAiQuestionsResponse {
+  itemTitle?: string | null;
+  questions: GeneratedAiQuestion[];
+}
+
+export type SaveTeacherAiQuestionsBodyQuestionsItemType = typeof SaveTeacherAiQuestionsBodyQuestionsItemType[keyof typeof SaveTeacherAiQuestionsBodyQuestionsItemType];
+
+
+export const SaveTeacherAiQuestionsBodyQuestionsItemType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export type SaveTeacherAiQuestionsBodyQuestionsItemLevel = typeof SaveTeacherAiQuestionsBodyQuestionsItemLevel[keyof typeof SaveTeacherAiQuestionsBodyQuestionsItemLevel];
+
+
+export const SaveTeacherAiQuestionsBodyQuestionsItemLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
+export type SaveTeacherAiQuestionsBodyQuestionsItem = {
+  type: SaveTeacherAiQuestionsBodyQuestionsItemType;
+  level?: SaveTeacherAiQuestionsBodyQuestionsItemLevel;
+  question: string;
+  options?: string[];
+  correctAnswer?: string | null;
+  points?: number;
+  sortOrder?: number;
+};
+
+export interface SaveTeacherAiQuestionsBody {
+  libraryItemId: number;
+  questions: SaveTeacherAiQuestionsBodyQuestionsItem[];
+}
+
+export interface SaveTeacherAiQuestionsResponse {
+  saved: number;
 }
 
 /**

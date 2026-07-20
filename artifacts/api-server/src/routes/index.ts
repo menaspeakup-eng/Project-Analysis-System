@@ -15,6 +15,7 @@ import friendsRouter from "./friends";
 import storageRouter from "./storage";
 import libraryRouter from "./library";
 import readingCoachRouter from "./reading-coach";
+import aiQuestionsRouter from "./ai-questions";
 
 const router: IRouter = Router();
 
@@ -34,5 +35,6 @@ router.use(friendsRouter);
 router.use(storageRouter);
 router.use(libraryRouter);
 router.use(readingCoachRouter);
+router.use(aiQuestionsRouter);
 
 export default router;

@@ -12,3 +12,21 @@ id = "-DxLYBCSqF2YwqB-PgTkw"
 uri = "file://screenshots/teacher-v2.jpg"
 type = "image"
 title = "Teacher Dashboard"
+
+[[outputs]]
+id = "I7FKaHbHXn2lv0F973aXI"
+uri = "file://screenshots/homepage-text-changes.jpg"
+type = "image"
+title = "Homepage text changes"
+
+[[outputs]]
+id = "ZHNqv66zRJD9TK4mAuPxa"
+uri = "file://screenshots/homepage-after-speed-optimization.jpg"
+type = "image"
+title = "Homepage after speed optimization"
+
+[[outputs]]
+id = "ss5MsW3xxoXpR2CLGWxDQ"
+uri = "file://screenshots/teacher-ai-questions.jpg"
+type = "image"
+title = "صفحة مولد الأسئلة الذكية"

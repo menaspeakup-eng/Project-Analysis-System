@@ -12,4 +12,13 @@ export type LibraryQuestionInputType = typeof LibraryQuestionInputType[keyof typ
 export const LibraryQuestionInputType = {
   mcq: 'mcq',
   text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
 } as const;

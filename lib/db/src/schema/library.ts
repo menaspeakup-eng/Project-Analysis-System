@@ -7,13 +7,34 @@ import {
   jsonb,
   boolean,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { studentsTable } from "./students";
 
 export const LIBRARY_ITEM_TYPES = ["read", "audio", "attachment"] as const;
-export const LIBRARY_QUESTION_TYPES = ["mcq", "text"] as const;
+export const LIBRARY_QUESTION_LEVELS = [
+  "easy",
+  "medium",
+  "advanced",
+  "high",
+  "enrichment",
+  "higher_order",
+] as const;
+export const LIBRARY_QUESTION_TYPES = [
+  "mcq",
+  "text",
+  "true_false",
+  "fill_blank",
+  "irab",
+  "classification",
+  "ordering",
+  "analytical",
+  "inference",
+  "error_correction",
+  "justification",
+] as const;
 
 export const libraryItemsTable = pgTable("library_items", {
   id: serial("id").primaryKey(),
@@ -31,17 +52,22 @@ export const libraryItemsTable = pgTable("library_items", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const libraryQuestionsTable = pgTable("library_questions", {
-  id: serial("id").primaryKey(),
-  libraryItemId: integer("library_item_id").notNull().references(() => libraryItemsTable.id, { onDelete: "cascade" }),
-  type: text("type").notNull(), // mcq | text
-  question: text("question").notNull(),
-  options: jsonb("options").notNull().default([]), // for mcq: string[]
-  correctAnswer: text("correct_answer"), // for mcq
-  points: integer("points").notNull().default(0),
-  sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const libraryQuestionsTable = pgTable(
+  "library_questions",
+  {
+    id: serial("id").primaryKey(),
+    libraryItemId: integer("library_item_id").notNull().references(() => libraryItemsTable.id, { onDelete: "cascade" }),
+    type: text("type").notNull(), // mcq | true_false | fill_blank | irab | classification | ordering | analytical | inference | error_correction | justification
+    level: text("level").notNull().default("medium"), // easy | medium | advanced | high | enrichment | higher_order
+    question: text("question").notNull(),
+    options: jsonb("options").notNull().default([]), // for mcq/true_false/classification/ordering: string[]
+    correctAnswer: text("correct_answer"), // for auto-graded types; for ordering it's comma-separated order
+    points: integer("points").notNull().default(0),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index().on(table.libraryItemId), index().on(table.type), index().on(table.level)],
+);
 
 export const librarySubmissionsTable = pgTable(
   "library_submissions",
@@ -57,20 +83,30 @@ export const librarySubmissionsTable = pgTable(
   },
   (t) => ({
     uniqueStudentItem: unique().on(t.libraryItemId, t.studentId),
+    studentIdx: index().on(t.studentId),
+    itemIdx: index().on(t.libraryItemId),
   }),
 );
 
-export const libraryAnswersTable = pgTable("library_answers", {
-  id: serial("id").primaryKey(),
-  submissionId: integer("submission_id").notNull().references(() => librarySubmissionsTable.id, { onDelete: "cascade" }),
-  questionId: integer("question_id").notNull().references(() => libraryQuestionsTable.id, { onDelete: "cascade" }),
-  selectedAnswer: text("selected_answer"), // for mcq
-  textAnswer: text("text_answer"), // for text
-  isCorrect: boolean("is_correct"), // for mcq
-  pointsAwarded: integer("points_awarded").default(0),
-  status: text("status").default("pending"), // pending | accepted | rejected
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const libraryAnswersTable = pgTable(
+  "library_answers",
+  {
+    id: serial("id").primaryKey(),
+    submissionId: integer("submission_id").notNull().references(() => librarySubmissionsTable.id, { onDelete: "cascade" }),
+    questionId: integer("question_id").notNull().references(() => libraryQuestionsTable.id, { onDelete: "cascade" }),
+    selectedAnswer: text("selected_answer"), // for mcq
+    textAnswer: text("text_answer"), // for text
+    isCorrect: boolean("is_correct"), // for mcq
+    pointsAwarded: integer("points_awarded").default(0),
+    status: text("status").default("pending"), // pending | accepted | rejected
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index().on(table.status),
+    index().on(table.submissionId),
+    index().on(table.questionId),
+  ],
+);
 
 export const insertLibraryItemSchema = createInsertSchema(libraryItemsTable).omit({
   id: true,

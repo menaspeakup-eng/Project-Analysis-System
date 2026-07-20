@@ -6,12 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GameType } from './gameType';
+import type { GrammarTopic } from './grammarTopic';
 
 export interface Game {
   id: number;
   slug: string;
   name: string;
   type: GameType;
+  grammarTopic?: GrammarTopic | null;
   description?: string | null;
   imageUrl?: string | null;
   pointsReward: number;

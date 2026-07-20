@@ -250,7 +250,7 @@ export default function TeacherChallenges({ teacherIdParam, classes }: TeacherCh
               <Textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="شرح موجز للطلاب..."
+                placeholder="شرح موجز للطلبة..."
                 className="rounded-xl border-border min-h-[80px]"
               />
             </div>

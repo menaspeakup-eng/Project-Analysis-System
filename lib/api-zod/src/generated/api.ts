@@ -921,7 +921,8 @@ export const GetGamesResponse = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
   "name": zod.string(),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']),
+  "grammarTopic": zod.union([zod.enum(['nominal-sentence', 'verbal-sentence', 'inna-and-sisters', 'kana-and-sisters', 'mudaaf-ilayh', 'harf-jarr', 'present-tense-verb', 'transitive-intransitive-verb', 'base-augmented-verb', 'faail', 'mafuul-bih', 'mafuul-mutlaq', 'mafuul-liajlih', 'mafuul-fihi', 'al-asmaaul-khamsah']),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
   "pointsReward": zod.number(),
@@ -944,7 +945,8 @@ export const GetGameByIdResponse = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
   "name": zod.string(),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']),
+  "grammarTopic": zod.union([zod.enum(['nominal-sentence', 'verbal-sentence', 'inna-and-sisters', 'kana-and-sisters', 'mudaaf-ilayh', 'harf-jarr', 'present-tense-verb', 'transitive-intransitive-verb', 'base-augmented-verb', 'faail', 'mafuul-bih', 'mafuul-mutlaq', 'mafuul-liajlih', 'mafuul-fihi', 'al-asmaaul-khamsah']),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
   "pointsReward": zod.number(),
@@ -997,7 +999,8 @@ export const GetTeacherGamesResponse = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
   "name": zod.string(),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']),
+  "grammarTopic": zod.union([zod.enum(['nominal-sentence', 'verbal-sentence', 'inna-and-sisters', 'kana-and-sisters', 'mudaaf-ilayh', 'harf-jarr', 'present-tense-verb', 'transitive-intransitive-verb', 'base-augmented-verb', 'faail', 'mafuul-bih', 'mafuul-mutlaq', 'mafuul-liajlih', 'mafuul-fihi', 'al-asmaaul-khamsah']),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
   "pointsReward": zod.number(),
@@ -1041,7 +1044,8 @@ export const createTeacherGameBodyPointsRewardMax = 1000;
 export const CreateTeacherGameBody = zod.object({
   "slug": zod.string().min(1).max(createTeacherGameBodySlugMax),
   "name": zod.string().min(1).max(createTeacherGameBodyNameMax),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']),
+  "grammarTopic": zod.union([zod.enum(['nominal-sentence', 'verbal-sentence', 'inna-and-sisters', 'kana-and-sisters', 'mudaaf-ilayh', 'harf-jarr', 'present-tense-verb', 'transitive-intransitive-verb', 'base-augmented-verb', 'faail', 'mafuul-bih', 'mafuul-mutlaq', 'mafuul-liajlih', 'mafuul-fihi', 'al-asmaaul-khamsah']),zod.null()]).optional(),
   "description": zod.string().max(createTeacherGameBodyDescriptionMax).optional(),
   "imageUrl": zod.string().max(createTeacherGameBodyImageUrlMax).optional(),
   "pointsReward": zod.number().min(createTeacherGameBodyPointsRewardMin).max(createTeacherGameBodyPointsRewardMax).optional(),
@@ -1052,7 +1056,8 @@ export const CreateTeacherGameResponse = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
   "name": zod.string(),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']),
+  "grammarTopic": zod.union([zod.enum(['nominal-sentence', 'verbal-sentence', 'inna-and-sisters', 'kana-and-sisters', 'mudaaf-ilayh', 'harf-jarr', 'present-tense-verb', 'transitive-intransitive-verb', 'base-augmented-verb', 'faail', 'mafuul-bih', 'mafuul-mutlaq', 'mafuul-liajlih', 'mafuul-fihi', 'al-asmaaul-khamsah']),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
   "pointsReward": zod.number(),
@@ -1100,14 +1105,16 @@ export const UpdateTeacherGameBody = zod.object({
   "imageUrl": zod.string().max(updateTeacherGameBodyImageUrlMax).optional(),
   "pointsReward": zod.number().min(updateTeacherGameBodyPointsRewardMin).max(updateTeacherGameBodyPointsRewardMax).optional(),
   "isActive": zod.boolean().optional(),
-  "classId": zod.number().optional()
+  "classId": zod.number().optional(),
+  "grammarTopic": zod.union([zod.enum(['nominal-sentence', 'verbal-sentence', 'inna-and-sisters', 'kana-and-sisters', 'mudaaf-ilayh', 'harf-jarr', 'present-tense-verb', 'transitive-intransitive-verb', 'base-augmented-verb', 'faail', 'mafuul-bih', 'mafuul-mutlaq', 'mafuul-liajlih', 'mafuul-fihi', 'al-asmaaul-khamsah']),zod.null()]).optional()
 })
 
 export const UpdateTeacherGameResponse = zod.object({
   "id": zod.number(),
   "slug": zod.string(),
   "name": zod.string(),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']),
+  "grammarTopic": zod.union([zod.enum(['nominal-sentence', 'verbal-sentence', 'inna-and-sisters', 'kana-and-sisters', 'mudaaf-ilayh', 'harf-jarr', 'present-tense-verb', 'transitive-intransitive-verb', 'base-augmented-verb', 'faail', 'mafuul-bih', 'mafuul-mutlaq', 'mafuul-liajlih', 'mafuul-fihi', 'al-asmaaul-khamsah']),zod.null()]).optional(),
   "description": zod.union([zod.string(),zod.null()]).optional(),
   "imageUrl": zod.union([zod.string(),zod.null()]).optional(),
   "pointsReward": zod.number(),
@@ -1140,7 +1147,7 @@ export const GetTeacherGameWordsQueryParams = zod.object({
 
 export const GetTeacherGameWordsResponse = zod.object({
   "gameId": zod.number(),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']).optional(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']).optional(),
   "version": zod.number().optional(),
   "items": zod.array(zod.object({
   "id": zod.number(),
@@ -1172,7 +1179,7 @@ export const UpdateTeacherGameWordsBody = zod.object({
 
 export const UpdateTeacherGameWordsResponse = zod.object({
   "gameId": zod.number(),
-  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences']).optional(),
+  "type": zod.enum(['match-sentence-picture', 'arrange-sentence', 'choose-picture', 'choose-sentence', 'complete-sentence', 'arrange-sentences', 'grammar-multiple-choice', 'grammar-fill-blank', 'grammar-classify']).optional(),
   "version": zod.number().optional(),
   "items": zod.array(zod.object({
   "id": zod.number(),
@@ -1754,7 +1761,8 @@ export const ListLibraryItemsResponse = zod.object({
   "questions": zod.array(zod.object({
   "id": zod.number(),
   "libraryItemId": zod.number(),
-  "type": zod.string(),
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
   "question": zod.string(),
   "options": zod.array(zod.string()),
   "correctAnswer": zod.string().nullish(),
@@ -1782,7 +1790,8 @@ export const UpsertLibraryItemBody = zod.object({
   "isPublished": zod.boolean().optional(),
   "questions": zod.array(zod.object({
   "id": zod.number().optional(),
-  "type": zod.enum(['mcq', 'text']),
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']).optional(),
   "question": zod.string(),
   "options": zod.array(zod.string()).optional(),
   "correctAnswer": zod.string().nullish(),
@@ -1826,7 +1835,8 @@ export const GetLibraryItemResponse = zod.object({
   "questions": zod.array(zod.object({
   "id": zod.number(),
   "libraryItemId": zod.number(),
-  "type": zod.string(),
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
   "question": zod.string(),
   "options": zod.array(zod.string()),
   "correctAnswer": zod.string().nullish(),
@@ -1900,7 +1910,8 @@ export const ListClassLibraryItemsResponse = zod.object({
   "questions": zod.array(zod.object({
   "id": zod.number(),
   "libraryItemId": zod.number(),
-  "type": zod.string(),
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
   "question": zod.string(),
   "options": zod.array(zod.string()),
   "correctAnswer": zod.string().nullish(),
@@ -2191,6 +2202,56 @@ export const AllowStudentReadingCoachResponse = zod.object({
   "allowed": zod.boolean(),
   "extraUses": zod.number(),
   "forDate": zod.string()
+})
+
+
+/**
+ * Generates Arabic curriculum-aligned questions for a selected library item using the configured AI model.
+ * @summary Generate AI curriculum-aligned questions
+ */
+export const generateTeacherAiQuestionsBodyCountMax = 20;
+
+
+
+export const GenerateTeacherAiQuestionsBody = zod.object({
+  "libraryItemId": zod.number(),
+  "count": zod.number().min(1).max(generateTeacherAiQuestionsBodyCountMax),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])
+})
+
+export const GenerateTeacherAiQuestionsResponse = zod.object({
+  "itemTitle": zod.string().nullish(),
+  "questions": zod.array(zod.object({
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
+  "question": zod.string(),
+  "options": zod.array(zod.string()),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number()
+}))
+})
+
+
+/**
+ * Persists generated questions as library questions attached to the selected lesson.
+ * @summary Save AI-generated questions to a library item
+ */
+export const SaveTeacherAiQuestionsBody = zod.object({
+  "libraryItemId": zod.number(),
+  "questions": zod.array(zod.object({
+  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']).optional(),
+  "question": zod.string(),
+  "options": zod.array(zod.string()).optional(),
+  "correctAnswer": zod.string().nullish(),
+  "points": zod.number().optional(),
+  "sortOrder": zod.number().optional()
+}))
+})
+
+export const SaveTeacherAiQuestionsResponse = zod.object({
+  "saved": zod.number()
 })
 
 

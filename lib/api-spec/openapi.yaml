@@ -28,6 +28,8 @@ tags:
     description: Educational library content and reviews
   - name: reading-coach
     description: Smart reading coach practice and review
+  - name: ai-questions
+    description: AI-powered curriculum-aligned question generation
 paths:
   /healthz:
     get:
@@ -1697,6 +1699,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadingCoachAllowResponse"
+  /teacher/ai-questions/generate:
+    post:
+      operationId: generateTeacherAiQuestions
+      tags: [ai-questions]
+      summary: Generate AI curriculum-aligned questions
+      description: Generates Arabic curriculum-aligned questions for a selected library item using the configured AI model.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateTeacherAiQuestionsBody"
+      responses:
+        "200":
+          description: Generated questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratedAiQuestionsResponse"
+        "400":
+          description: Invalid input
+        "403":
+          description: Forbidden
+        "502":
+          description: AI provider error
+  /teacher/ai-questions/save:
+    post:
+      operationId: saveTeacherAiQuestions
+      tags: [ai-questions]
+      summary: Save AI-generated questions to a library item
+      description: Persists generated questions as library questions attached to the selected lesson.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveTeacherAiQuestionsBody"
+      responses:
+        "200":
+          description: Questions saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveTeacherAiQuestionsResponse"
+        "400":
+          description: Invalid input
+        "403":
+          description: Forbidden
 
 components:
   parameters:
@@ -2588,6 +2638,27 @@ components:
         - choose-sentence
         - complete-sentence
         - arrange-sentences
+        - grammar-multiple-choice
+        - grammar-fill-blank
+        - grammar-classify
+    GrammarTopic:
+      type: string
+      enum:
+        - nominal-sentence
+        - verbal-sentence
+        - inna-and-sisters
+        - kana-and-sisters
+        - mudaaf-ilayh
+        - harf-jarr
+        - present-tense-verb
+        - transitive-intransitive-verb
+        - base-augmented-verb
+        - faail
+        - mafuul-bih
+        - mafuul-mutlaq
+        - mafuul-liajlih
+        - mafuul-fihi
+        - al-asmaaul-khamsah
     Game:
       type: object
       properties:
@@ -2599,6 +2670,10 @@ components:
           type: string
         type:
           $ref: "#/components/schemas/GameType"
+        grammarTopic:
+          oneOf:
+            - $ref: "#/components/schemas/GrammarTopic"
+            - type: "null"
         description:
           oneOf:
             - type: string
@@ -2647,6 +2722,10 @@ components:
           type: string
         type:
           $ref: "#/components/schemas/GameType"
+        grammarTopic:
+          oneOf:
+            - $ref: "#/components/schemas/GrammarTopic"
+            - type: "null"
         description:
           oneOf:
             - type: string
@@ -2758,6 +2837,10 @@ components:
           maxLength: 200
         type:
           $ref: "#/components/schemas/GameType"
+        grammarTopic:
+          oneOf:
+            - $ref: "#/components/schemas/GrammarTopic"
+            - type: "null"
         description:
           type: string
           maxLength: 1000
@@ -2796,6 +2879,10 @@ components:
           type: boolean
         classId:
           type: integer
+        grammarTopic:
+          oneOf:
+            - $ref: "#/components/schemas/GrammarTopic"
+            - type: "null"
       required: []
     GameItem:
       type: object
@@ -3575,7 +3662,7 @@ components:
             $ref: '#/components/schemas/LibraryQuestionInput'
     LibraryQuestion:
       type: object
-      required: [id, libraryItemId, type, question, options, points, sortOrder, createdAt]
+      required: [id, libraryItemId, type, level, question, options, points, sortOrder, createdAt]
       properties:
         id:
           type: integer
@@ -3583,6 +3670,10 @@ components:
           type: integer
         type:
           type: string
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
         question:
           type: string
         options:
@@ -3607,7 +3698,10 @@ components:
           type: integer
         type:
           type: string
-          enum: [mcq, text]
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
         question:
           type: string
         options:
@@ -3929,3 +4023,88 @@ components:
           type: integer
         forDate:
           type: string
+    GenerateTeacherAiQuestionsBody:
+      type: object
+      required: [libraryItemId, count, level, type]
+      properties:
+        libraryItemId:
+          type: integer
+        count:
+          type: integer
+          minimum: 1
+          maximum: 20
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
+        type:
+          type: string
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+    GeneratedAiQuestion:
+      type: object
+      required: [type, level, question, options, points]
+      properties:
+        type:
+          type: string
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
+        question:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        correctAnswer:
+          type: string
+          nullable: true
+        points:
+          type: integer
+    GeneratedAiQuestionsResponse:
+      type: object
+      required: [questions]
+      properties:
+        itemTitle:
+          type: string
+          nullable: true
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeneratedAiQuestion"
+    SaveTeacherAiQuestionsBody:
+      type: object
+      required: [libraryItemId, questions]
+      properties:
+        libraryItemId:
+          type: integer
+        questions:
+          type: array
+          items:
+            type: object
+            required: [type, question]
+            properties:
+              type:
+                type: string
+                enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+              level:
+                type: string
+                enum: [easy, medium, advanced, high, enrichment, higher_order]
+              question:
+                type: string
+              options:
+                type: array
+                items:
+                  type: string
+              correctAnswer:
+                type: string
+                nullable: true
+              points:
+                type: integer
+              sortOrder:
+                type: integer
+    SaveTeacherAiQuestionsResponse:
+      type: object
+      required: [saved]
+      properties:
+        saved:
+          type: integer

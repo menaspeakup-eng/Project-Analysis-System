@@ -65,8 +65,8 @@ export default function LibraryItem() {
       libraryItemId: item.id,
       answers: questions.map((q) => ({
         questionId: q.id,
-        selectedAnswer: q.type === "mcq" ? mcqAnswers[q.id] || "" : undefined,
-        textAnswer: q.type === "text" ? (textRefs.current[q.id]?.value || "").trim() : undefined,
+        selectedAnswer: String(q.type) === "mcq" ? mcqAnswers[q.id] || "" : undefined,
+        textAnswer: String(q.type) === "text" ? (textRefs.current[q.id]?.value || "").trim() : undefined,
       })),
     };
     try {

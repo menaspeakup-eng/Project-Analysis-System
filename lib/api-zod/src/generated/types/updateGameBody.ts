@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { GrammarTopic } from './grammarTopic';
 
 export interface UpdateGameBody {
   /**
@@ -23,4 +24,5 @@ export interface UpdateGameBody {
   pointsReward?: number;
   isActive?: boolean;
   classId?: number;
+  grammarTopic?: GrammarTopic | null;
 }

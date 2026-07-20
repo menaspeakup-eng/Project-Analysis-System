@@ -20,6 +20,7 @@ export const ACTIVITY_TYPES = [
   "friend_accepted",
   "settings_updated",
   "account_deleted",
+  "ai_questions_generated",
 ] as const;
 
 export const activityLogsTable = pgTable(

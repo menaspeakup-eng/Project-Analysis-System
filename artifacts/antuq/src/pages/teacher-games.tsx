@@ -30,25 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Gamepad2, Pencil, Plus, Save, Star, Users, RotateCcw, Trash2, BarChart3, GraduationCap } from "lucide-react";
-import type { GameType } from "@/lib/gameTypes";
-
-const GAME_TYPE_LABELS: Record<GameType, string> = {
-  "match-sentence-picture": "طابق الجملة بالصورة",
-  "arrange-sentence": "رتب الجملة",
-  "choose-picture": "اختر الصورة الصحيحة",
-  "choose-sentence": "اختر الجملة الصحيحة",
-  "complete-sentence": "أكمل الجملة",
-  "arrange-sentences": "ترتيب الجمل",
-};
-
-const GAME_TYPES: GameType[] = [
-  "match-sentence-picture",
-  "arrange-sentence",
-  "choose-picture",
-  "choose-sentence",
-  "complete-sentence",
-  "arrange-sentences",
-];
+import type { GameType, GrammarTopic } from "@/lib/gameTypes";
+import { GAME_TYPE_LABELS, GAME_TYPES, GRAMMAR_TOPIC_LABELS, GRAMMAR_TOPICS } from "@/lib/gameTypes";
 
 interface BaseItem {
   id?: number;
@@ -86,7 +69,24 @@ interface ArrangeSentencesItem extends BaseItem {
   sentence: string;
 }
 
-type GameItem = MatchItem | ArrangeSentenceItem | ChoosePictureItem | ChooseSentenceItem | CompleteSentenceItem | ArrangeSentencesItem;
+interface GrammarMultipleChoiceItem extends BaseItem {
+  question: string;
+  correctAnswer: string;
+  wrongAnswers: [string, string, string];
+}
+
+interface GrammarFillBlankItem extends BaseItem {
+  sentence: string;
+  hiddenWord: string;
+  wrongWords: [string, string, string];
+}
+
+interface GrammarClassifyItem extends BaseItem {
+  items: { text: string; category: string }[];
+  categories: string[];
+}
+
+type GameItem = MatchItem | ArrangeSentenceItem | ChoosePictureItem | ChooseSentenceItem | CompleteSentenceItem | ArrangeSentencesItem | GrammarMultipleChoiceItem | GrammarFillBlankItem | GrammarClassifyItem;
 
 const emptyItemFor = (type: GameType): GameItem => {
   switch (type) {
@@ -102,6 +102,12 @@ const emptyItemFor = (type: GameType): GameItem => {
       return { sentence: "", hiddenWord: "", wrongWords: ["", "", ""] };
     case "arrange-sentences":
       return { sentence: "" };
+    case "grammar-multiple-choice":
+      return { question: "", correctAnswer: "", wrongAnswers: ["", "", ""] };
+    case "grammar-fill-blank":
+      return { sentence: "", hiddenWord: "", wrongWords: ["", "", ""] };
+    case "grammar-classify":
+      return { items: [], categories: ["", ""] };
     default:
       return { sentence: "" };
   }
@@ -128,16 +134,19 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
     imageUrl: "",
     pointsReward: 15,
     classId: null as number | null,
+    grammarTopic: null as GrammarTopic | null,
   });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<{
     name: string;
     type: GameType;
     classId: number | null;
+    grammarTopic: GrammarTopic | null;
   }>({
     name: "",
     type: GAME_TYPES[0] as GameType,
     classId: classes[0]?.id ?? null,
+    grammarTopic: null,
   });
 
   const { data, isLoading } = useGetTeacherGames(undefined, { query: { enabled: true } as never });
@@ -171,6 +180,7 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
       imageUrl: game.imageUrl ?? "",
       pointsReward: game.pointsReward,
       classId: game.classId ?? null,
+      grammarTopic: (game.grammarTopic as GrammarTopic) ?? null,
     });
   };
 
@@ -209,6 +219,7 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
           imageUrl: metaForm.imageUrl.trim() || undefined,
           pointsReward: Number(metaForm.pointsReward) || undefined,
           classId: metaForm.classId ?? undefined,
+          grammarTopic: metaForm.grammarTopic ?? undefined,
         },
       },
       {
@@ -246,6 +257,7 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
           name: createForm.name.trim(),
           type: createForm.type,
           classId,
+          grammarTopic: createForm.grammarTopic ?? undefined,
         },
       },
       {
@@ -254,6 +266,7 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
             name: "",
             type: GAME_TYPES[0] as GameType,
             classId: classes[0]?.id ?? null,
+            grammarTopic: null,
           });
           setIsCreateOpen(false);
           queryClient.invalidateQueries({ queryKey: ["/api/teacher/games"] });
@@ -270,13 +283,60 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
     });
   };
 
-  const updateWrong = (index: number, key: "wrongImageUrls" | "wrongSentences" | "wrongWords", slot: number, value: string) => {
+  const updateWrong = (index: number, key: "wrongImageUrls" | "wrongSentences" | "wrongWords" | "wrongAnswers", slot: number, value: string) => {
     setItems((prev) => {
       const next = [...prev];
       const item = { ...next[index] } as Record<string, unknown>;
       const arr = [...(item[key] as string[])];
       arr[slot] = value;
       item[key] = arr as [string, string, string];
+      next[index] = item as unknown as GameItem;
+      return next;
+    });
+  };
+
+  const updateClassifyCategory = (index: number, catIndex: number, value: string) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const item = { ...next[index] } as Record<string, unknown>;
+      const categories = [...(item.categories as string[])];
+      categories[catIndex] = value;
+      item.categories = categories;
+      next[index] = item as unknown as GameItem;
+      return next;
+    });
+  };
+
+  const updateClassifyItem = (index: number, itemIndex: number, patch: { text?: string; category?: string }) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const item = { ...next[index] } as Record<string, unknown>;
+      const items = [...(item.items as { text: string; category: string }[])];
+      items[itemIndex] = { ...items[itemIndex], ...patch };
+      item.items = items;
+      next[index] = item as unknown as GameItem;
+      return next;
+    });
+  };
+
+  const addClassifyItem = (index: number) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const item = { ...next[index] } as Record<string, unknown>;
+      const categories = (item.categories as string[]) || ["", ""];
+      const items = [...(item.items as { text: string; category: string }[]), { text: "", category: categories[0] || "" }];
+      item.items = items;
+      next[index] = item as unknown as GameItem;
+      return next;
+    });
+  };
+
+  const removeClassifyItem = (index: number, itemIndex: number) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const item = { ...next[index] } as Record<string, unknown>;
+      const items = (item.items as { text: string; category: string }[]).filter((_, i) => i !== itemIndex);
+      item.items = items;
       next[index] = item as unknown as GameItem;
       return next;
     });
@@ -391,8 +451,9 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
           </div>
         );
       }
-      case "complete-sentence": {
-        const i = item as CompleteSentenceItem;
+      case "complete-sentence":
+      case "grammar-fill-blank": {
+        const i = item as CompleteSentenceItem | GrammarFillBlankItem;
         return (
           <div className="space-y-3">
             <Input
@@ -418,6 +479,97 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
                 />
               ))}
             </div>
+          </div>
+        );
+      }
+      case "grammar-multiple-choice": {
+        const i = item as GrammarMultipleChoiceItem;
+        return (
+          <div className="space-y-3">
+            <Input
+              placeholder="السؤال النحوي"
+              value={i.question}
+              onChange={(e) => updateItem(idx, { question: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <Input
+              placeholder="الإجابة الصحيحة"
+              value={i.correctAnswer}
+              onChange={(e) => updateItem(idx, { correctAnswer: e.target.value })}
+              className="rounded-xl border-border"
+            />
+            <div className="space-y-2">
+              {i.wrongAnswers.map((answer, slot) => (
+                <Input
+                  key={slot}
+                  placeholder={`إجابة خاطئة ${slot + 1}`}
+                  value={answer}
+                  onChange={(e) => updateWrong(idx, "wrongAnswers", slot, e.target.value)}
+                  className="rounded-xl border-border"
+                />
+              ))}
+            </div>
+          </div>
+        );
+      }
+      case "grammar-classify": {
+        const i = item as GrammarClassifyItem;
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {i.categories.map((category, catIdx) => (
+                <Input
+                  key={catIdx}
+                  placeholder={`التصنيف ${catIdx + 1}`}
+                  value={category}
+                  onChange={(e) => updateClassifyCategory(idx, catIdx, e.target.value)}
+                  className="rounded-xl border-border"
+                />
+              ))}
+            </div>
+            <div className="space-y-2">
+              {i.items.map((it, itemIdx) => (
+                <div key={itemIdx} className="flex items-center gap-2">
+                  <Input
+                    placeholder="النص"
+                    value={it.text}
+                    onChange={(e) => updateClassifyItem(idx, itemIdx, { text: e.target.value })}
+                    className="rounded-xl border-border flex-1"
+                  />
+                  <Select
+                    value={it.category}
+                    onValueChange={(value) => updateClassifyItem(idx, itemIdx, { category: value })}
+                  >
+                    <SelectTrigger className="rounded-xl border-border w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {i.categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category || "—"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-destructive font-bold h-10"
+                    onClick={() => removeClassifyItem(idx, itemIdx)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              className="w-full rounded-xl font-bold h-10 border-dashed border-border"
+              onClick={() => addClassifyItem(idx)}
+            >
+              <Plus className="w-4 h-4 ml-1" />
+              إضافة عنصر للتصنيف
+            </Button>
           </div>
         );
       }
@@ -543,7 +695,7 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
             </DialogHeader>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground font-medium">
-                حفظ التعديلات سينشر نسخة جديدة (v{itemsGame.version + 1}) ويسمح للطلاب بلعبها مرة أخرى.
+                حفظ التعديلات سينشر نسخة جديدة (v{itemsGame.version + 1}) ويسمح للطلبة بلعبها مرة أخرى.
               </p>
               <div className="space-y-4">
                 {items.map((item, idx) => (
@@ -640,6 +792,25 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label className="font-bold">الموضوع النحوي</Label>
+                <Select
+                  value={metaForm.grammarTopic ?? ""}
+                  onValueChange={(value) => setMetaForm((f) => ({ ...f, grammarTopic: (value || null) as GrammarTopic | null }))}
+                >
+                  <SelectTrigger className="rounded-xl border-border">
+                    <SelectValue placeholder="بدون موضوع نحوي" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">بدون موضوع نحوي</SelectItem>
+                    {GRAMMAR_TOPICS.map((topic) => (
+                      <SelectItem key={topic} value={topic}>
+                        {GRAMMAR_TOPIC_LABELS[topic]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button className="w-full rounded-xl font-bold h-11" onClick={handleSaveMeta}>
                 <Save className="w-4 h-4 ml-1" />
                 حفظ الإعدادات
@@ -696,6 +867,25 @@ export default function TeacherGames({ classes }: TeacherGamesProps) {
                     {classes.map((c) => (
                       <SelectItem key={c.id} value={c.id.toString()}>
                         {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="font-bold">الموضوع النحوي</Label>
+                <Select
+                  value={createForm.grammarTopic ?? ""}
+                  onValueChange={(value) => setCreateForm((f) => ({ ...f, grammarTopic: (value || null) as GrammarTopic | null }))}
+                >
+                  <SelectTrigger className="rounded-xl border-border">
+                    <SelectValue placeholder="بدون موضوع نحوي" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">بدون موضوع نحوي</SelectItem>
+                    {GRAMMAR_TOPICS.map((topic) => (
+                      <SelectItem key={topic} value={topic}>
+                        {GRAMMAR_TOPIC_LABELS[topic]}
                       </SelectItem>
                     ))}
                   </SelectContent>

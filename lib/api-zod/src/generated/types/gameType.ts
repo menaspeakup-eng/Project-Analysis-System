@@ -16,4 +16,7 @@ export const GameType = {
   'choose-sentence': 'choose-sentence',
   'complete-sentence': 'complete-sentence',
   'arrange-sentences': 'arrange-sentences',
+  'grammar-multiple-choice': 'grammar-multiple-choice',
+  'grammar-fill-blank': 'grammar-fill-blank',
+  'grammar-classify': 'grammar-classify',
 } as const;

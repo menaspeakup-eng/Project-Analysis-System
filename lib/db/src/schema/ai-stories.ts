@@ -8,6 +8,7 @@ import {
   date,
   boolean,
   unique,
+  index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -63,7 +64,10 @@ export const aiStoryQuizSubmissionsTable = pgTable(
     reviewedAt: timestamp("reviewed_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (table) => [unique().on(table.studentId, table.sessionId)],
+  (table) => [
+    unique().on(table.studentId, table.sessionId),
+    index().on(table.studentId, table.createdAt),
+  ],
 );
 
 export const insertAiStoryQuizSubmissionSchema = createInsertSchema(

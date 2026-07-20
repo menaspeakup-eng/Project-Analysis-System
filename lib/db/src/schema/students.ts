@@ -8,6 +8,7 @@ import {
   date,
   unique,
   boolean,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
@@ -61,27 +62,31 @@ export type AvatarConfig = z.infer<typeof avatarConfigSchema>;
 // rather than creating a parallel identity. The hardcoded admin
 // (see api-server's identity helper) is resolved purely from `email` at
 // runtime and is never stored as a `role` value here.
-export const studentsTable = pgTable("students", {
-  id: serial("id").primaryKey(),
-  clerkUserId: text("clerk_user_id").notNull().unique(),
-  name: text("name").notNull(),
-  // Nullable because rows created before this field existed may not have
-  // backfilled it yet — see identity.ts's self-healing fetch-on-read.
-  email: text("email"),
-  // Profile image URL from Clerk's user object (Google/Clerk avatar).
-  imageUrl: text("image_url"),
-  // "student" | "teacher" — admin is resolved from email, not stored here.
-  role: text("role").notNull().default("student"),
-  // Every new sign-in auto-fills `name` from the Google/Clerk profile but
-  // must still ask the user to type their real full name once, so
-  // admin/teacher picklists show a name the user actually chose. This
-  // stays false until that one-time step completes.
-  nameConfirmed: boolean("name_confirmed").notNull().default(false),
-  classId: integer("class_id").references((): any => classesTable.id),
-  points: integer("points").notNull().default(0),
-  avatarConfig: jsonb("avatar_config").notNull().default({}),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const studentsTable = pgTable(
+  "students",
+  {
+    id: serial("id").primaryKey(),
+    clerkUserId: text("clerk_user_id").notNull().unique(),
+    name: text("name").notNull(),
+    // Nullable because rows created before this field existed may not have
+    // backfilled it yet — see identity.ts's self-healing fetch-on-read.
+    email: text("email"),
+    // Profile image URL from Clerk's user object (Google/Clerk avatar).
+    imageUrl: text("image_url"),
+    // "student" | "teacher" — admin is resolved from email, not stored here.
+    role: text("role").notNull().default("student"),
+    // Every new sign-in auto-fills `name` from the Google/Clerk profile but
+    // must still ask the user to type their real full name once, so
+    // admin/teacher picklists show a name the user actually chose. This
+    // stays false until that one-time step completes.
+    nameConfirmed: boolean("name_confirmed").notNull().default(false),
+    classId: integer("class_id").references((): any => classesTable.id),
+    points: integer("points").notNull().default(0),
+    avatarConfig: jsonb("avatar_config").notNull().default({}),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index().on(table.classId)],
+);
 
 export const insertStudentSchema = createInsertSchema(studentsTable).omit({
   id: true,

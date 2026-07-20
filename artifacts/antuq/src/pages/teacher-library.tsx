@@ -41,7 +41,8 @@ const typeLabels: Record<string, string> = {
 
 interface QuestionDraft {
   id?: number;
-  type: "mcq" | "text";
+  type: "mcq" | "text" | "true_false" | "fill_blank" | "irab" | "classification" | "ordering" | "analytical" | "inference" | "error_correction" | "justification";
+  level?: "easy" | "medium" | "advanced" | "high" | "enrichment" | "higher_order";
   question: string;
   options: string[];
   correctAnswer: string;
@@ -338,7 +339,7 @@ export default function TeacherLibrary() {
 
               <div className="flex items-center gap-2">
                 <Switch id="published" checked={form.isPublished} onCheckedChange={(v) => setForm((f) => ({ ...f, isPublished: v }))} />
-                <Label htmlFor="published" className="font-bold">منشور للطلاب</Label>
+                <Label htmlFor="published" className="font-bold">منشور للطلبة</Label>
               </div>
 
               <div className="space-y-3">

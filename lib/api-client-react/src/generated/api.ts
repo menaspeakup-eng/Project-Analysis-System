@@ -60,6 +60,8 @@ import type {
   GameList,
   GenerateStoryBody,
   GenerateStoryResponse,
+  GenerateTeacherAiQuestionsBody,
+  GeneratedAiQuestionsResponse,
   GetLeaderboardParams,
   GetTeacherAnalyticsParams,
   GetTeacherChallengeSubmissionsParams,
@@ -98,6 +100,8 @@ import type {
   ReviewTeacherSubmissionParams,
   ReviewedStorySubmission,
   ReviewedSubmission,
+  SaveTeacherAiQuestionsBody,
+  SaveTeacherAiQuestionsResponse,
   StoryQuizSubmission,
   StoryUsageStatus,
   StudentChallenge,
@@ -5831,5 +5835,149 @@ export const useAllowStudentReadingCoach = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAllowStudentReadingCoachMutationOptions(options));
+    }
+
+export const getGenerateTeacherAiQuestionsUrl = () => {
+
+
+
+
+  return `/api/teacher/ai-questions/generate`
+}
+
+/**
+ * Generates Arabic curriculum-aligned questions for a selected library item using the configured AI model.
+ * @summary Generate AI curriculum-aligned questions
+ */
+export const generateTeacherAiQuestions = async (generateTeacherAiQuestionsBody: GenerateTeacherAiQuestionsBody, options?: RequestInit): Promise<GeneratedAiQuestionsResponse> => {
+
+  return customFetch<GeneratedAiQuestionsResponse>(getGenerateTeacherAiQuestionsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(generateTeacherAiQuestionsBody)
+  }
+);}
+
+
+
+
+
+export const getGenerateTeacherAiQuestionsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateTeacherAiQuestions>>, TError,{data: BodyType<GenerateTeacherAiQuestionsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateTeacherAiQuestions>>, TError,{data: BodyType<GenerateTeacherAiQuestionsBody>}, TContext> => {
+
+const mutationKey = ['generateTeacherAiQuestions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateTeacherAiQuestions>>, {data: BodyType<GenerateTeacherAiQuestionsBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateTeacherAiQuestions(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateTeacherAiQuestionsMutationResult = NonNullable<Awaited<ReturnType<typeof generateTeacherAiQuestions>>>
+    export type GenerateTeacherAiQuestionsMutationBody = BodyType<GenerateTeacherAiQuestionsBody>
+    export type GenerateTeacherAiQuestionsMutationError = ErrorType<void>
+
+    /**
+ * @summary Generate AI curriculum-aligned questions
+ */
+export const useGenerateTeacherAiQuestions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateTeacherAiQuestions>>, TError,{data: BodyType<GenerateTeacherAiQuestionsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateTeacherAiQuestions>>,
+        TError,
+        {data: BodyType<GenerateTeacherAiQuestionsBody>},
+        TContext
+      > => {
+      return useMutation(getGenerateTeacherAiQuestionsMutationOptions(options));
+    }
+
+export const getSaveTeacherAiQuestionsUrl = () => {
+
+
+
+
+  return `/api/teacher/ai-questions/save`
+}
+
+/**
+ * Persists generated questions as library questions attached to the selected lesson.
+ * @summary Save AI-generated questions to a library item
+ */
+export const saveTeacherAiQuestions = async (saveTeacherAiQuestionsBody: SaveTeacherAiQuestionsBody, options?: RequestInit): Promise<SaveTeacherAiQuestionsResponse> => {
+
+  return customFetch<SaveTeacherAiQuestionsResponse>(getSaveTeacherAiQuestionsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(saveTeacherAiQuestionsBody)
+  }
+);}
+
+
+
+
+
+export const getSaveTeacherAiQuestionsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveTeacherAiQuestions>>, TError,{data: BodyType<SaveTeacherAiQuestionsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveTeacherAiQuestions>>, TError,{data: BodyType<SaveTeacherAiQuestionsBody>}, TContext> => {
+
+const mutationKey = ['saveTeacherAiQuestions'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveTeacherAiQuestions>>, {data: BodyType<SaveTeacherAiQuestionsBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveTeacherAiQuestions(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveTeacherAiQuestionsMutationResult = NonNullable<Awaited<ReturnType<typeof saveTeacherAiQuestions>>>
+    export type SaveTeacherAiQuestionsMutationBody = BodyType<SaveTeacherAiQuestionsBody>
+    export type SaveTeacherAiQuestionsMutationError = ErrorType<void>
+
+    /**
+ * @summary Save AI-generated questions to a library item
+ */
+export const useSaveTeacherAiQuestions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveTeacherAiQuestions>>, TError,{data: BodyType<SaveTeacherAiQuestionsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveTeacherAiQuestions>>,
+        TError,
+        {data: BodyType<SaveTeacherAiQuestionsBody>},
+        TContext
+      > => {
+      return useMutation(getSaveTeacherAiQuestionsMutationOptions(options));
     }
 

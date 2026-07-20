@@ -5,11 +5,14 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { LibraryQuestionLevel } from './libraryQuestionLevel';
+import type { LibraryQuestionType } from './libraryQuestionType';
 
 export interface LibraryQuestion {
   id: number;
   libraryItemId: number;
-  type: string;
+  type: LibraryQuestionType;
+  level: LibraryQuestionLevel;
   question: string;
   options: string[];
   correctAnswer?: string | null;

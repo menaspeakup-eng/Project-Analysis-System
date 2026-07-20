@@ -179,7 +179,7 @@ export default function Portal() {
   // Google sometimes populates fullName without splitting it into first/last name,
   // so fall back through fullName before the generic placeholder.
   const displayName = isGuest
-    ? "الزائر الصغير"
+    ? "الزائر الرائع"
     : profile?.avatarConfig?.nickname?.trim() ||
       profile?.name ||
       user?.firstName ||
@@ -388,7 +388,7 @@ export default function Portal() {
               </div>
             ) : leaderboard.top.length === 0 ? (
               <p className="text-muted-foreground font-medium text-sm">
-                لا يوجد طلاب حتى الآن — كن أول المتصدرين!
+                لا يوجد طلبة حتى الآن — كن أول المتصدرين!
               </p>
             ) : (
               <div className="space-y-1">

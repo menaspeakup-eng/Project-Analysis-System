@@ -173,8 +173,8 @@ export default function TeacherAnalytics({
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "الطلاب");
-    XLSX.writeFile(wb, "تقرير-الطلاب.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "الطلبة");
+    XLSX.writeFile(wb, "تقرير-الطلبة.xlsx");
   }
 
   async function downloadPDF() {
@@ -196,7 +196,7 @@ export default function TeacherAnalytics({
     let position = 0;
 
     doc.setFontSize(14);
-    doc.text("تقرير تحليل الطلاب والتقارير", pageWidth / 2, 10, { align: "center" });
+    doc.text("تقرير تحليل الطلبة والتقارير", pageWidth / 2, 10, { align: "center" });
     doc.setFontSize(10);
     doc.text(`الفترة: ${range.from} → ${range.to}`, pageWidth / 2, 16, { align: "center" });
 
@@ -211,7 +211,7 @@ export default function TeacherAnalytics({
       heightLeft -= pageHeight;
     }
 
-    doc.save("تقرير-الطلاب.pdf");
+    doc.save("تقرير-الطلبة.pdf");
   }
 
   if (classes.length === 0) {
@@ -232,7 +232,7 @@ export default function TeacherAnalytics({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-6 h-6 text-primary" />
-          <h2 className="font-black text-foreground text-lg">تحليل الطلاب والتقارير</h2>
+          <h2 className="font-black text-foreground text-lg">تحليل الطلبة والتقارير</h2>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -307,11 +307,11 @@ export default function TeacherAnalytics({
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
-            <SummaryCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلاب" value={summary?.totalStudents ?? 0} color="bg-blue-50 text-blue-600" hint="عدد الطلاب المسجلين في الصف/الصفوف المختارة" />
-            <SummaryCard icon={<Activity className="w-5 h-5" />} label="المشاركين" value={summary?.activeStudents ?? 0} color="bg-emerald-50 text-emerald-600" hint="طلاب لديهم أي نشاط في الفترة: قصة، اختبار، أو لعبة" />
-            <SummaryCard icon={<Trophy className="w-5 h-5" />} label="متوسط النقاط" value={summary?.avgPoints ?? 0} color="bg-amber-50 text-amber-600" hint="متوسط نقاط جميع الطلاب في الصف/الصفوف" />
-            <SummaryCard icon={<Target className="w-5 h-5" />} label="متوسط نسبة القراءة الصحيحة" value={`${summary?.avgScore ?? 0}%`} color="bg-rose-50 text-rose-600" hint="متوسط نتائج اختبارات القصص والمكتبة للطلاب" />
-            <SummaryCard icon={<BookOpen className="w-5 h-5" />} label="القصص المكتملة" value={summary?.storiesCompleted ?? 0} color="bg-purple-50 text-purple-600" hint="عدد اختبارات القصص الذكية التي أتمها الطلاب" />
+            <SummaryCard icon={<Users className="w-5 h-5" />} label="إجمالي الطلبة" value={summary?.totalStudents ?? 0} color="bg-blue-50 text-blue-600" hint="عدد الطلبة المسجلين في الصف/الصفوف المختارة" />
+            <SummaryCard icon={<Activity className="w-5 h-5" />} label="المشاركين" value={summary?.activeStudents ?? 0} color="bg-emerald-50 text-emerald-600" hint="طلبة لديهم أي نشاط في الفترة: قصة، اختبار، أو لعبة" />
+            <SummaryCard icon={<Trophy className="w-5 h-5" />} label="متوسط النقاط" value={summary?.avgPoints ?? 0} color="bg-amber-50 text-amber-600" hint="متوسط نقاط جميع الطلبة في الصف/الصفوف" />
+            <SummaryCard icon={<Target className="w-5 h-5" />} label="متوسط نسبة القراءة الصحيحة" value={`${summary?.avgScore ?? 0}%`} color="bg-rose-50 text-rose-600" hint="متوسط نتائج اختبارات القصص والمكتبة للطلبة" />
+            <SummaryCard icon={<BookOpen className="w-5 h-5" />} label="القصص المكتملة" value={summary?.storiesCompleted ?? 0} color="bg-purple-50 text-purple-600" hint="عدد اختبارات القصص الذكية التي أتمها الطلبة" />
             <SummaryCard icon={<TrendingUp className="w-5 h-5" />} label="الاختبارات المنجزة" value={summary?.testsCompleted ?? 0} color="bg-cyan-50 text-cyan-600" hint="اختبارات القصص الذكية + اختبارات المكتبة" />
             <SummaryCard icon={<Calendar className="w-5 h-5" />} label="نسبة القراءة الصحيحة" value={`${summary?.successRate ?? 0}%`} color="bg-teal-50 text-teal-600" hint="متوسط الإجابات الصحيحة في جميع الاختبارات" />
           </div>
@@ -325,7 +325,7 @@ export default function TeacherAnalytics({
             <CardContent>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm font-medium text-muted-foreground">
                 <MethodologyItem title="المشاركين" description="طالب له نشاط واحد على الأقل خلال الفترة المختارة." />
-                <MethodologyItem title="القصص المكتملة" description="عدد اختبارات القصص الذكية (AI Story) التي أتمها الطلاب." />
+                <MethodologyItem title="القصص المكتملة" description="عدد اختبارات القصص الذكية (AI Story) التي أتمها الطلبة." />
                 <MethodologyItem title="الاختبارات المنجزة" description="مجموع اختبارات القصص الذكية واختبارات المكتبة." />
                 <MethodologyItem title="نسبة القراءة الصحيحة" description="(الإجابات الصحيحة ÷ إجمالي الأسئلة) × 100، بمتوسط جميع الاختبارات." />
                 <MethodologyItem title="نسبة التقدم" description="نفس نسبة القراءة الصحيحة للطالب؛ تعكس دقة الإجابات." />
@@ -394,7 +394,7 @@ export default function TeacherAnalytics({
             <CardHeader>
               <CardTitle className="font-black text-foreground flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-secondary" />
-                مقارنة أداء الطلاب
+                مقارنة أداء الطلبة
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -470,7 +470,7 @@ export default function TeacherAnalytics({
                   {filteredStudents.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        لا يوجد طلاب مطابقين للبحث.
+                        لا يوجد طلبة مطابقين للبحث.
                       </TableCell>
                     </TableRow>
                   ) : (

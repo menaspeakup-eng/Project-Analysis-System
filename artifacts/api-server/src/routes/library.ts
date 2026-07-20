@@ -328,6 +328,10 @@ router.get("/library/class", async (req, res) => {
     ),
   });
   const submissionByItem = new Map(submissions.map((s) => [s.libraryItemId, s]));
+  const pointsByItem = new Map<number, number>();
+  for (const q of questions) {
+    pointsByItem.set(q.libraryItemId, (pointsByItem.get(q.libraryItemId) || 0) + q.points);
+  }
 
   res.json({
     items: items.map((i) => ({
@@ -335,9 +339,7 @@ router.get("/library/class", async (req, res) => {
       coverUrl: toStorageUrl(i.coverObjectPath),
       contentUrl: toStorageUrl(i.contentObjectPath),
       questionCount: questionsByItem.get(i.id) || 0,
-      totalPoints: questions
-        .filter((q) => q.libraryItemId === i.id)
-        .reduce((sum, q) => sum + q.points, 0),
+      totalPoints: pointsByItem.get(i.id) || 0,
       submission: submissionByItem.get(i.id) || null,
     })),
   });
@@ -349,7 +351,7 @@ router.post("/library/submissions", async (req, res) => {
   requireIdentity(identity);
 
   if (identity.student.role !== "student") {
-    res.status(403).json({ error: "فقط الطلاب يمكنهم تقديم إجابات" });
+    res.status(403).json({ error: "فقط الطلبة يمكنهم تقديم إجابات" });
     return;
   }
 
@@ -389,11 +391,19 @@ router.post("/library/submissions", async (req, res) => {
     status: string;
   }> = [];
 
+  const autoGradedTypes = new Set(["mcq", "true_false", "fill_blank", "classification", "ordering"]);
+
+  function normalizeAnswer(value: string | null | undefined): string {
+    return (value || "").trim().replace(/\s+/g, " ");
+  }
+
   for (const q of questions) {
     maxScore += q.points;
     const answer = body.answers.find((a) => a.questionId === q.id);
-    if (q.type === "mcq") {
-      const isCorrect = Boolean(answer?.selectedAnswer && answer.selectedAnswer === q.correctAnswer);
+    if (autoGradedTypes.has(q.type)) {
+      const submitted = normalizeAnswer(answer?.selectedAnswer);
+      const expected = normalizeAnswer(q.correctAnswer);
+      const isCorrect = submitted.length > 0 && submitted === expected;
       const points = isCorrect ? q.points : 0;
       score += points;
       answerRows.push({
@@ -407,7 +417,7 @@ router.post("/library/submissions", async (req, res) => {
     } else {
       answerRows.push({
         questionId: q.id,
-        selectedAnswer: null,
+        selectedAnswer: q.type === "irab" ? answer?.selectedAnswer || null : null,
         textAnswer: answer?.textAnswer || null,
         isCorrect: null,
         pointsAwarded: 0,
@@ -450,6 +460,7 @@ router.get("/library/reviews", async (req, res) => {
   const pendingAnswers = await db.query.libraryAnswersTable.findMany({
     where: eq(libraryAnswersTable.status, "pending"),
     orderBy: [desc(libraryAnswersTable.createdAt)],
+    limit: 200,
   });
 
   const textAnswers = pendingAnswers.filter((a) => a.textAnswer && a.textAnswer.trim() !== "");

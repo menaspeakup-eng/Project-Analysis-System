@@ -6,8 +6,8 @@ import { GraduationCap, Users, BarChart3, ShieldCheck } from "lucide-react";
 const features = [
   {
     icon: Users,
-    title: "إدارة الفصول والطلاب",
-    description: "أضف فصولك الدراسية وطلابك بسهولة، وتابع كل طالب على حدة أو الفصل بأكمله.",
+    title: "إدارة الفصول والطلبة",
+    description: "أضف فصولك الدراسية وطلبةك بسهولة، وتابع كل طالب على حدة أو الفصل بأكمله.",
   },
   {
     icon: BarChart3,
@@ -21,8 +21,8 @@ const features = [
   },
   {
     icon: ShieldCheck,
-    title: "بيئة آمنة ومناسبة للطلاب",
-    description: "لا إعلانات، لا محتوى خارجي غير مناسب، وضوابط خصوصية صارمة لبيانات الطلاب.",
+    title: "بيئة آمنة ومناسبة للطلبة",
+    description: "لا إعلانات، لا محتوى خارجي غير مناسب، وضوابط خصوصية صارمة لبيانات الطلبة.",
   },
 ];
 

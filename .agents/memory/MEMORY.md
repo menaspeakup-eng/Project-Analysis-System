@@ -1,5 +1,6 @@
 # Memory Index
 
+- [Frontend performance on antuq](antuq-performance.md) — keep routes lazy-loaded; never preload heavy 3D models on startup; use gltf-transform quantize (not meshopt) for GLTFLoader compatibility; optimize images to WebP.
 - [Clerk auth wiring on react-vite artifacts](clerk-artifact-wiring.md) — server proxy must precede body parsers; frontend needs `src/lib/queryClient.ts` created explicitly, design subagents forget it.
 - [Apply Drizzle migrations after schema changes](drizzle-migrations-apply.md) — generated migrations aren't auto-applied; stale schema causes 500s on first sign-in.
 - [Drizzle jsonb default backfill](drizzle-jsonb-default-backfill.md) — jsonb column DB default doesn't apply your zod schema's defaults to existing rows; normalize with the zod schema at read time.
