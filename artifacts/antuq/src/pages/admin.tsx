@@ -296,7 +296,7 @@ export default function Admin() {
           </Button>
           <h1 className="font-black text-foreground text-lg flex items-center gap-2">
             <School className="w-6 h-6 text-primary" />
-            لوحة الأدمن
+            لوحة المسؤول
           </h1>
         </div>
         <div className="flex items-center gap-3">

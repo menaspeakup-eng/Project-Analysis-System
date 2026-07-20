@@ -315,7 +315,7 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
       <div className="flex-1 flex flex-col items-center justify-center min-h-[60dvh] text-muted-foreground gap-3" dir="rtl">
         <MessageCircle className="w-12 h-12 opacity-30" />
         <p className="font-bold text-lg">لا يوجد شات متاح لك حالياً</p>
-        <p className="text-sm font-medium">تواصل مع الأدمن إذا كنت تعتقد أن هذا خطأ.</p>
+        <p className="text-sm font-medium">تواصل مع المسؤول إذا كنت تعتقد أن هذا خطأ.</p>
         {backUrl && (
           <Button variant="outline" className="rounded-xl font-bold mt-2" onClick={handleBack}>
             <ArrowRight className="w-4 h-4 ml-2" />
@@ -346,7 +346,7 @@ export function ChatPanel({ backUrl }: ChatPanelProps) {
             <Badge variant="outline" className="rounded-full font-bold text-primary border-primary hidden sm:flex">
               {isAdmin ? (
                 <>
-                  <Shield className="w-3 h-3 ml-1" /> أدمن
+                  <Shield className="w-3 h-3 ml-1" /> مسؤول
                 </>
               ) : (
                 <>

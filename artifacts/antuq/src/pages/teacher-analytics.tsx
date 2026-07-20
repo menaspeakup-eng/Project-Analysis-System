@@ -218,7 +218,7 @@ export default function TeacherAnalytics({
     return (
       <Card className="rounded-3xl border-border shadow-sm">
         <CardContent className="p-8 text-center text-muted-foreground font-medium">
-          لا يوجد صفوف مرتبطة بك بعد — تواصل مع الأدمن لإنشاء صف.
+          لا يوجد صفوف مرتبطة بك بعد — تواصل مع المسؤول لإنشاء صف.
         </CardContent>
       </Card>
     );

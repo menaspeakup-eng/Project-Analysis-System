@@ -79,7 +79,7 @@ export default function OnboardingName() {
           </div>
           <h1 className="text-2xl font-black text-foreground">أهلاً بك في انطق!</h1>
           <p className="text-muted-foreground font-medium">
-            للتأكد من ظهور اسمك بشكل صحيح في صفحة المعلم والأدمن، اكتب اسمك الكامل بالعربي أو الإنجليزي.
+            للتأكد من ظهور اسمك بشكل صحيح في صفحة المعلم والمسؤول، اكتب اسمك الكامل بالعربي أو الإنجليزي.
           </p>
         </div>
 

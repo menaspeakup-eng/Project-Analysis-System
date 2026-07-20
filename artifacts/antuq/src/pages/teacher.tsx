@@ -203,7 +203,7 @@ export default function Teacher() {
               className="rounded-xl font-bold h-9 border-primary text-primary hover:bg-primary hover:text-white"
               onClick={() => setLocation("/admin")}
             >
-              لوحة الأدمن
+              لوحة المسؤول
             </Button>
           )}
           <Button
@@ -315,7 +315,7 @@ export default function Teacher() {
             ) : classes.length === 0 ? (
               <Card className="rounded-3xl border-border shadow-sm">
                 <CardContent className="p-6 text-center text-muted-foreground font-medium">
-                  لا يوجد صفوف مرتبطة بك بعد — تواصل مع الأدمن لإنشاء صف.
+                  لا يوجد صفوف مرتبطة بك بعد — تواصل مع المسؤول لإنشاء صف.
                 </CardContent>
               </Card>
             ) : (

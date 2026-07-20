@@ -54,3 +54,15 @@ id = "V3h1-E64gdLB2Vw77-77Q"
 uri = "file://screenshots/home-platform-guide.jpg"
 type = "image"
 title = "الصفحة الرئيسية - دليل استخدام المنصة"
+
+[[outputs]]
+id = "fnvmJLs6nxkqx4WWRaOGM"
+uri = "file://screenshots/admin-panel-title.jpg"
+type = "image"
+title = "عنوان صفحة المسؤول"
+
+[[outputs]]
+id = "ApEEBgBFNC4eHStuDiBuR"
+uri = "file://screenshots/teacher-admin-sidebar.jpg"
+type = "image"
+title = "قائمة المعلم - رابط لوحة المسؤول"
