@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GenerateStoryQuizBodyLevel } from './generateStoryQuizBodyLevel';
-import type { GenerateStoryQuizBodyType } from './generateStoryQuizBodyType';
+import type { GenerateStoryQuizBodyTypesItem } from './generateStoryQuizBodyTypesItem';
 
 export interface GenerateStoryQuizBody {
   sessionId: number;
@@ -16,5 +16,9 @@ export interface GenerateStoryQuizBody {
      */
   count?: number;
   level: GenerateStoryQuizBodyLevel;
-  type: GenerateStoryQuizBodyType;
+  /**
+     * @minItems 1
+     * @maxItems 5
+     */
+  types: GenerateStoryQuizBodyTypesItem[];
 }

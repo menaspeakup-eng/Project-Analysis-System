@@ -1455,13 +1455,15 @@ export const GetStoriesUsageResponse = zod.object({
  */
 export const generateStoryQuizBodyCountMax = 20;
 
+export const generateStoryQuizBodyTypesMax = 5;
+
 
 
 export const GenerateStoryQuizBody = zod.object({
   "sessionId": zod.number(),
   "count": zod.number().min(1).max(generateStoryQuizBodyCountMax).optional(),
   "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
-  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])
+  "types": zod.array(zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])).min(1).max(generateStoryQuizBodyTypesMax)
 })
 
 export const GenerateStoryQuizResponse = zod.object({
@@ -1519,6 +1521,8 @@ export const SubmitStoryQuizResponse = zod.object({
 /**
  * @summary Get AI story quiz defaults for the student's class
  */
+export const getStudentStoryQuizDefaultsResponseDefaultsTypesMax = 5;
+
 export const getStudentStoryQuizDefaultsResponseDefaultsCountMax = 20;
 
 
@@ -1526,7 +1530,7 @@ export const getStudentStoryQuizDefaultsResponseDefaultsCountMax = 20;
 export const GetStudentStoryQuizDefaultsResponse = zod.object({
   "defaults": zod.object({
   "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
-  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "types": zod.array(zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])).min(1).max(getStudentStoryQuizDefaultsResponseDefaultsTypesMax),
   "count": zod.number().min(1).max(getStudentStoryQuizDefaultsResponseDefaultsCountMax)
 })
 })
@@ -1535,6 +1539,8 @@ export const GetStudentStoryQuizDefaultsResponse = zod.object({
 /**
  * @summary Get AI story quiz defaults for teacher's classes
  */
+export const getTeacherStoryQuizDefaultsResponseClassesItemDefaultsTypesMax = 5;
+
 export const getTeacherStoryQuizDefaultsResponseClassesItemDefaultsCountMax = 20;
 
 
@@ -1545,7 +1551,7 @@ export const GetTeacherStoryQuizDefaultsResponse = zod.object({
   "name": zod.string(),
   "defaults": zod.object({
   "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
-  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "types": zod.array(zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])).min(1).max(getTeacherStoryQuizDefaultsResponseClassesItemDefaultsTypesMax),
   "count": zod.number().min(1).max(getTeacherStoryQuizDefaultsResponseClassesItemDefaultsCountMax)
 })
 }))
@@ -1555,6 +1561,8 @@ export const GetTeacherStoryQuizDefaultsResponse = zod.object({
 /**
  * @summary Set AI story quiz defaults for a class
  */
+export const setTeacherStoryQuizDefaultsBodyTypesMax = 5;
+
 export const setTeacherStoryQuizDefaultsBodyCountMax = 20;
 
 
@@ -1562,9 +1570,11 @@ export const setTeacherStoryQuizDefaultsBodyCountMax = 20;
 export const SetTeacherStoryQuizDefaultsBody = zod.object({
   "classId": zod.number(),
   "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
-  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "types": zod.array(zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])).min(1).max(setTeacherStoryQuizDefaultsBodyTypesMax),
   "count": zod.number().min(1).max(setTeacherStoryQuizDefaultsBodyCountMax)
 })
+
+export const setTeacherStoryQuizDefaultsResponseDefaultsTypesMax = 5;
 
 export const setTeacherStoryQuizDefaultsResponseDefaultsCountMax = 20;
 
@@ -1574,7 +1584,7 @@ export const SetTeacherStoryQuizDefaultsResponse = zod.object({
   "classId": zod.number(),
   "defaults": zod.object({
   "level": zod.enum(['easy', 'medium', 'advanced', 'high', 'enrichment', 'higher_order']),
-  "type": zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification']),
+  "types": zod.array(zod.enum(['mcq', 'text', 'true_false', 'fill_blank', 'irab', 'classification', 'ordering', 'analytical', 'inference', 'error_correction', 'justification'])).min(1).max(setTeacherStoryQuizDefaultsResponseDefaultsTypesMax),
   "count": zod.number().min(1).max(setTeacherStoryQuizDefaultsResponseDefaultsCountMax)
 })
 })

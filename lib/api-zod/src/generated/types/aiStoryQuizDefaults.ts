@@ -6,11 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { AiStoryQuizDefaultsLevel } from './aiStoryQuizDefaultsLevel';
-import type { AiStoryQuizDefaultsType } from './aiStoryQuizDefaultsType';
+import type { AiStoryQuizDefaultsTypesItem } from './aiStoryQuizDefaultsTypesItem';
 
 export interface AiStoryQuizDefaults {
   level: AiStoryQuizDefaultsLevel;
-  type: AiStoryQuizDefaultsType;
+  /**
+     * @minItems 1
+     * @maxItems 5
+     */
+  types: AiStoryQuizDefaultsTypesItem[];
   /**
      * @minimum 1
      * @maximum 20

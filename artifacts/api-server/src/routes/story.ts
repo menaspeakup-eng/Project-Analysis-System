@@ -72,35 +72,42 @@ const GenerateStoryQuizBody = z.object({
   sessionId: z.number().int().positive(),
   count: z.number().int().min(1).max(20).default(5),
   level: z.enum(LIBRARY_QUESTION_LEVELS),
-  type: z.enum(LIBRARY_QUESTION_TYPES),
+  types: z.array(z.enum(LIBRARY_QUESTION_TYPES)).min(1).max(5),
 });
 
 type AiStoryQuizDefaults = {
   level: (typeof LIBRARY_QUESTION_LEVELS)[number];
-  type: (typeof LIBRARY_QUESTION_TYPES)[number];
+  types: (typeof LIBRARY_QUESTION_TYPES)[number][];
   count: number;
 };
 
 const AiStoryQuizDefaultsBody = z.object({
   classId: z.number().int().positive(),
   level: z.enum(LIBRARY_QUESTION_LEVELS),
-  type: z.enum(LIBRARY_QUESTION_TYPES),
+  types: z.array(z.enum(LIBRARY_QUESTION_TYPES)).min(1).max(5),
   count: z.number().int().min(1).max(20),
 });
 
 const DEFAULT_AI_STORY_QUIZ: AiStoryQuizDefaults = {
   level: "medium",
-  type: "mcq",
+  types: ["mcq"],
   count: 5,
 };
 
 function parseDefaults(value: unknown): AiStoryQuizDefaults {
   if (!value || typeof value !== "object") return DEFAULT_AI_STORY_QUIZ;
-  const v = value as Partial<AiStoryQuizDefaults>;
+  const v = value as Partial<AiStoryQuizDefaults> & { type?: string };
   const level = LIBRARY_QUESTION_LEVELS.includes(v.level as AiStoryQuizDefaults["level"]) ? v.level : DEFAULT_AI_STORY_QUIZ.level;
-  const type = LIBRARY_QUESTION_TYPES.includes(v.type as AiStoryQuizDefaults["type"]) ? v.type : DEFAULT_AI_STORY_QUIZ.type;
+  const rawTypes = Array.isArray(v.types)
+    ? v.types
+    : v.type
+      ? [v.type]
+      : DEFAULT_AI_STORY_QUIZ.types;
+  const types = rawTypes.filter((t): t is AiStoryQuizDefaults["types"][number] =>
+    LIBRARY_QUESTION_TYPES.includes(t as AiStoryQuizDefaults["types"][number]),
+  );
   const count = typeof v.count === "number" && Number.isInteger(v.count) && v.count >= 1 && v.count <= 20 ? v.count : DEFAULT_AI_STORY_QUIZ.count;
-  return { level: level!, type: type!, count };
+  return { level: level!, types: types.length > 0 ? types : DEFAULT_AI_STORY_QUIZ.types, count };
 }
 
 const ReviewQuestionBody = z.object({
@@ -380,7 +387,7 @@ router.post("/stories/quiz/generate", async (req, res) => {
     return;
   }
 
-  const { sessionId, count, level, type } = body.data;
+  const { sessionId, count, level, types } = body.data;
 
   const session = await db.query.aiStorySessionsTable.findFirst({
     where: eq(aiStorySessionsTable.id, sessionId),
@@ -402,47 +409,57 @@ router.post("/stories/quiz/generate", async (req, res) => {
     return;
   }
 
-  const prompt = buildQuestionPrompt(
-    { title: session.title, bodyText: session.story, description: "" },
-    count,
-    level,
-    type,
-  );
   const url = `${OPENAI_BASE_URL.replace(/\/+$/, "")}/chat/completions`;
+  const questionsPerType = Math.max(1, Math.ceil(count / types.length));
 
   try {
-    const openaiRes = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: OPENAI_MODEL,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.5,
-        max_tokens: 4096,
+    const results = await Promise.all(
+      types.map(async (type) => {
+        const prompt = buildQuestionPrompt(
+          { title: session.title, bodyText: session.story, description: "" },
+          questionsPerType,
+          level,
+          type,
+        );
+        const openaiRes = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: OPENAI_MODEL,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.5,
+            max_tokens: 4096,
+          }),
+        });
+
+        if (!openaiRes.ok) {
+          const json = (await openaiRes.json().catch(() => ({}))) as { error?: { message?: string; code?: string } };
+          throw new Error(getOpenAIErrorMessage(json));
+        }
+
+        const json = (await openaiRes.json()) as {
+          choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
+          error?: { message?: string; code?: string };
+        };
+
+        const rawText = json.choices?.[0]?.message?.content ?? "";
+        if (!rawText) {
+          throw new Error("لم يعيد الذكاء الاصطناعي أسئلة. حاول مرة أخرى.");
+        }
+
+        return parseGeneratedQuestions(rawText);
       }),
-    });
+    );
 
-    if (!openaiRes.ok) {
-      const json = (await openaiRes.json().catch(() => ({}))) as { error?: { message?: string; code?: string } };
-      res.status(502).json({ error: getOpenAIErrorMessage(json) });
+    const questions = results.flat().slice(0, count);
+    if (questions.length === 0) {
+      res.status(502).json({ error: "لم يتم إنشاء أي أسئلة. حاول مرة أخرى." });
       return;
     }
 
-    const json = (await openaiRes.json()) as {
-      choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
-      error?: { message?: string; code?: string };
-    };
-
-    const rawText = json.choices?.[0]?.message?.content ?? "";
-    if (!rawText) {
-      res.status(502).json({ error: "لم يعيد الذكاء الاصطناعي أسئلة. حاول مرة أخرى." });
-      return;
-    }
-
-    const questions = parseGeneratedQuestions(rawText);
     const content = session.generatedContent as unknown as GeneratedStory;
     const updatedContent: GeneratedStory = { ...content, questions };
 
@@ -586,7 +603,7 @@ router.post("/teacher/stories/quiz-defaults", async (req, res) => {
 
   const [cls] = await db
     .update(classesTable)
-    .set({ aiStoryQuizDefaults: { level: body.level, type: body.type, count: body.count } as unknown as Record<string, unknown> })
+    .set({ aiStoryQuizDefaults: { level: body.level, types: body.types, count: body.count } as unknown as Record<string, unknown> })
     .where(eq(classesTable.id, body.classId))
     .returning();
 

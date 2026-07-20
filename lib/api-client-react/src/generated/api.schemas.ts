@@ -849,10 +849,10 @@ export const GenerateStoryQuizBodyLevel = {
   higher_order: 'higher_order',
 } as const;
 
-export type GenerateStoryQuizBodyType = typeof GenerateStoryQuizBodyType[keyof typeof GenerateStoryQuizBodyType];
+export type GenerateStoryQuizBodyTypesItem = typeof GenerateStoryQuizBodyTypesItem[keyof typeof GenerateStoryQuizBodyTypesItem];
 
 
-export const GenerateStoryQuizBodyType = {
+export const GenerateStoryQuizBodyTypesItem = {
   mcq: 'mcq',
   text: 'text',
   true_false: 'true_false',
@@ -874,7 +874,11 @@ export interface GenerateStoryQuizBody {
      */
   count?: number;
   level: GenerateStoryQuizBodyLevel;
-  type: GenerateStoryQuizBodyType;
+  /**
+     * @minItems 1
+     * @maxItems 5
+     */
+  types: GenerateStoryQuizBodyTypesItem[];
 }
 
 export interface GenerateStoryQuizResponse {
@@ -943,10 +947,10 @@ export const AiStoryQuizDefaultsLevel = {
   higher_order: 'higher_order',
 } as const;
 
-export type AiStoryQuizDefaultsType = typeof AiStoryQuizDefaultsType[keyof typeof AiStoryQuizDefaultsType];
+export type AiStoryQuizDefaultsTypesItem = typeof AiStoryQuizDefaultsTypesItem[keyof typeof AiStoryQuizDefaultsTypesItem];
 
 
-export const AiStoryQuizDefaultsType = {
+export const AiStoryQuizDefaultsTypesItem = {
   mcq: 'mcq',
   text: 'text',
   true_false: 'true_false',
@@ -962,7 +966,11 @@ export const AiStoryQuizDefaultsType = {
 
 export interface AiStoryQuizDefaults {
   level: AiStoryQuizDefaultsLevel;
-  type: AiStoryQuizDefaultsType;
+  /**
+     * @minItems 1
+     * @maxItems 5
+     */
+  types: AiStoryQuizDefaultsTypesItem[];
   /**
      * @minimum 1
      * @maximum 20
@@ -996,10 +1004,10 @@ export const SetStoryQuizDefaultsBodyLevel = {
   higher_order: 'higher_order',
 } as const;
 
-export type SetStoryQuizDefaultsBodyType = typeof SetStoryQuizDefaultsBodyType[keyof typeof SetStoryQuizDefaultsBodyType];
+export type SetStoryQuizDefaultsBodyTypesItem = typeof SetStoryQuizDefaultsBodyTypesItem[keyof typeof SetStoryQuizDefaultsBodyTypesItem];
 
 
-export const SetStoryQuizDefaultsBodyType = {
+export const SetStoryQuizDefaultsBodyTypesItem = {
   mcq: 'mcq',
   text: 'text',
   true_false: 'true_false',
@@ -1016,7 +1024,11 @@ export const SetStoryQuizDefaultsBodyType = {
 export interface SetStoryQuizDefaultsBody {
   classId: number;
   level: SetStoryQuizDefaultsBodyLevel;
-  type: SetStoryQuizDefaultsBodyType;
+  /**
+     * @minItems 1
+     * @maxItems 5
+     */
+  types: SetStoryQuizDefaultsBodyTypesItem[];
   /**
      * @minimum 1
      * @maximum 20

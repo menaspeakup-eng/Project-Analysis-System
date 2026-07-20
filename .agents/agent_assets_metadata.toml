@@ -42,3 +42,9 @@ id = "YcJq-bkLWs5ze--aRfeRY"
 uri = "file://screenshots/teacher-ai-stories-defaults.jpg"
 type = "image"
 title = "صفحة المعلم - إعدادات اختبار القصص الافتراضية"
+
+[[outputs]]
+id = "bfBiOSNme0rDchj-M6sog"
+uri = "file://screenshots/teacher-ai-stories-multi-type.jpg"
+type = "image"
+title = "صفحة المعلم - اختيار أكثر من نوع سؤال"

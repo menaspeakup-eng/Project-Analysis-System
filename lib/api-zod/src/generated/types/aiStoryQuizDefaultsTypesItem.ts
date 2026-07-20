@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AiStoryQuizDefaultsType = typeof AiStoryQuizDefaultsType[keyof typeof AiStoryQuizDefaultsType];
+export type AiStoryQuizDefaultsTypesItem = typeof AiStoryQuizDefaultsTypesItem[keyof typeof AiStoryQuizDefaultsTypesItem];
 
 
-export const AiStoryQuizDefaultsType = {
+export const AiStoryQuizDefaultsTypesItem = {
   mcq: 'mcq',
   text: 'text',
   true_false: 'true_false',

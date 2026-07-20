@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Link } from "wouter";
 import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, Target, Lock, AlertTriangle, Trophy, Send, Home, ChevronLeft, ChevronRight } from "lucide-react";
@@ -77,20 +77,6 @@ const quizLevels: { value: StoryQuestionLevel; label: string }[] = [
   { value: "higher_order", label: "مهارات التفكير العليا" },
 ];
 
-const quizTypes: { value: StoryQuestionType; label: string }[] = [
-  { value: "mcq", label: "اختيار من متعدد" },
-  { value: "true_false", label: "صح أو خطأ" },
-  { value: "fill_blank", label: "أكمل الفراغ" },
-  { value: "irab", label: "الإعراب" },
-  { value: "classification", label: "التصنيف" },
-  { value: "ordering", label: "الترتيب" },
-  { value: "text", label: "سؤال مفتوح" },
-  { value: "analytical", label: "سؤال تحليلي" },
-  { value: "inference", label: "التفكير والاستنتاج" },
-  { value: "error_correction", label: "تصحيح الخطأ" },
-  { value: "justification", label: "تعليل الإجابة" },
-];
-
 const fadeSlide: Variants = {
   initial: { opacity: 0, y: 16 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
@@ -113,11 +99,7 @@ export default function AIStory() {
   const [submitted, setSubmitted] = useState(false);
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [quizMode, setQuizMode] = useState(false);
-  const [quizConfigMode, setQuizConfigMode] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<StoryQuestion[]>([]);
-  const [quizLevel, setQuizLevel] = useState<StoryQuestionLevel>("medium");
-  const [quizType, setQuizType] = useState<StoryQuestionType>("mcq");
-  const [quizCount, setQuizCount] = useState(5);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -129,14 +111,6 @@ export default function AIStory() {
   const { mutate: submitQuiz, data: quizResultData, isPending: isSubmittingQuiz } = useSubmitStoryQuiz();
   const { mutate: generateQuiz, isPending: isGeneratingQuiz } = useGenerateStoryQuiz();
   const { data: defaultsData } = useGetStudentStoryQuizDefaults();
-
-  useEffect(() => {
-    const defaults = defaultsData?.defaults;
-    if (!defaults) return;
-    if (defaults.level) setQuizLevel(defaults.level as StoryQuestionLevel);
-    if (defaults.type) setQuizType(defaults.type as StoryQuestionType);
-    if (typeof defaults.count === "number") setQuizCount(defaults.count);
-  }, [defaultsData]);
 
   const result = data?.result;
   const quizResult = quizResultData?.submission;
@@ -163,7 +137,6 @@ export default function AIStory() {
     setStoryType("");
     setSessionId(null);
     setQuizMode(false);
-    setQuizConfigMode(false);
     setQuizQuestions([]);
     setQuizAnswers({});
     setQuizSubmitted(false);
@@ -190,7 +163,6 @@ export default function AIStory() {
         onSuccess: () => {
           setQuizSubmitted(true);
           setQuizMode(false);
-          setQuizConfigMode(false);
           toast({ title: "تم إرسال الإجابات للمعلم", description: "ستظهر النتيجة بعد مراجعة المعلم" });
         },
         onError: (err) => {
@@ -440,7 +412,7 @@ export default function AIStory() {
               </motion.div>
 
               {/* Quiz CTA */}
-              {!quizMode && !quizConfigMode && !quizSubmitted && !quizResult && (
+              {!quizMode && !quizSubmitted && !quizResult && (
                 <motion.div variants={staggerItem}>
                   <Card className="rounded-3xl border-border bg-gradient-to-br from-[hsl(265,60%,96%)] to-white overflow-hidden">
                     <CardContent className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-6">
@@ -450,119 +422,44 @@ export default function AIStory() {
                       <div className="flex-1 text-center md:text-right">
                         <h3 className="font-black text-xl mb-2">اختبر نفسك لزيادة نقاطك</h3>
                         <p className="text-muted-foreground font-medium">
-                          اختر المستوى ونوع السؤال وعدد الأسئلة، ثم أنشئ أسئلة مباشرة من القصة.
+                          اضغط لإنشاء أسئلة مباشرة من القصة حسب إعدادات المعلم.
                         </p>
                       </div>
-                      <Button size="lg" className="rounded-xl h-14 px-8 font-bold shrink-0" onClick={() => setQuizConfigMode(true)}>
-                        ابدأ الاختبار
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-
-              {/* Quiz configuration */}
-              {quizConfigMode && !quizMode && !quizSubmitted && !quizResult && (
-                <motion.div variants={staggerItem}>
-                  <Card className="rounded-3xl border-border bg-white shadow-sm overflow-hidden">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-xl font-black flex items-center gap-2">
-                        <Target className="w-6 h-6 text-[hsl(265,60%,45%)]" />
-                        إعداد اختبار القصة
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-5">
-                      <div className="space-y-2">
-                        <Label className="text-base font-bold">نوع السؤال</Label>
-                        <Select value={quizType} onValueChange={(v) => setQuizType(v as StoryQuestionType)}>
-                          <SelectTrigger className="h-12 rounded-xl text-base">
-                            <SelectValue placeholder="اختر نوع السؤال" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            {quizTypes.map((t) => (
-                              <SelectItem key={t.value} value={t.value} className="rounded-lg text-base">
-                                {t.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-base font-bold">المستوى</Label>
-                        <Select value={quizLevel} onValueChange={(v) => setQuizLevel(v as StoryQuestionLevel)}>
-                          <SelectTrigger className="h-12 rounded-xl text-base">
-                            <SelectValue placeholder="اختر المستوى" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            {quizLevels.map((l) => (
-                              <SelectItem key={l.value} value={l.value} className="rounded-lg text-base">
-                                {l.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-base font-bold">عدد الأسئلة</Label>
-                        <Select value={String(quizCount)} onValueChange={(v) => setQuizCount(Number(v))}>
-                          <SelectTrigger className="h-12 rounded-xl text-base">
-                            <SelectValue placeholder="اختر عدد الأسئلة" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                              <SelectItem key={n} value={String(n)} className="rounded-lg text-base">
-                                {n} {n === 1 ? "سؤال" : "أسئلة"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="flex items-center gap-3 pt-2">
-                        <Button
-                          variant="outline"
-                          className="rounded-xl h-12 font-bold flex-1"
-                          onClick={() => setQuizConfigMode(false)}
-                        >
-                          إلغاء
-                        </Button>
-                        <Button
-                          className="rounded-xl h-12 font-bold flex-1"
-                          disabled={isGeneratingQuiz || !sessionId}
-                          onClick={() => {
-                            if (!sessionId) return;
-                            generateQuiz(
-                              { data: { sessionId, count: quizCount, level: quizLevel, type: quizType } },
-                              {
-                                onSuccess: (res) => {
-                                  setQuizQuestions(res.questions ?? []);
-                                  setQuizConfigMode(false);
-                                  setQuizMode(true);
-                                  setQuizAnswers({});
-                                  setCurrentQuestionIndex(0);
-                                },
-                                onError: (err) => {
-                                  toast({ title: "تعذر إنشاء الأسئلة", description: getApiErrorMessage(err) ?? "حاول مرة أخرى", variant: "destructive" });
-                                },
+                      <Button
+                        size="lg"
+                        className="rounded-xl h-14 px-8 font-bold shrink-0"
+                        disabled={isGeneratingQuiz || !sessionId || !defaultsData?.defaults}
+                        onClick={() => {
+                          if (!sessionId || !defaultsData?.defaults) return;
+                          const { count, level, types } = defaultsData.defaults;
+                          generateQuiz(
+                            { data: { sessionId, count, level: level as StoryQuestionLevel, types: types as StoryQuestionType[] } },
+                            {
+                              onSuccess: (res) => {
+                                setQuizQuestions(res.questions ?? []);
+                                setQuizMode(true);
+                                setQuizAnswers({});
+                                setCurrentQuestionIndex(0);
                               },
-                            );
-                          }}
-                        >
-                          {isGeneratingQuiz ? (
-                            <>
-                              <Loader2 className="w-5 h-5 animate-spin" />
-                              يُنشئ الأسئلة...
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles className="w-5 h-5" />
-                              إنشاء الأسئلة
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                              onError: (err) => {
+                                toast({ title: "تعذر إنشاء الأسئلة", description: getApiErrorMessage(err) ?? "حاول مرة أخرى", variant: "destructive" });
+                              },
+                            },
+                          );
+                        }}
+                      >
+                        {isGeneratingQuiz ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            يُنشئ الأسئلة...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-5 h-5" />
+                            ابدأ الاختبار
+                          </>
+                        )}
+                      </Button>
                     </CardContent>
                   </Card>
                 </motion.div>

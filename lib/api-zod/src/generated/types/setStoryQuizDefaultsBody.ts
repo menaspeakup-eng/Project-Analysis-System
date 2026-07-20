@@ -6,12 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { SetStoryQuizDefaultsBodyLevel } from './setStoryQuizDefaultsBodyLevel';
-import type { SetStoryQuizDefaultsBodyType } from './setStoryQuizDefaultsBodyType';
+import type { SetStoryQuizDefaultsBodyTypesItem } from './setStoryQuizDefaultsBodyTypesItem';
 
 export interface SetStoryQuizDefaultsBody {
   classId: number;
   level: SetStoryQuizDefaultsBodyLevel;
-  type: SetStoryQuizDefaultsBodyType;
+  /**
+     * @minItems 1
+     * @maxItems 5
+     */
+  types: SetStoryQuizDefaultsBodyTypesItem[];
   /**
      * @minimum 1
      * @maximum 20

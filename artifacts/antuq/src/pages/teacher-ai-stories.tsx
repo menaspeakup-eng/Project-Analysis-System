@@ -27,6 +27,7 @@ import {
   type StoryQuizAnswerResult,
   type ReviewStoryQuestionBody,
   type AiStoryQuizDefaults,
+  type AiStoryQuizDefaultsTypesItem,
   type TeacherStoryQuizDefaultsListClassesItem,
 } from "@workspace/api-client-react";
 
@@ -50,7 +51,7 @@ const quizLevels: { value: AiStoryQuizDefaults["level"]; label: string }[] = [
   { value: "higher_order", label: "مهارات التفكير العليا" },
 ];
 
-const quizTypes: { value: AiStoryQuizDefaults["type"]; label: string }[] = [
+const quizTypes: { value: AiStoryQuizDefaultsTypesItem; label: string }[] = [
   { value: "mcq", label: "اختيار من متعدد" },
   { value: "true_false", label: "صح أو خطأ" },
   { value: "fill_blank", label: "أكمل الفراغ" },
@@ -76,7 +77,7 @@ export default function TeacherAiStories() {
   const classes = defaultsData?.classes ?? [];
   const [selectedClassId, setSelectedClassId] = useState<number | undefined>(undefined);
   const [defaultLevel, setDefaultLevel] = useState<AiStoryQuizDefaults["level"]>("medium");
-  const [defaultType, setDefaultType] = useState<AiStoryQuizDefaults["type"]>("mcq");
+  const [defaultTypes, setDefaultTypes] = useState<AiStoryQuizDefaults["types"]>(["mcq"]);
   const [defaultCount, setDefaultCount] = useState(5);
 
   const [feedback, setFeedback] = useState<Record<number, string>>({});
@@ -90,7 +91,7 @@ export default function TeacherAiStories() {
     const d = selected.defaults;
     if (d) {
       setDefaultLevel(d.level);
-      setDefaultType(d.type);
+      setDefaultTypes(d.types);
       setDefaultCount(d.count);
     }
   }, [defaultsData, classes.length]);
@@ -100,7 +101,7 @@ export default function TeacherAiStories() {
   const handleSaveDefaults = () => {
     if (!selectedClassId) return;
     setDefaults(
-      { data: { classId: selectedClassId, level: defaultLevel, type: defaultType, count: defaultCount } },
+      { data: { classId: selectedClassId, level: defaultLevel, types: defaultTypes, count: defaultCount } },
       {
         onSuccess: () => {
           toast({ title: "تم حفظ الإعدادات الافتراضية" });
@@ -238,7 +239,7 @@ export default function TeacherAiStories() {
                         const cls = classes.find((c) => c.id === id);
                         if (cls?.defaults) {
                           setDefaultLevel(cls.defaults.level);
-                          setDefaultType(cls.defaults.type);
+                          setDefaultTypes(cls.defaults.types);
                           setDefaultCount(cls.defaults.count);
                         }
                       }}
@@ -257,20 +258,39 @@ export default function TeacherAiStories() {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label className="text-sm font-bold">نوع السؤال الافتراضي</Label>
-                  <Select value={defaultType} onValueChange={(v) => setDefaultType(v as AiStoryQuizDefaults["type"])}>
-                    <SelectTrigger className="h-12 rounded-xl text-base">
-                      <SelectValue placeholder="اختر نوع السؤال" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {quizTypes.map((t) => (
-                        <SelectItem key={t.value} value={t.value} className="rounded-lg text-base">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label className="text-sm font-bold">أنواع الأسئلة الافتراضية (يمكن اختيار أكثر من نوع)</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {quizTypes.map((t) => {
+                      const selected = defaultTypes.includes(t.value);
+                      return (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() => {
+                            setDefaultTypes((prev) => {
+                              if (selected) {
+                                const next = prev.filter((v) => v !== t.value);
+                                return next.length > 0 ? next : prev;
+                              }
+                              return prev.length >= 5 ? prev : [...prev, t.value];
+                            });
+                          }}
+                          className={`rounded-xl px-4 py-2 text-sm font-bold border transition-colors ${
+                            selected
+                              ? "bg-[hsl(265,60%,55%)] text-white border-[hsl(265,60%,55%)]"
+                              : "bg-white text-foreground border-border hover:bg-[hsl(40,33%,96%)]"
+                          }`}
+                        >
+                          {selected && <CheckCircle2 className="w-4 h-4 inline ml-1" />}
                           {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {defaultTypes.length === 0 && (
+                    <p className="text-xs text-destructive font-bold">اختر نوعاً واحداً على الأقل.</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -309,7 +329,7 @@ export default function TeacherAiStories() {
               <Button
                 className="rounded-xl h-12 font-bold w-full sm:w-auto"
                 onClick={handleSaveDefaults}
-                disabled={isSavingDefaults || isLoadingDefaults || !selectedClassId}
+                disabled={isSavingDefaults || isLoadingDefaults || !selectedClassId || defaultTypes.length === 0}
               >
                 {isSavingDefaults ? (
                   <>

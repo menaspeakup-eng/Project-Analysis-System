@@ -6,10 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SetStoryQuizDefaultsBodyType = typeof SetStoryQuizDefaultsBodyType[keyof typeof SetStoryQuizDefaultsBodyType];
+export type GenerateStoryQuizBodyTypesItem = typeof GenerateStoryQuizBodyTypesItem[keyof typeof GenerateStoryQuizBodyTypesItem];
 
 
-export const SetStoryQuizDefaultsBodyType = {
+export const GenerateStoryQuizBodyTypesItem = {
   mcq: 'mcq',
   text: 'text',
   true_false: 'true_false',
