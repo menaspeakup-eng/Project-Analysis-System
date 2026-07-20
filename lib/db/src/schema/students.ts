@@ -107,6 +107,9 @@ export const classesTable = pgTable("classes", {
   name: text("name").notNull(),
   teacherId: integer("teacher_id").references((): any => studentsTable.id),
   isChatEnabled: boolean("is_chat_enabled").notNull().default(true),
+  aiStoryQuizDefaults: jsonb("ai_story_quiz_defaults").default(
+    sql`'{"level":"medium","type":"mcq","count":5}'::jsonb`,
+  ),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

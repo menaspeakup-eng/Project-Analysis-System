@@ -1217,6 +1217,63 @@ paths:
           description: Not signed in
         "404":
           description: Story session not found
+  /stories/quiz-defaults:
+    get:
+      operationId: getStudentStoryQuizDefaults
+      tags: [story]
+      summary: Get AI story quiz defaults for the student's class
+      responses:
+        "200":
+          description: Default quiz settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentStoryQuizDefaults"
+        "400":
+          description: Student has no class
+        "401":
+          description: Not signed in
+  /teacher/stories/quiz-defaults:
+    get:
+      operationId: getTeacherStoryQuizDefaults
+      tags: [story, teacher]
+      summary: Get AI story quiz defaults for teacher's classes
+      responses:
+        "200":
+          description: Classes with their default quiz settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherStoryQuizDefaultsList"
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher
+    post:
+      operationId: setTeacherStoryQuizDefaults
+      tags: [story, teacher]
+      summary: Set AI story quiz defaults for a class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetStoryQuizDefaultsBody"
+      responses:
+        "200":
+          description: Updated defaults
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeacherStoryQuizDefaultsResult"
+        "400":
+          description: Invalid body
+        "401":
+          description: Not signed in
+        "403":
+          description: Not a teacher or wrong class
+        "404":
+          description: Class not found
   /teacher/stories/submissions:
     get:
       operationId: getTeacherStorySubmissions
@@ -3336,6 +3393,66 @@ components:
           $ref: "#/components/schemas/StoryQuizSubmissionRecord"
       required:
         - submission
+    AiStoryQuizDefaults:
+      type: object
+      required: [level, type, count]
+      properties:
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
+        type:
+          type: string
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+        count:
+          type: integer
+          minimum: 1
+          maximum: 20
+    StudentStoryQuizDefaults:
+      type: object
+      required: [defaults]
+      properties:
+        defaults:
+          $ref: "#/components/schemas/AiStoryQuizDefaults"
+    TeacherStoryQuizDefaultsList:
+      type: object
+      required: [classes]
+      properties:
+        classes:
+          type: array
+          items:
+            type: object
+            required: [id, name, defaults]
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              defaults:
+                $ref: "#/components/schemas/AiStoryQuizDefaults"
+    SetStoryQuizDefaultsBody:
+      type: object
+      required: [classId, level, type, count]
+      properties:
+        classId:
+          type: integer
+        level:
+          type: string
+          enum: [easy, medium, advanced, high, enrichment, higher_order]
+        type:
+          type: string
+          enum: [mcq, text, true_false, fill_blank, irab, classification, ordering, analytical, inference, error_correction, justification]
+        count:
+          type: integer
+          minimum: 1
+          maximum: 20
+    TeacherStoryQuizDefaultsResult:
+      type: object
+      required: [classId, defaults]
+      properties:
+        classId:
+          type: integer
+        defaults:
+          $ref: "#/components/schemas/AiStoryQuizDefaults"
     StoryQuizAnswerResult:
       type: object
       properties:

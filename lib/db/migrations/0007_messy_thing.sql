@@ -1,0 +1,1 @@
+ALTER TABLE "classes" ADD COLUMN "ai_story_quiz_defaults" jsonb DEFAULT '{"level":"medium","type":"mcq","count":5}'::jsonb;

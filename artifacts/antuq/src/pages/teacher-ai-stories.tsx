@@ -1,22 +1,33 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, XCircle, Target, BookOpen, Loader2, Sparkles, AlertTriangle, User, Trash2, Send, MessageSquare } from "lucide-react";
+import { CheckCircle2, XCircle, Target, BookOpen, Loader2, Sparkles, AlertTriangle, User, Trash2, Send, MessageSquare, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   useGetTeacherStorySubmissions,
   getGetTeacherStorySubmissionsQueryKey,
   useReviewTeacherStorySubmission,
   useDeleteTeacherStorySubmission,
+  useGetTeacherStoryQuizDefaults,
+  useSetTeacherStoryQuizDefaults,
   type TeacherStorySubmission,
   type StoryQuizAnswerResult,
   type ReviewStoryQuestionBody,
+  type AiStoryQuizDefaults,
+  type TeacherStoryQuizDefaultsListClassesItem,
 } from "@workspace/api-client-react";
 
 const item = {
@@ -30,18 +41,77 @@ type AnswerState = {
   note: string;
 };
 
+const quizLevels: { value: AiStoryQuizDefaults["level"]; label: string }[] = [
+  { value: "easy", label: "سهل" },
+  { value: "medium", label: "متوسط" },
+  { value: "advanced", label: "متقدم" },
+  { value: "high", label: "عالي" },
+  { value: "enrichment", label: "إثرائي" },
+  { value: "higher_order", label: "مهارات التفكير العليا" },
+];
+
+const quizTypes: { value: AiStoryQuizDefaults["type"]; label: string }[] = [
+  { value: "mcq", label: "اختيار من متعدد" },
+  { value: "true_false", label: "صح أو خطأ" },
+  { value: "fill_blank", label: "أكمل الفراغ" },
+  { value: "irab", label: "الإعراب" },
+  { value: "classification", label: "التصنيف" },
+  { value: "ordering", label: "الترتيب" },
+  { value: "text", label: "سؤال مفتوح" },
+  { value: "analytical", label: "سؤال تحليلي" },
+  { value: "inference", label: "التفكير والاستنتاج" },
+  { value: "error_correction", label: "تصحيح الخطأ" },
+  { value: "justification", label: "تعليل الإجابة" },
+];
+
 export default function TeacherAiStories() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data, isLoading } = useGetTeacherStorySubmissions();
   const { mutate: review, isPending: isReviewing } = useReviewTeacherStorySubmission();
   const { mutate: deleteSubmission, isPending: isDeleting } = useDeleteTeacherStorySubmission();
+  const { data: defaultsData, isLoading: isLoadingDefaults } = useGetTeacherStoryQuizDefaults();
+  const { mutate: setDefaults, isPending: isSavingDefaults } = useSetTeacherStoryQuizDefaults();
+
+  const classes = defaultsData?.classes ?? [];
+  const [selectedClassId, setSelectedClassId] = useState<number | undefined>(undefined);
+  const [defaultLevel, setDefaultLevel] = useState<AiStoryQuizDefaults["level"]>("medium");
+  const [defaultType, setDefaultType] = useState<AiStoryQuizDefaults["type"]>("mcq");
+  const [defaultCount, setDefaultCount] = useState(5);
 
   const [feedback, setFeedback] = useState<Record<number, string>>({});
   const [answerStates, setAnswerStates] = useState<Record<number, Record<number, AnswerState>>>({});
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  useEffect(() => {
+    if (classes.length === 0) return;
+    const selected = classes.find((c) => c.id === selectedClassId) ?? classes[0];
+    setSelectedClassId(selected.id);
+    const d = selected.defaults;
+    if (d) {
+      setDefaultLevel(d.level);
+      setDefaultType(d.type);
+      setDefaultCount(d.count);
+    }
+  }, [defaultsData, classes.length]);
+
   const submissions = data?.submissions ?? [];
+
+  const handleSaveDefaults = () => {
+    if (!selectedClassId) return;
+    setDefaults(
+      { data: { classId: selectedClassId, level: defaultLevel, type: defaultType, count: defaultCount } },
+      {
+        onSuccess: () => {
+          toast({ title: "تم حفظ الإعدادات الافتراضية" });
+          queryClient.invalidateQueries({ queryKey: ["/teacher/stories/quiz-defaults"] });
+        },
+        onError: (err) => {
+          toast({ title: "تعذر حفظ الإعدادات", description: err instanceof Error ? err.message : "", variant: "destructive" });
+        },
+      },
+    );
+  };
 
   const getAnswerState = (submissionId: number, questionIndex: number, defaultPoints: number): AnswerState => {
     const states = answerStates[submissionId];
@@ -145,6 +215,118 @@ export default function TeacherAiStories() {
         <Sparkles className="w-5 h-5 text-[hsl(265,60%,45%)]" />
         <h2 className="font-black text-lg text-foreground">إجابات قصصي الذكية</h2>
       </div>
+
+      {classes.length > 0 && (
+        <motion.div variants={item} initial="initial" animate="animate">
+          <Card className="rounded-3xl border-border shadow-sm overflow-hidden">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Settings2 className="w-5 h-5 text-[hsl(265,60%,45%)]" />
+                <CardTitle className="text-lg font-black">إعدادات اختبار القصص الافتراضية</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {classes.length > 1 && (
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label className="text-sm font-bold">الصف</Label>
+                    <Select
+                      value={selectedClassId ? String(selectedClassId) : ""}
+                      onValueChange={(v) => {
+                        const id = Number(v);
+                        setSelectedClassId(id);
+                        const cls = classes.find((c) => c.id === id);
+                        if (cls?.defaults) {
+                          setDefaultLevel(cls.defaults.level);
+                          setDefaultType(cls.defaults.type);
+                          setDefaultCount(cls.defaults.count);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-12 rounded-xl text-base">
+                        <SelectValue placeholder="اختر الصف" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {classes.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)} className="rounded-lg text-base">
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold">نوع السؤال الافتراضي</Label>
+                  <Select value={defaultType} onValueChange={(v) => setDefaultType(v as AiStoryQuizDefaults["type"])}>
+                    <SelectTrigger className="h-12 rounded-xl text-base">
+                      <SelectValue placeholder="اختر نوع السؤال" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {quizTypes.map((t) => (
+                        <SelectItem key={t.value} value={t.value} className="rounded-lg text-base">
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold">المستوى الافتراضي</Label>
+                  <Select value={defaultLevel} onValueChange={(v) => setDefaultLevel(v as AiStoryQuizDefaults["level"])}>
+                    <SelectTrigger className="h-12 rounded-xl text-base">
+                      <SelectValue placeholder="اختر المستوى" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {quizLevels.map((l) => (
+                        <SelectItem key={l.value} value={l.value} className="rounded-lg text-base">
+                          {l.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-bold">عدد الأسئلة الافتراضي</Label>
+                  <Select value={String(defaultCount)} onValueChange={(v) => setDefaultCount(Number(v))}>
+                    <SelectTrigger className="h-12 rounded-xl text-base">
+                      <SelectValue placeholder="اختر عدد الأسئلة" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                        <SelectItem key={n} value={String(n)} className="rounded-lg text-base">
+                          {n} {n === 1 ? "سؤال" : "أسئلة"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button
+                className="rounded-xl h-12 font-bold w-full sm:w-auto"
+                onClick={handleSaveDefaults}
+                disabled={isSavingDefaults || isLoadingDefaults || !selectedClassId}
+              >
+                {isSavingDefaults ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    جاري الحفظ...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5" />
+                    حفظ الإعدادات الافتراضية
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 gap-5">
         {submissions.map((submission) => {

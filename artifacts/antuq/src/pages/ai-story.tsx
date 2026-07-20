@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Link } from "wouter";
 import { ArrowRight, BookOpen, Sparkles, Loader2, Volume2, Mic, RefreshCw, Target, Lock, AlertTriangle, Trophy, Send, Home, ChevronLeft, ChevronRight } from "lucide-react";
@@ -23,12 +23,14 @@ import {
   getGetStoriesUsageQueryKey,
   useSubmitStoryQuiz,
   useGenerateStoryQuiz,
+  useGetStudentStoryQuizDefaults,
   type StoryType,
   type ApiError,
   type StoryQuizAnswer,
   type StoryQuestionType,
   type StoryQuestionLevel,
   type StoryQuestion,
+  type AiStoryQuizDefaults,
 } from "@workspace/api-client-react";
 
 function getApiErrorMessage(error: unknown): string | null {
@@ -126,6 +128,15 @@ export default function AIStory() {
   });
   const { mutate: submitQuiz, data: quizResultData, isPending: isSubmittingQuiz } = useSubmitStoryQuiz();
   const { mutate: generateQuiz, isPending: isGeneratingQuiz } = useGenerateStoryQuiz();
+  const { data: defaultsData } = useGetStudentStoryQuizDefaults();
+
+  useEffect(() => {
+    const defaults = defaultsData?.defaults;
+    if (!defaults) return;
+    if (defaults.level) setQuizLevel(defaults.level as StoryQuestionLevel);
+    if (defaults.type) setQuizType(defaults.type as StoryQuestionType);
+    if (typeof defaults.count === "number") setQuizCount(defaults.count);
+  }, [defaultsData]);
 
   const result = data?.result;
   const quizResult = quizResultData?.submission;

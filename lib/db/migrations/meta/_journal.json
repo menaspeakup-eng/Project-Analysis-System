@@ -50,6 +50,13 @@
       "when": 1784549052354,
       "tag": "0006_material_daredevil",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784551611427,
+      "tag": "0007_messy_thing",
+      "breakpoints": true
     }
   ]
 }

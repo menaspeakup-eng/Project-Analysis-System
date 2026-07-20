@@ -931,6 +931,104 @@ export interface StoryQuizSubmission {
   submission: StoryQuizSubmissionRecord;
 }
 
+export type AiStoryQuizDefaultsLevel = typeof AiStoryQuizDefaultsLevel[keyof typeof AiStoryQuizDefaultsLevel];
+
+
+export const AiStoryQuizDefaultsLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
+export type AiStoryQuizDefaultsType = typeof AiStoryQuizDefaultsType[keyof typeof AiStoryQuizDefaultsType];
+
+
+export const AiStoryQuizDefaultsType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export interface AiStoryQuizDefaults {
+  level: AiStoryQuizDefaultsLevel;
+  type: AiStoryQuizDefaultsType;
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  count: number;
+}
+
+export interface StudentStoryQuizDefaults {
+  defaults: AiStoryQuizDefaults;
+}
+
+export type TeacherStoryQuizDefaultsListClassesItem = {
+  id: number;
+  name: string;
+  defaults: AiStoryQuizDefaults;
+};
+
+export interface TeacherStoryQuizDefaultsList {
+  classes: TeacherStoryQuizDefaultsListClassesItem[];
+}
+
+export type SetStoryQuizDefaultsBodyLevel = typeof SetStoryQuizDefaultsBodyLevel[keyof typeof SetStoryQuizDefaultsBodyLevel];
+
+
+export const SetStoryQuizDefaultsBodyLevel = {
+  easy: 'easy',
+  medium: 'medium',
+  advanced: 'advanced',
+  high: 'high',
+  enrichment: 'enrichment',
+  higher_order: 'higher_order',
+} as const;
+
+export type SetStoryQuizDefaultsBodyType = typeof SetStoryQuizDefaultsBodyType[keyof typeof SetStoryQuizDefaultsBodyType];
+
+
+export const SetStoryQuizDefaultsBodyType = {
+  mcq: 'mcq',
+  text: 'text',
+  true_false: 'true_false',
+  fill_blank: 'fill_blank',
+  irab: 'irab',
+  classification: 'classification',
+  ordering: 'ordering',
+  analytical: 'analytical',
+  inference: 'inference',
+  error_correction: 'error_correction',
+  justification: 'justification',
+} as const;
+
+export interface SetStoryQuizDefaultsBody {
+  classId: number;
+  level: SetStoryQuizDefaultsBodyLevel;
+  type: SetStoryQuizDefaultsBodyType;
+  /**
+     * @minimum 1
+     * @maximum 20
+     */
+  count: number;
+}
+
+export interface TeacherStoryQuizDefaultsResult {
+  classId: number;
+  defaults: AiStoryQuizDefaults;
+}
+
 export type TeacherStorySubmissionSession = {
   id: number;
   title: string;

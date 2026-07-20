@@ -75,6 +75,34 @@ const GenerateStoryQuizBody = z.object({
   type: z.enum(LIBRARY_QUESTION_TYPES),
 });
 
+type AiStoryQuizDefaults = {
+  level: (typeof LIBRARY_QUESTION_LEVELS)[number];
+  type: (typeof LIBRARY_QUESTION_TYPES)[number];
+  count: number;
+};
+
+const AiStoryQuizDefaultsBody = z.object({
+  classId: z.number().int().positive(),
+  level: z.enum(LIBRARY_QUESTION_LEVELS),
+  type: z.enum(LIBRARY_QUESTION_TYPES),
+  count: z.number().int().min(1).max(20),
+});
+
+const DEFAULT_AI_STORY_QUIZ: AiStoryQuizDefaults = {
+  level: "medium",
+  type: "mcq",
+  count: 5,
+};
+
+function parseDefaults(value: unknown): AiStoryQuizDefaults {
+  if (!value || typeof value !== "object") return DEFAULT_AI_STORY_QUIZ;
+  const v = value as Partial<AiStoryQuizDefaults>;
+  const level = LIBRARY_QUESTION_LEVELS.includes(v.level as AiStoryQuizDefaults["level"]) ? v.level : DEFAULT_AI_STORY_QUIZ.level;
+  const type = LIBRARY_QUESTION_TYPES.includes(v.type as AiStoryQuizDefaults["type"]) ? v.type : DEFAULT_AI_STORY_QUIZ.type;
+  const count = typeof v.count === "number" && Number.isInteger(v.count) && v.count >= 1 && v.count <= 20 ? v.count : DEFAULT_AI_STORY_QUIZ.count;
+  return { level: level!, type: type!, count };
+}
+
 const ReviewQuestionBody = z.object({
   questionIndex: z.number().int().min(0),
   status: z.enum(["accepted", "rejected"]),
@@ -503,6 +531,71 @@ router.post("/stories/quiz/submit", async (req, res) => {
   });
 
   res.json({ submission });
+});
+
+router.get("/stories/quiz-defaults", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+
+  const student = identity.student;
+  if (!student.classId) {
+    res.status(400).json({ error: "غير مرتبط بصف" });
+    return;
+  }
+
+  const cls = await db.query.classesTable.findFirst({
+    where: eq(classesTable.id, student.classId),
+  });
+  const defaults = parseDefaults(cls?.aiStoryQuizDefaults);
+  res.json({ defaults });
+});
+
+router.get("/teacher/stories/quiz-defaults", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireTeacher(identity);
+
+  if (identity.teacherClassIds.length === 0) {
+    res.json({ classes: [] });
+    return;
+  }
+
+  const classes = await db.query.classesTable.findMany({
+    where: sql`${classesTable.id} IN (${sql.join(identity.teacherClassIds.map(String), sql`,`)})`,
+  });
+
+  res.json({
+    classes: classes.map((c) => ({
+      id: c.id,
+      name: c.name,
+      defaults: parseDefaults(c.aiStoryQuizDefaults),
+    })),
+  });
+});
+
+router.post("/teacher/stories/quiz-defaults", async (req, res) => {
+  const identity = await resolveIdentity(req);
+  requireIdentity(identity);
+  requireTeacher(identity);
+
+  const body = AiStoryQuizDefaultsBody.parse(req.body);
+  if (!identity.isAdmin && !identity.teacherClassIds.includes(body.classId)) {
+    res.status(403).json({ error: "لا يمكنك تعديل صف آخر" });
+    return;
+  }
+
+  const [cls] = await db
+    .update(classesTable)
+    .set({ aiStoryQuizDefaults: { level: body.level, type: body.type, count: body.count } as unknown as Record<string, unknown> })
+    .where(eq(classesTable.id, body.classId))
+    .returning();
+
+  if (!cls) {
+    res.status(404).json({ error: "الصف غير موجود" });
+    return;
+  }
+
+  res.json({ classId: cls.id, defaults: parseDefaults(cls.aiStoryQuizDefaults) });
 });
 
 router.get("/teacher/stories/submissions", async (req, res) => {

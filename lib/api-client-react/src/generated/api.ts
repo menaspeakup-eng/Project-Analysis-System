@@ -104,11 +104,13 @@ import type {
   ReviewedSubmission,
   SaveTeacherAiQuestionsBody,
   SaveTeacherAiQuestionsResponse,
+  SetStoryQuizDefaultsBody,
   StoryQuizSubmission,
   StoryUsageStatus,
   StudentChallenge,
   StudentChallengeList,
   StudentProfile,
+  StudentStoryQuizDefaults,
   SubmitChallengeBody,
   SubmitStoryQuizBody,
   TeacherAnalyticsReport,
@@ -119,6 +121,8 @@ import type {
   TeacherGameList,
   TeacherGameStats,
   TeacherReadingCoachAttempts,
+  TeacherStoryQuizDefaultsList,
+  TeacherStoryQuizDefaultsResult,
   TeacherStorySubmissionList,
   TeacherStudent,
   TeacherStudentClass,
@@ -4110,6 +4114,231 @@ export const useSubmitStoryQuiz = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getSubmitStoryQuizMutationOptions(options));
+    }
+
+export const getGetStudentStoryQuizDefaultsUrl = () => {
+
+
+
+
+  return `/api/stories/quiz-defaults`
+}
+
+/**
+ * @summary Get AI story quiz defaults for the student's class
+ */
+export const getStudentStoryQuizDefaults = async ( options?: RequestInit): Promise<StudentStoryQuizDefaults> => {
+
+  return customFetch<StudentStoryQuizDefaults>(getGetStudentStoryQuizDefaultsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStudentStoryQuizDefaultsQueryKey = () => {
+    return [
+    `/api/stories/quiz-defaults`
+    ] as const;
+    }
+
+
+export const getGetStudentStoryQuizDefaultsQueryOptions = <TData = Awaited<ReturnType<typeof getStudentStoryQuizDefaults>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentStoryQuizDefaults>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudentStoryQuizDefaultsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudentStoryQuizDefaults>>> = ({ signal }) => getStudentStoryQuizDefaults({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudentStoryQuizDefaults>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStudentStoryQuizDefaultsQueryResult = NonNullable<Awaited<ReturnType<typeof getStudentStoryQuizDefaults>>>
+export type GetStudentStoryQuizDefaultsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get AI story quiz defaults for the student's class
+ */
+
+export function useGetStudentStoryQuizDefaults<TData = Awaited<ReturnType<typeof getStudentStoryQuizDefaults>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudentStoryQuizDefaults>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStudentStoryQuizDefaultsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetTeacherStoryQuizDefaultsUrl = () => {
+
+
+
+
+  return `/api/teacher/stories/quiz-defaults`
+}
+
+/**
+ * @summary Get AI story quiz defaults for teacher's classes
+ */
+export const getTeacherStoryQuizDefaults = async ( options?: RequestInit): Promise<TeacherStoryQuizDefaultsList> => {
+
+  return customFetch<TeacherStoryQuizDefaultsList>(getGetTeacherStoryQuizDefaultsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTeacherStoryQuizDefaultsQueryKey = () => {
+    return [
+    `/api/teacher/stories/quiz-defaults`
+    ] as const;
+    }
+
+
+export const getGetTeacherStoryQuizDefaultsQueryOptions = <TData = Awaited<ReturnType<typeof getTeacherStoryQuizDefaults>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherStoryQuizDefaults>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTeacherStoryQuizDefaultsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeacherStoryQuizDefaults>>> = ({ signal }) => getTeacherStoryQuizDefaults({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeacherStoryQuizDefaults>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTeacherStoryQuizDefaultsQueryResult = NonNullable<Awaited<ReturnType<typeof getTeacherStoryQuizDefaults>>>
+export type GetTeacherStoryQuizDefaultsQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get AI story quiz defaults for teacher's classes
+ */
+
+export function useGetTeacherStoryQuizDefaults<TData = Awaited<ReturnType<typeof getTeacherStoryQuizDefaults>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeacherStoryQuizDefaults>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTeacherStoryQuizDefaultsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSetTeacherStoryQuizDefaultsUrl = () => {
+
+
+
+
+  return `/api/teacher/stories/quiz-defaults`
+}
+
+/**
+ * @summary Set AI story quiz defaults for a class
+ */
+export const setTeacherStoryQuizDefaults = async (setStoryQuizDefaultsBody: SetStoryQuizDefaultsBody, options?: RequestInit): Promise<TeacherStoryQuizDefaultsResult> => {
+
+  return customFetch<TeacherStoryQuizDefaultsResult>(getSetTeacherStoryQuizDefaultsUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setStoryQuizDefaultsBody)
+  }
+);}
+
+
+
+
+
+export const getSetTeacherStoryQuizDefaultsMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTeacherStoryQuizDefaults>>, TError,{data: BodyType<SetStoryQuizDefaultsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setTeacherStoryQuizDefaults>>, TError,{data: BodyType<SetStoryQuizDefaultsBody>}, TContext> => {
+
+const mutationKey = ['setTeacherStoryQuizDefaults'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setTeacherStoryQuizDefaults>>, {data: BodyType<SetStoryQuizDefaultsBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setTeacherStoryQuizDefaults(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetTeacherStoryQuizDefaultsMutationResult = NonNullable<Awaited<ReturnType<typeof setTeacherStoryQuizDefaults>>>
+    export type SetTeacherStoryQuizDefaultsMutationBody = BodyType<SetStoryQuizDefaultsBody>
+    export type SetTeacherStoryQuizDefaultsMutationError = ErrorType<void>
+
+    /**
+ * @summary Set AI story quiz defaults for a class
+ */
+export const useSetTeacherStoryQuizDefaults = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setTeacherStoryQuizDefaults>>, TError,{data: BodyType<SetStoryQuizDefaultsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setTeacherStoryQuizDefaults>>,
+        TError,
+        {data: BodyType<SetStoryQuizDefaultsBody>},
+        TContext
+      > => {
+      return useMutation(getSetTeacherStoryQuizDefaultsMutationOptions(options));
     }
 
 export const getGetTeacherStorySubmissionsUrl = () => {
