@@ -72,3 +72,9 @@ id = "yT0aAEI0fOwQAjgTzUD5J"
 uri = "file://screenshots/home-rebranded-iqra.jpg"
 type = "image"
 title = "الصفحة الرئيسية بعد التعديل - إقرا"
+
+[[outputs]]
+id = "DpB7mn-tovJExv0t7U2hH"
+uri = "file://screenshots/home-reverted-intiq.jpg"
+type = "image"
+title = "الصفحة الرئيسية - إنطق"

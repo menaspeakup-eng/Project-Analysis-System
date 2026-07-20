@@ -77,7 +77,7 @@ export default function OnboardingName() {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
             <Sparkles className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-black text-foreground">أهلاً بك في إقرا!</h1>
+          <h1 className="text-2xl font-black text-foreground">أهلاً بك في إنطق!</h1>
           <p className="text-muted-foreground font-medium">
             للتأكد من ظهور اسمك بشكل صحيح في صفحة المعلم والمسؤول، اكتب اسمك الكامل بالعربي أو الإنجليزي.
           </p>

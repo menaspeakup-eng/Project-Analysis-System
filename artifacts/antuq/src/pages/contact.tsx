@@ -9,7 +9,7 @@ export default function Contact() {
       title="نحن هنا لمساعدتك"
     >
       <p>
-        هل لديك سؤال أو اقتراح؟ تواصل مع فريق إقرا وسنرد عليك في أقرب وقت.
+        هل لديك سؤال أو اقتراح؟ تواصل مع فريق إنطق وسنرد عليك في أقرب وقت.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-6 not-prose">
