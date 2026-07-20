@@ -90,3 +90,9 @@ id = "UnPhD9V-ReHZVKxqTCfdR"
 uri = "file://screenshots/portal-educational-library.jpg"
 type = "image"
 title = "البوابة - قسم المكتبة التعليمية"
+
+[[outputs]]
+id = "A90PuoN1vpE2azvj_a7xd"
+uri = "file://screenshots/home-tagline-fixed.jpg"
+type = "image"
+title = "الصفحة الرئيسية - الشعار بعد التصحيح"

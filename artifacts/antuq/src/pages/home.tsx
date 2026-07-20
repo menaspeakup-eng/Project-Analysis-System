@@ -41,7 +41,7 @@ export default function Home() {
           </div>
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-foreground leading-[1.15] md:leading-[1.15]">
             اقرأ • تعلّم • <span className="text-primary relative inline-block">
-              تعلّم
+              تطوّر
               <svg className="absolute -bottom-2 left-0 w-full h-4 text-secondary/50 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" strokeLinecap="round"/></svg>
             </span>
           </h1>
