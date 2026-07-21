@@ -5,6 +5,7 @@ export default defineConfig({
   dialect: "postgresql",
   out: "./migrations",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "postgresql://localhost:5432/antuq",
+    url: process.env.DATABASE_URL!,
+    ssl: true,
   },
 });
