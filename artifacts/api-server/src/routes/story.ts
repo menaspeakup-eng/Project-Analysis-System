@@ -748,8 +748,7 @@ router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
       ? updatedAnswers.reduce((sum, a) => sum + (a.status === "accepted" ? (a.points ?? POINTS_PER_CORRECT_ANSWER) : 0), 0)
       : 0;
 
-  const reviewerId = identity.student?.id ?? identity.user?.id ?? 0;
-
+const reviewerId = identity.student?.id ?? 0;
   await db.transaction(async (tx) => {
     await tx
       .update(aiStoryQuizSubmissionsTable)
