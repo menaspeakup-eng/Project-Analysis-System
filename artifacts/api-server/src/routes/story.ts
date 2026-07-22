@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { z } from "zod";
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { resolveIdentity, requireIdentity, requireTeacher } from "../lib/identity";
 import { logActivity } from "../lib/activity-logs";
 import {
@@ -141,23 +141,6 @@ function todayDate(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-function normalizeLetter(letter: string): string {
-  const normalized = letter.trim().toLowerCase();
-  const map: Record<string, string> = {
-    أ: "أ",
-    ب: "ب",
-    ج: "ج",
-    د: "د",
-    a: "أ",
-    b: "ب",
-    c: "ج",
-    d: "د",
-    "آ": "أ",
-    "إ": "أ",
-  };
-  return map[normalized] ?? normalized;
-}
-
 async function getDailyUsage(studentId: number): Promise<{ used: number; limit: number; extra: number }> {
   const today = todayDate();
   const [sessions, allowance] = await Promise.all([
@@ -197,7 +180,41 @@ async function requireDailyStoryAllowance(studentId: number) {
 
 function buildPrompt(studentName: string, storyType: StoryType): string {
   const typeLabel = STORY_TYPE_LABELS[storyType];
-  return `اكتب قصة عربية فصحى قصيرة (300–400 كلمة) مشكولة بالتشكيل الكامل (الفتحة والضمة والكسرة والسكون والتنوين والشدة والمد)، بطلها: ${studentName}، ونوعها: ${typeLabel}.\n\nالشروط:\n- لغة سهلة، جمل قصيرة، بدون عامية أو رموز تعبيرية.\n- بدون رعب أو رومانسية أو عنف.\n- حوار بسيط، ودرس أخلاقي في النهاية.\n\nأعد النتيجة بالتنسيق التالي فقط، بدون مقدمة أو شرح أو أقواس حول العنوان:\n\n# عنوان القصة\n[العنوان مشكول في سطر واحد]\n\n# القصة\n[القصة مشكولة بفقرات]\n\n# الكلمات الجديدة\n1. كلمة: معناها\n2. كلمة: معناها\n3. كلمة: معناها\n4. كلمة: معناها\n5. كلمة: معناها\n\n# سؤال للتفكير\n[سؤال مفتوح]\n\n# الدرس المستفاد\n[درس في سطر]\n\n# معلومات القراءة\n- مستوى الصعوبة: 1-5\n- عدد الكلمات: عدد\n- الزمن المتوقع للقراءة: دقائق`;
+  return `أنت كاتب قصص أطفال محترف ومتقن للغاية للغة العربية ومحيط بقواعد الإملاء والنحو.
+اكتب قصة عربية فصحى مشوقة ومناسبة للأطفال (300–400 كلمة).
+البطل: ${studentName}
+نوع القصة: ${typeLabel}
+
+قواعد وإرشادات هامة جداً:
+1. الإملاء والنحو: يجب أن تكون القصة خالية تماماً من أي أخطاء إملائية أو نحوية (انتبه للفرق بين الهمزات "أ، إ، آ"، والتاء المربوطة "ة" والهاء "ه"، والألف المقصورة "ى").
+2. التشكيل والتنسيق: النص مشكول تشكيلاً كاملاً وصحيحاً. قسم القصة إلى فقرات قصيرة وواضحة يفصل بينها سطر فارغ لتسهيل القراءة على الشاشة.
+3. المضمون: لغة ممتعة، حوارات بسيطة وواضحة، بدون عامية أو رموز تعبيرية (إيموجي)، وبدون أي عنف أو رعب. تتضمن القصة درساً أخلاقياً وتربوياً رائعاً.
+
+التزم بالصيغة والتنسيق التالي بدقة متناهية (بدون أي مقدمات أو شرح خارج التنسيق):
+
+# عنوان القصة
+[العنوان مشكول وبدون أقواس]
+
+# القصة
+[نص القصة مقسم إلى فقرات قصيرة ومواقف مشوقة ومشكولة بالكامل]
+
+# الكلمات الجديدة
+1. الكلمة: معناها ببساطة
+2. الكلمة: معناها ببساطة
+3. الكلمة: معناها ببساطة
+4. الكلمة: معناها ببساطة
+5. الكلمة: معناها ببساطة
+
+# سؤال للتفكير
+[سؤال مفتوح ومحفز للتفكير حول القصة]
+
+# الدرس المستفاد
+[الدرس الأخلاقي المكتسب بأسلوب دقيق وشيق]
+
+# معلومات القراءة
+- مستوى الصعوبة: 3
+- عدد الكلمات: 350
+- الزمن المتوقع للقراءة: 3 دقائق`;
 }
 
 function parseStoryText(raw: string): GeneratedStory {
@@ -211,13 +228,12 @@ function parseStoryText(raw: string): GeneratedStory {
     sections.set(headerLine, body);
   }
 
-  const title = sections.get("عنوان القصة") || "قصتي الذكية";
+  const title = (sections.get("عنوان القصة") || "قصتي الذكية").replace(/^["'«]/, "").replace(/["'»]$/, "").trim();
   const story = sections.get("القصة") || "";
   const newWordsRaw = sections.get("الكلمات الجديدة") || "";
-  const reflectionQuestion = sections.get("سؤال تفكير") || "";
+  const reflectionQuestion = sections.get("سؤال للتفكير") || sections.get("سؤال تفكير") || "";
   const lesson = sections.get("الدرس المستفاد") || "";
-  const readingInfoRaw =
-    sections.get("معلومات الققراءة") || sections.get("معلومات القراءة") || "";
+  const readingInfoRaw = sections.get("معلومات القراءة") || sections.get("معلومات الققراءة") || "";
 
   const newWords: GeneratedStory["newWords"] = [];
   const wordLines = newWordsRaw.split("\n").filter((l) => l.trim());
@@ -232,14 +248,14 @@ function parseStoryText(raw: string): GeneratedStory {
     if (newWords.length >= 5) break;
   }
 
-  let difficulty = 1;
-  let wordCount = 0;
+  let difficulty = 3;
+  let wordCount = story.split(/\s+/).length || 300;
   let estimatedTime = "3 دقائق";
 
   const diffMatch = readingInfoRaw.match(/مستوى الصعوبة[:\s]*(\d)/i);
   if (diffMatch) difficulty = Math.min(5, Math.max(1, Number(diffMatch[1])));
 
-  const countMatch = readingInfoRaw.match(/(?:عدد الكلمات|عدد الكلمات)[:\s]*(\d+)/i);
+  const countMatch = readingInfoRaw.match(/(?:عدد الكلمات)[:\s]*(\d+)/i);
   if (countMatch) wordCount = Number(countMatch[1]);
 
   const timeMatch = readingInfoRaw.match(/(?:الزمن المتوقع للقراءة|الزمن)[:\s]*(.+)/i);
@@ -319,8 +335,8 @@ router.post("/stories/generate", async (req, res) => {
       body: JSON.stringify({
         model: OPENAI_MODEL,
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.6,
-        max_tokens: 2048,
+        temperature: 0.4,
+        max_tokens: 2500,
       }),
     });
 
@@ -334,9 +350,7 @@ router.post("/stories/generate", async (req, res) => {
 
     const json = (await openaiRes.json()) as {
       choices?: Array<{
-        message?: {
-          content?: string;
-        };
+        message?: { content?: string };
         finish_reason?: string;
       }>;
       error?: { message?: string; code?: string };
@@ -578,7 +592,7 @@ router.get("/teacher/stories/quiz-defaults", async (req, res) => {
   }
 
   const classes = await db.query.classesTable.findMany({
-    where: sql`${classesTable.id} IN (${sql.join(identity.teacherClassIds.map(String), sql`,`)})`,
+    where: inArray(classesTable.id, identity.teacherClassIds),
   });
 
   res.json({
@@ -631,7 +645,7 @@ router.get("/teacher/stories/submissions", async (req, res) => {
     .from(studentsTable)
     .where(
       and(
-        sql`${studentsTable.classId} IN (${sql.join(teacherClassIds.map(String), sql`,`)})`,
+        inArray(studentsTable.classId, teacherClassIds),
         eq(studentsTable.role, "student"),
       ),
     );
@@ -643,12 +657,12 @@ router.get("/teacher/stories/submissions", async (req, res) => {
   }
 
   const submissions = await db.query.aiStoryQuizSubmissionsTable.findMany({
-    where: sql`${aiStoryQuizSubmissionsTable.studentId} IN (${sql.join(studentIds.map(String), sql`,`)})`,
+    where: inArray(aiStoryQuizSubmissionsTable.studentId, studentIds),
     orderBy: sql`${aiStoryQuizSubmissionsTable.createdAt} DESC`,
   });
 
   const students = await db.query.studentsTable.findMany({
-    where: sql`${studentsTable.id} IN (${sql.join(studentIds.map(String), sql`,`)})`,
+    where: inArray(studentsTable.id, studentIds),
   });
   const studentsById = new Map(students.map((s) => [s.id, s]));
 
@@ -656,7 +670,7 @@ router.get("/teacher/stories/submissions", async (req, res) => {
   const sessions =
     sessionIds.length > 0
       ? await db.query.aiStorySessionsTable.findMany({
-          where: sql`${aiStorySessionsTable.id} IN (${sql.join(sessionIds.map(String), sql`,`)})`,
+          where: inArray(aiStorySessionsTable.id, sessionIds),
         })
       : [];
   const sessionsById = new Map(sessions.map((s) => [s.id, s]));
@@ -707,7 +721,6 @@ router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
     return;
   }
 
-  // Merge per-question decisions into the stored answers.
   const storedAnswers = (submission.answers ?? []) as Array<{
     questionIndex: number;
     question: string;
@@ -735,6 +748,8 @@ router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
       ? updatedAnswers.reduce((sum, a) => sum + (a.status === "accepted" ? (a.points ?? POINTS_PER_CORRECT_ANSWER) : 0), 0)
       : 0;
 
+  const reviewerId = identity.student?.id ?? identity.user?.id ?? 0;
+
   await db.transaction(async (tx) => {
     await tx
       .update(aiStoryQuizSubmissionsTable)
@@ -743,7 +758,7 @@ router.post("/teacher/stories/submissions/:id/review", async (req, res) => {
         teacherFeedback: body.teacherFeedback ?? null,
         answers: updatedAnswers as unknown as Record<string, unknown>[],
         pointsAwarded: body.status === "accepted" ? pointsAwarded : 0,
-        reviewedBy: identity.student.id,
+        reviewedBy: reviewerId,
         reviewedAt: new Date(),
       })
       .where(eq(aiStoryQuizSubmissionsTable.id, submissionId));
@@ -782,7 +797,7 @@ router.delete("/teacher/stories/submissions/:id", async (req, res) => {
     where: eq(studentsTable.id, submission.studentId),
   });
   if (!student || !student.classId) {
-    res.status(404).json({ error: "الطالب غير مرتبط بصف" });
+    res.status(404).json({ error: "الطالب غير موجود أو غير مرتبط بصف" });
     return;
   }
   if (!identity.isAdmin && !identity.teacherClassIds.includes(student.classId)) {
