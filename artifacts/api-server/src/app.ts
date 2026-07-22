@@ -1,3 +1,4 @@
+import path from "path";
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
@@ -35,8 +36,8 @@ app.use(
 
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
-  .split(',')
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
 
@@ -51,14 +52,17 @@ app.use(
       if (!origin || allowedOrigins.length === 0) {
         return callback(null, true);
       }
+
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+
       logger.warn({ origin }, "CORS blocked request from origin");
       return callback(new Error("CORS not allowed"), false);
     },
   }),
 );
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -71,6 +75,16 @@ app.use(
   })),
 );
 
+// API routes
 app.use("/api", router);
+
+// Frontend React/Vite
+const publicPath = path.resolve(process.cwd(), "../antuq/dist");
+
+app.use(express.static(publicPath));
+
+app.get("/{*splat}", (_req, res) => {
+  res.sendFile(path.join(publicPath, "index.html"));
+});
 
 export default app;
