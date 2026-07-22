@@ -1,15 +1,13 @@
-import path from "path";
 import express, { type Express } from "express";
+import path from "path";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import {
   CLERK_PROXY_PATH,
   clerkProxyMiddleware,
-  getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
 
 const app: Express = express();
@@ -34,16 +32,14 @@ app.use(
   }),
 );
 
+// Clerk proxy
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
+// CORS
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
-
-if (allowedOrigins.length > 0) {
-  logger.info({ allowedOrigins }, "Restricting CORS to allowed origins");
-}
 
 app.use(
   cors({
@@ -57,7 +53,7 @@ app.use(
         return callback(null, true);
       }
 
-      logger.warn({ origin }, "CORS blocked request from origin");
+      logger.warn({ origin }, "CORS blocked request");
       return callback(new Error("CORS not allowed"), false);
     },
   }),
@@ -66,20 +62,22 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Clerk Authentication
 app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
+  clerkMiddleware({
+    secretKey: process.env.CLERK_SECRET_KEY,
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+  }),
 );
 
-// API routes
+// API Routes
 app.use("/api", router);
 
-// Frontend React/Vite
-const publicPath = path.resolve(process.cwd(), "../antuq/dist");
+// Frontend
+const publicPath = path.resolve(
+  process.cwd(),
+  "../antuq/dist/public",
+);
 
 app.use(express.static(publicPath));
 
