@@ -86,5 +86,11 @@
     "jspdf": "^4.2.1",
     "three": "^0.185.1",
     "xlsx": "^0.18.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@clerk/shared",
+      "esbuild"
+    ]
   }
 }
