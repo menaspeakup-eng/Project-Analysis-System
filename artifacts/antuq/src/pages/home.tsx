@@ -48,7 +48,7 @@ export default function Home() {
           <div className="flex flex-col items-center lg:items-start gap-2">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/5 text-primary font-bold text-sm md:text-base border border-primary/10 shadow-sm">
               <GraduationCap className="w-4 h-4" />
-              <span>المنصة تحت إشراف الأستاذة هداء الناصري</span>
+              <span>المنصة تحت إشراف الأستاذة هدى الناصري</span>
             </div>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/5 text-accent font-bold text-sm md:text-base border border-accent/10 shadow-sm">
               <School className="w-4 h-4" />
