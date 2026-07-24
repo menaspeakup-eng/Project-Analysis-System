@@ -14,10 +14,14 @@ const basePath = process.env.BASE_PATH || '/';
 
 export default defineConfig({
   base: basePath,
+
   plugins: [
     react(),
-    tailwindcss({ optimize: true }),
+    tailwindcss({
+      optimize: true,
+    }),
   ],
+
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, 'src'),
@@ -30,20 +34,28 @@ export default defineConfig({
     },
     dedupe: ['react', 'react-dom'],
   },
+
   root: path.resolve(import.meta.dirname),
+
   build: {
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
+
+    // يمنع تحويل الملفات الصغيرة إلى Base64 داخل JavaScript
+    assetsInlineLimit: 0,
   },
+
   server: {
     port,
     strictPort: true,
     host: '0.0.0.0',
     allowedHosts: true,
+
     fs: {
       strict: true,
     },
   },
+
   preview: {
     port,
     host: '0.0.0.0',
