@@ -1,6 +1,11 @@
 import { Suspense, lazy, useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, useClerk, useAuth } from '@clerk/react';
-import { publishableKeyFromHost } from '@clerk/react/internal';
+const clerkPubKey = publishableKeyFromHost(
+  window.location.hostname,
+  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
+);
+
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
 import { queryClient } from "@/lib/queryClient";
@@ -42,12 +47,8 @@ const TeacherLibrary = lazy(() => import("@/pages/teacher-library"));
 const TeacherLibraryReviews = lazy(() => import("@/pages/teacher-library-reviews"));
 const TeacherAIGenerator = lazy(() => import("@/pages/teacher-ai-questions"));
 
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
 
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const basePath = import.meta.env.BASE_URL.replace(/\/+$/, "");
 
@@ -173,10 +174,9 @@ function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
   return (
-    <ClerkProvider
-      publishableKey={clerkPubKey}
-      proxyUrl={clerkProxyUrl}
-      appearance={clerkAppearance}
+<ClerkProvider
+  publishableKey={clerkPubKey}
+  appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-in`}
       localization={{
