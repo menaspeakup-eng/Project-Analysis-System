@@ -86,6 +86,3 @@ app.use(express.static(publicPath));
 app.get("/{*splat}", (_req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
-
-export default app;
-
