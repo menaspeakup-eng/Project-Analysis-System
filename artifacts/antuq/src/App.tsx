@@ -1,11 +1,7 @@
 import { Suspense, lazy, useEffect, useRef } from "react";
 import { ClerkProvider, SignIn, useClerk, useAuth } from '@clerk/react';
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
 
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+
 import { shadcn } from '@clerk/themes';
 import { Switch, Route, useLocation, Router as WouterRouter, Redirect } from 'wouter';
 import { queryClient } from "@/lib/queryClient";
