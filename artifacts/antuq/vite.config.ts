@@ -37,7 +37,9 @@ export default defineConfig({
 
   root: path.resolve(import.meta.dirname),
 
-build: {
+
+
+  build: {
   outDir: path.resolve(import.meta.dirname, "dist/public"),
   emptyOutDir: true,
 
@@ -45,10 +47,26 @@ build: {
 
   rollupOptions: {
     output: {
-      assetFileNames: "assets/[name]-[hash][extname]",
+      assetFileNames: (assetInfo) => {
+        if (
+          assetInfo.name?.endsWith(".png") ||
+          assetInfo.name?.endsWith(".jpg") ||
+          assetInfo.name?.endsWith(".jpeg") ||
+          assetInfo.name?.endsWith(".webp")
+        ) {
+          return "assets/[name][extname]";
+        }
+
+        return "assets/[name]-[hash][extname]";
+      },
     },
   },
 },
+
+
+
+
+  
 
   server: {
     host: "0.0.0.0",
