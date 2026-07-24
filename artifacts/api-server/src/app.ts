@@ -87,6 +87,4 @@ app.get("/{*splat}", (_req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 
-app.get("/{*splat}", (_req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
-});
+export default app;
