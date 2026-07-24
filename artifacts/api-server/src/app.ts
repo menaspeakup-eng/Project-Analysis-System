@@ -34,8 +34,10 @@ app.use(
   }),
 );
 
+// Clerk Proxy
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
 
+// CORS
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())
@@ -63,9 +65,11 @@ app.use(
   }),
 );
 
+// Body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
+// Clerk
 app.use(
   clerkMiddleware((req) => ({
     publishableKey: publishableKeyFromHost(
@@ -75,19 +79,27 @@ app.use(
   })),
 );
 
-// API routes
+// API
 app.use("/api", router);
 
-// Frontend React/Vite
+
+// ===============================
+// Frontend React + Vite
+// Cloud Run path fix
+// ===============================
+
 const publicPath = path.resolve(
   process.cwd(),
-  "artifacts/antuq/dist/public"
+  "artifacts/antuq/dist/public",
 );
+
+logger.info({ publicPath }, "Serving frontend from");
 
 app.use(express.static(publicPath));
 
 app.get("/{*splat}", (_req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
+
 
 export default app;
