@@ -79,7 +79,10 @@ app.use(
 app.use("/api", router);
 
 // Frontend React/Vite
-const publicPath = path.resolve(process.cwd(), "../antuq/dist/public");
+const publicPath = path.resolve(
+  process.cwd(),
+  "artifacts/antuq/dist/public"
+);
 
 app.use(express.static(publicPath));
 
