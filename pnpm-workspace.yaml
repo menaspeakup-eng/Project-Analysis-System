@@ -26,8 +26,6 @@
 #
 # ============================================================================
 minimumReleaseAge: 1440
-
-minimumReleaseAgeExclude:
 packages:
   - artifacts/*
   - lib/*
@@ -149,3 +147,8 @@ overrides:
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+
+allowBuilds:
+  '@clerk/shared': true
+  core-js: false
+  esbuild: true

@@ -1,35 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://antuq.app/</loc>
+    <loc>https://iintaq.com/</loc>
     <priority>1.0</priority>
   </url>
+
   <url>
-    <loc>https://antuq.app/about</loc>
+    <loc>https://iintaq.com/about</loc>
     <priority>0.8</priority>
   </url>
+
   <url>
-    <loc>https://antuq.app/features</loc>
+    <loc>https://iintaq.com/features</loc>
     <priority>0.8</priority>
   </url>
+
   <url>
-    <loc>https://antuq.app/schools</loc>
+    <loc>https://iintaq.com/schools</loc>
     <priority>0.8</priority>
   </url>
+
   <url>
-    <loc>https://antuq.app/contact</loc>
+    <loc>https://iintaq.com/contact</loc>
     <priority>0.6</priority>
   </url>
+
   <url>
-    <loc>https://antuq.app/faq</loc>
+    <loc>https://iintaq.com/faq</loc>
     <priority>0.6</priority>
   </url>
+
   <url>
-    <loc>https://antuq.app/terms</loc>
+    <loc>https://iintaq.com/terms</loc>
     <priority>0.4</priority>
   </url>
+
   <url>
-    <loc>https://antuq.app/privacy</loc>
+    <loc>https://iintaq.com/privacy</loc>
     <priority>0.4</priority>
   </url>
 </urlset>
