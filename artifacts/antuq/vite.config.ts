@@ -37,10 +37,18 @@ export default defineConfig({
 
   root: path.resolve(import.meta.dirname),
 
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
+build: {
+  outDir: path.resolve(import.meta.dirname, "dist/public"),
+  emptyOutDir: true,
+
+  assetsInlineLimit: 0,
+
+  rollupOptions: {
+    output: {
+      assetFileNames: "assets/[name]-[hash][extname]",
+    },
   },
+},
 
   server: {
     host: "0.0.0.0",
